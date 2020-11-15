@@ -5,8 +5,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::{Rect, Point};
 use sdl2::render::{TextureQuery, Texture, Canvas};
 
-
-
+//draws split names that have been made into textures previously
 pub fn render_rows(on_screen: &Vec<Texture>, canvas: &mut Canvas<Window>, window_width: u32) {
 	let mut row = Rect::new(0, 0, 0, 0);
 	let mut y = 0;
