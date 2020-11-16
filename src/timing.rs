@@ -6,7 +6,7 @@ use sdl2::event::EventSender;
 
 //Creates a pretty string time with different 0 padding depending on how many time values exist
 macro_rules! pretty_time {
-	($ms:ident) => {format!("{:03}", $ms)};
+	($ms:ident) => {format!("0.{:03}", $ms)};
 	($s:ident, $ms:ident) => {format!("{}.{:03}", $s, $ms)};
 	($min:ident, $s:ident, $ms:ident) => {format!("{}:{:02}.{:03}", $min, $s, $ms)};
 	($hr:ident, $min:ident, $s:ident, $ms:ident) => {format!("{}:{:02}:{:02}.{:03}", $hr, $min, $s, $ms)};

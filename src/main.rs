@@ -20,6 +20,7 @@ fn main() {
 	let ev_sender = event_subsystem.event_sender();
 	let ttf_context = ttf::init().expect("ttf init failed");
 	let font = ttf_context.load_font("segoe-ui-bold.ttf", 30).unwrap();
+	let timer_font = ttf_context.load_font("segoe-ui-bold.ttf", 60).unwrap();
 
 	let video_subsystem = sdl_context.video().unwrap();
 	let window = video_subsystem.window("mist", 300, 500)
@@ -52,6 +53,8 @@ fn main() {
 
 	let mut event_pump = sdl_context.event_pump().unwrap();
 	let mut frame_time: Instant;
+	let mut time_ev = "0".to_string();
+	render::render_time(&time_ev, &mut canvas, &timer_font);
 	canvas.present();
 	'running: loop {
 		frame_time = Instant::now();
@@ -90,14 +93,14 @@ fn main() {
 					//println!("{}", current_index);
 				}
 				Event::User {..} => {
-					let time_ev = event.as_user_event_type::<TimeUpdateEvent>().unwrap();
-					println!("{}", time_ev.time);
+					time_ev = event.as_user_event_type::<TimeUpdateEvent>().unwrap().time;
 				}
 				_ => {}
 			}
 		}
 		window_width = canvas.viewport().width();
 		render::render_rows(&on_screen, &mut canvas, window_width);
+		render::render_time(&time_ev, &mut canvas, &timer_font);
 		canvas.present();
 		thread::sleep(Duration::new(0, 1_000_000_000 / 60) - Instant::now().duration_since(frame_time));
 	}
