@@ -9,11 +9,16 @@ use std::thread;
 
 mod timing;
 mod render;
- 
+use timing::TimeUpdateEvent;
+
 fn main() {
 	//sdl setup boilerplate
-	let sdl_context = sdl2::init().unwrap();
-	let ttf_context = ttf::init().unwrap();
+	let sdl_context = sdl2::init().expect("sdl init failed");
+	
+	let event_subsystem = sdl_context.event().unwrap();
+	event_subsystem.register_custom_event::<TimeUpdateEvent>().unwrap();
+	let ev_sender = event_subsystem.event_sender();
+	let ttf_context = ttf::init().expect("ttf init failed");
 	let font = ttf_context.load_font("segoe-ui-bold.ttf", 30).unwrap();
 
 	let video_subsystem = sdl_context.video().unwrap();
@@ -42,7 +47,7 @@ fn main() {
 	render::render_rows(&on_screen, &mut canvas, window_width);
 
 	thread::spawn(|| {
-		timing::time_30_fps(); //separate thread for timing so we dont have to hope mainloop is fast enough
+		timing::time_30_fps(ev_sender); //separate thread for timing so we dont have to hope mainloop is fast enough
 	});
 
 	let mut event_pump = sdl_context.event_pump().unwrap();
@@ -83,6 +88,10 @@ fn main() {
 						}
 					}
 					//println!("{}", current_index);
+				}
+				Event::User {..} => {
+					let time_ev = event.as_user_event_type::<TimeUpdateEvent>().unwrap();
+					println!("{}", time_ev.time);
 				}
 				_ => {}
 			}

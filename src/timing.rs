@@ -2,6 +2,7 @@
 
 use std::time::{Instant, Duration};
 use std::thread;
+use sdl2::event::EventSender;
 
 //Creates a pretty string time with different 0 padding depending on how many time values exist
 macro_rules! pretty_time {
@@ -49,10 +50,14 @@ pub fn ms_to_readable(mut ms: u32) -> String {
 	} else { return get_time_string(0, 0, 0, ms); }
 }
 
+pub struct TimeUpdateEvent {
+	pub time: String
+}
+
 //uses a sleep-spin cycle to accurately update a time variable so that it is
 //approximately the times when frames would occur in a 30fps game
 //eventually will call a render function to print the times to the sdl window rather than the terminal
-pub fn time_30_fps() {
+pub fn time_30_fps(ev_sender: EventSender) {
 	let mut loop_time: Instant;
 	let mut time: u32 = 0; //u32 of milliseconds allows up to 49 day speedruns which should suffice
 	loop {
@@ -62,18 +67,18 @@ pub fn time_30_fps() {
 			thread::yield_now(); //yield_now basically tells the OS that the thread isn't doing anything
 		}
 		time += 33;
-		println!("{}", ms_to_readable(time));
+		ev_sender.push_custom_event(TimeUpdateEvent {time: ms_to_readable(time)}).unwrap();
 		thread::sleep(Duration::from_micros(33400));
 		while loop_time.elapsed().as_micros() < 67000 {
 			thread::yield_now();
 		}
 		time += 34;
-		println!("{}", ms_to_readable(time));
+		ev_sender.push_custom_event(TimeUpdateEvent {time: ms_to_readable(time)}).unwrap();
 		thread::sleep(Duration::from_micros(32400));
 		while loop_time.elapsed().as_micros() < 100_000 {
 			thread::yield_now();
 		}
 		time += 33;
-		println!("{}", ms_to_readable(time));
+		ev_sender.push_custom_event(TimeUpdateEvent {time: ms_to_readable(time)}).unwrap();
 	}
 }
