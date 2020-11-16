@@ -11,24 +11,26 @@ mod timing;
 mod render;
 use timing::TimeUpdateEvent;
 
+const SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
+
 fn main() {
-	//sdl setup boilerplate
+	//sdl boilerplate
 	let sdl_context = sdl2::init().expect("sdl init failed");
-	
+	//event setup
 	let event_subsystem = sdl_context.event().unwrap();
 	event_subsystem.register_custom_event::<TimeUpdateEvent>().unwrap();
 	let ev_sender = event_subsystem.event_sender();
+	//font setup
 	let ttf_context = ttf::init().expect("ttf init failed");
-	let font = ttf_context.load_font("segoe-ui-bold.ttf", 30).unwrap();
-	let timer_font = ttf_context.load_font("segoe-ui-bold.ttf", 60).unwrap();
-
+	let font = ttf_context.load_font("assets/segoe-ui-bold.ttf", 30).unwrap();
+	let timer_font = ttf_context.load_font("assets/segoe-ui-bold.ttf", 60).unwrap();
+	//window and canvas for drawing
 	let video_subsystem = sdl_context.video().unwrap();
 	let window = video_subsystem.window("mist", 300, 500)
 		.position_centered()
 		.resizable()
 		.build()
 		.unwrap();
- 
 	let mut canvas = window.into_canvas().build().unwrap();
 	let mut window_width = canvas.viewport().width();
  	let creator = canvas.texture_creator();
@@ -36,10 +38,10 @@ fn main() {
 	canvas.clear();
 
 	//queue and render the initial splits on screen
+	//these splits will eventually come from a splits file
 	let splits = ["Something", "else", "words", "text", "split 5 idk", "q", "asdf", "words 2", "no", "yes", "another one"];
 	let mut on_screen = vec![];
-	let original_index = 8; // limits to 8 splits on screen
-	let mut current_index = original_index;
+	let mut current_index = SPLITS_ON_SCREEN;
 	for item in splits[0..current_index].iter() {
 		let text_surface = font.render(item).blended(Color::WHITE).unwrap();
 		let texture = creator.create_texture_from_surface(&text_surface).unwrap();
@@ -72,7 +74,7 @@ fn main() {
 					if current_index < splits.len() {
 						current_index += 1;
 						on_screen = vec![];
-						for item in splits[current_index - original_index..current_index].iter() {
+						for item in splits[current_index - SPLITS_ON_SCREEN..current_index].iter() {
 							let text_surface = font.render(item).blended(Color::WHITE).unwrap();
 							let texture = creator.create_texture_from_surface(&text_surface).unwrap();
 							on_screen.push(texture);
@@ -81,10 +83,10 @@ fn main() {
 					//println!("{}", current_index);
 				},
 				Event::MouseWheel { y: 1, .. } => {
-					if current_index != original_index {
+					if current_index != SPLITS_ON_SCREEN {
 						current_index -= 1;
 						on_screen = vec![];
-						for item in splits[current_index - original_index..current_index].iter() {
+						for item in splits[current_index - SPLITS_ON_SCREEN..current_index].iter() {
 							let text_surface = font.render(item).blended(Color::WHITE).unwrap();
 							let texture = creator.create_texture_from_surface(&text_surface).unwrap();
 							on_screen.push(texture);
