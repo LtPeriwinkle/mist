@@ -55,12 +55,12 @@ fn main() {
 
 	let mut event_pump = sdl_context.event_pump().unwrap();
 	let mut frame_time: Instant;
-	let mut time_ev = "0".to_string();
-	render::render_time(&time_ev, &mut canvas, &timer_font);
+	let mut time_ev = "0.000".to_string();
+	let mut cleared = false;
+	render::render_time(&time_ev, &mut canvas, &timer_font, &creator);
 	canvas.present();
 	'running: loop {
 		frame_time = Instant::now();
-		canvas.clear();
 		for event in event_pump.poll_iter() {
 			if let Event::KeyDown { scancode, .. } = event {
 				println!("{:?}", scancode);
@@ -73,6 +73,8 @@ fn main() {
 				Event::KeyDown { keycode: Some(Keycode::Space), .. } | Event::MouseWheel { y: -1, .. } => {
 					if current_index < splits.len() {
 						current_index += 1;
+						cleared = true;
+						canvas.clear();
 						on_screen = vec![];
 						for item in splits[current_index - SPLITS_ON_SCREEN..current_index].iter() {
 							let text_surface = font.render(item).blended(Color::WHITE).unwrap();
@@ -85,6 +87,8 @@ fn main() {
 				Event::MouseWheel { y: 1, .. } => {
 					if current_index != SPLITS_ON_SCREEN {
 						current_index -= 1;
+						cleared = true;
+						canvas.clear();
 						on_screen = vec![];
 						for item in splits[current_index - SPLITS_ON_SCREEN..current_index].iter() {
 							let text_surface = font.render(item).blended(Color::WHITE).unwrap();
@@ -96,13 +100,18 @@ fn main() {
 				}
 				Event::User {..} => {
 					time_ev = event.as_user_event_type::<TimeUpdateEvent>().unwrap().time;
+					cleared = true;
+					canvas.clear();
 				}
 				_ => {}
 			}
 		}
-		window_width = canvas.viewport().width();
-		render::render_rows(&on_screen, &mut canvas, window_width);
-		render::render_time(&time_ev, &mut canvas, &timer_font);
+		if cleared {
+			window_width = canvas.viewport().width();
+			render::render_rows(&on_screen, &mut canvas, window_width);
+			render::render_time(&time_ev, &mut canvas, &timer_font, &creator);
+			cleared = false;
+		}
 		canvas.present();
 		thread::sleep(Duration::new(0, 1_000_000_000 / 60) - Instant::now().duration_since(frame_time));
 	}
