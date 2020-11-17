@@ -1,29 +1,8 @@
-//Functions and macro used for timing and formatting of times
+//Functions used for timing and formatting of times
 
 use std::time::{Instant, Duration};
 use std::thread;
 use sdl2::event::EventSender;
-
-//Creates a pretty string time with different 0 padding depending on how many time values exist
-macro_rules! pretty_time {
-	($ms:ident) => {format!("0.{:03}", $ms)};
-	($s:ident, $ms:ident) => {format!("{}.{:03}", $s, $ms)};
-	($min:ident, $s:ident, $ms:ident) => {format!("{}:{:02}.{:03}", $min, $s, $ms)};
-	($hr:ident, $min:ident, $s:ident, $ms:ident) => {format!("{}:{:02}:{:02}.{:03}", $hr, $min, $s, $ms)};
-}
-
-//Passes the correct number of non-zero time values to pretty_time!()
-fn get_time_string(hr: u32, min: u32, s: u32, ms: u32) -> String {
-	if hr != 0 {
-		pretty_time!(hr, min, s, ms)
-	} else if min != 0 {
-		pretty_time!(min, s, ms)
-	} else if s != 0 {
-		pretty_time!(s, ms)
-	} else {
-		pretty_time!(ms)
-	}
-}
 
 //Takes a number in milliseconds, divides it out into hours, minutes, seconds, and remaining millis
 //then gets a time string with those values
@@ -42,12 +21,12 @@ pub fn ms_to_readable(mut ms: u32) -> String {
 				let remain_min = min % 60;
 				min -= remain_min;
 				let hr = min / 60;
-				return get_time_string(hr, remain_min, remain_s, remain_ms);
-			} else { return get_time_string(0, min, remain_s, remain_ms); }
+				return format!("{}:{:02}:{:02}.{03}", hr, min, s, ms);
+			} else { return format!("{}:{:02}.{:03}", min, s, ms); }
 
-		} else { return get_time_string(0, 0, s, remain_ms); }
+		} else { return format!("{}.{:03}", s, ms); }
 
-	} else { return get_time_string(0, 0, 0, ms); }
+	} else { return format!("{:03}", ms); }
 }
 
 pub struct TimeUpdateEvent {
@@ -56,7 +35,6 @@ pub struct TimeUpdateEvent {
 
 //uses a sleep-spin cycle to accurately update a time variable so that it is
 //approximately the times when frames would occur in a 30fps game
-//eventually will call a render function to print the times to the sdl window rather than the terminal
 pub fn time_30_fps(ev_sender: EventSender) {
 	let mut loop_time: Instant;
 	let mut time: u32 = 0; //u32 of milliseconds allows up to 49 day speedruns which should suffice
