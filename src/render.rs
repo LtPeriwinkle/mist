@@ -1,11 +1,9 @@
 //Functions related to rendering information to the SDL window
 
-use sdl2::video::WindowContext;
 use sdl2::video::Window;
 use sdl2::pixels::Color;
 use sdl2::rect::{Rect, Point};
-use sdl2::render::{TextureQuery, Texture, Canvas, TextureCreator};
-use sdl2::ttf::Font;
+use sdl2::render::{TextureQuery, Texture, Canvas};
 
 //draws split names that have been made into textures previously
 pub fn render_rows(on_screen: &Vec<Texture>, canvas: &mut Canvas<Window>, window_width: u32) {
@@ -21,9 +19,7 @@ pub fn render_rows(on_screen: &Vec<Texture>, canvas: &mut Canvas<Window>, window
 	}
 }
 
-pub fn render_time(time: &str, canvas: &mut Canvas<Window>, font: &Font, creator: &TextureCreator<WindowContext>) {
-	let time_surface = font.render(time).shaded(Color::WHITE, Color::BLACK).unwrap();
-	let texture = creator.create_texture_from_surface(&time_surface).unwrap();
+pub fn render_time(texture: Texture, canvas: &mut Canvas<Window>) {
 	let vp = canvas.viewport();
 	let h = vp.height();
 	let w = vp.width();
