@@ -119,7 +119,7 @@ impl App {
 			render::render_rows(&on_screen, &mut self.canvas, window_width);
 			if let TimerState::Running = self.state {
 				time_str = timing::ms_to_readable(total_time.elapsed().as_millis());
-				let time_surface = font.render(&time_str).shaded(Color::WHITE, Color::BLACK).unwrap();
+				let time_surface = timer_font.render(&time_str).shaded(Color::WHITE, Color::BLACK).unwrap();
 				let texture = creator.create_texture_from_surface(&time_surface).unwrap();
 				render::render_time(texture, &mut self.canvas);
 			}
