@@ -56,6 +56,7 @@ impl App {
 		let font = self.ttf.load_font("assets/segoe-ui-bold.ttf", 30).expect("could not open font file");
 		let creator = self.canvas.texture_creator();
 
+		//get first vec of split name textures
 		let splits = App::get_splits();
 		let mut on_screen: Vec<Texture> = vec![];
 		for item in splits[0..current_index].iter() {
@@ -63,11 +64,12 @@ impl App {
 			let texture = creator.create_texture_from_surface(&text_surface).unwrap();
 			on_screen.push(texture);
 		}
-		
+
+		//set up variables used in the mainloop
 		let mut frame_time: Instant;
 		let mut total_time = Instant::now();
 		let mut time_str: String;
-		let mut before_pause = Duration::from_millis(0);
+		let mut before_pause: Option<Duration> = None;
 		self.canvas.present();
 		'running: loop {
 			self.canvas.clear();
@@ -106,10 +108,18 @@ impl App {
 					Event::KeyDown { keycode: Some(Keycode::Return), ..} => {
 						if let TimerState::Paused { time } = self.state {
 							total_time = Instant::now();
-							before_pause = Duration::from_millis(time as u64);
+							before_pause = Some(Duration::from_millis(time as u64));
 							self.state = TimerState::Running { color: Color::GREEN };
 						} else {
-							self.state =  TimerState::Paused { time: total_time.elapsed().as_millis() + before_pause.as_millis()}
+    							match before_pause {
+								Some(x) => {
+    									self.state =  TimerState::Paused { time: total_time.elapsed().as_millis() + x.as_millis()};
+								},
+								None => {
+									self.state = TimerState::Paused { time: total_time.elapsed().as_millis() };
+								}
+    							}
+
 						}
 					}
 					_ => {}
@@ -118,13 +128,20 @@ impl App {
 			let window_width = self.canvas.viewport().width();
 			render::render_rows(&on_screen, &mut self.canvas, window_width);
 			if let TimerState::Running { color } = self.state {
-				time_str = timing::ms_to_readable(total_time.elapsed().as_millis() + before_pause.as_millis());
-				let time_surface = timer_font.render(&time_str).shaded(color, Color::BLACK).unwrap();
+    				match before_pause {
+					Some(x) => {
+						time_str = timing::ms_to_readable(total_time.elapsed().as_millis() + x.as_millis());
+					},
+					None => {
+						time_str = timing::ms_to_readable(total_time.elapsed().as_millis());
+					}
+    				}
+    				let time_surface = timer_font.render(&time_str).shaded(color, Color::BLACK).unwrap();
 				let texture = creator.create_texture_from_surface(&time_surface).unwrap();
 				render::render_time(texture, &mut self.canvas);
 			} else if let TimerState::Paused { time } = self.state {
 				time_str = timing::ms_to_readable(time);
-				let time_surface = timer_font.render(&time_str).shaded(Color::GRAY, Color::BLACK).unwrap();
+				let time_surface = timer_font.render(&time_str).shaded(Color::WHITE, Color::BLACK).unwrap();
 				let texture = creator.create_texture_from_surface(&time_surface).unwrap();
 				render::render_time(texture, &mut self.canvas);
 			}
