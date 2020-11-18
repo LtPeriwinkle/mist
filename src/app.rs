@@ -9,12 +9,13 @@ use std::time::{Instant, Duration};
 use std::thread;
 
 use crate::render;
+use crate::timing;
 
 const SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
 
 pub struct App {
 	context: sdl2::Sdl,
-	ev_subsystem: sdl2::EventSubsystem,
+	ev_pump: sdl2::EventPump,
 	canvas: Canvas<Window>,
 	ttf: sdl2::ttf::Sdl2TtfContext,
 	state: TimerState
@@ -24,6 +25,7 @@ enum TimerState {
 	Running,
 	Paused
 }
+
 
 impl App {
 	pub fn init() -> Self {
@@ -37,10 +39,10 @@ impl App {
 			.expect("could not initialize SDL window");
 		let canvas = window.into_canvas().build().expect("could not initialize SDL canvas");
 		let ttf = ttf::init().expect("could not initialize TTF subsystem");
-		let ev_subsystem = context.event().expect("could not initialize SDL event subsystem");
+		let ev_pump = context.event_pump().expect("could not initialize SDL event handler");
 		App {
 			context: context,
-			ev_subsystem: ev_subsystem,
+			ev_pump: ev_pump,
 			canvas: canvas,
 			ttf: ttf,
 			state: TimerState::Paused
@@ -51,7 +53,7 @@ impl App {
 		self.canvas.clear();
 
 		let mut current_index = SPLITS_ON_SCREEN;
-		let _timer_font = self.ttf.load_font("assets/segoe-ui-bold.ttf", 60).expect("could not open font file");
+		let timer_font = self.ttf.load_font("assets/segoe-ui-bold.ttf", 60).expect("could not open font file");
 		let font = self.ttf.load_font("assets/segoe-ui-bold.ttf", 30).expect("could not open font file");
 		let creator = self.canvas.texture_creator();
 
@@ -64,13 +66,13 @@ impl App {
 		}
 		
 		let mut frame_time: Instant;
-		let _total_time: Instant;
-		let mut event_pump = self.context.event_pump().expect("could not initialize event pump");
+		let mut total_time = Instant::now();
+		let mut time_str: String;
 		self.canvas.present();
 		'running: loop {
 			self.canvas.clear();
 			frame_time = Instant::now();
-			for event in event_pump.poll_iter() {
+			for event in self.ev_pump.poll_iter() {
 				if let Event::KeyDown { scancode, .. } = event {
 					println!("{:?}", scancode);
 				}
@@ -89,7 +91,6 @@ impl App {
 								on_screen.push(texture);
 							}
 						}
-						//println!("{}", current_index);
 					},
 					Event::MouseWheel { y: 1, .. } => {
 						if current_index != SPLITS_ON_SCREEN {
@@ -101,17 +102,27 @@ impl App {
 								on_screen.push(texture);
 							}
 						}
-						//println!("{}", current_index);
 					},
 					Event::KeyDown { keycode: Some(Keycode::Return), ..} => {
-						return;
+						if let TimerState::Paused = self.state {
+							self.state = TimerState::Running;
+							total_time = Instant::now();
+						} else {
+							self.state = TimerState::Paused;
+						}
+
 					}
 					_ => {}
 				}
 			}
 			let window_width = self.canvas.viewport().width();
 			render::render_rows(&on_screen, &mut self.canvas, window_width);
-			//render::render_time(&time_ev, &mut self.canvas, &timer_font, &creator);
+			if let TimerState::Running = self.state {
+				time_str = timing::ms_to_readable(total_time.elapsed().as_millis());
+				let time_surface = font.render(&time_str).shaded(Color::WHITE, Color::BLACK).unwrap();
+				let texture = creator.create_texture_from_surface(&time_surface).unwrap();
+				render::render_time(texture, &mut self.canvas);
+			}
 			self.canvas.present();
 			thread::sleep(Duration::new(0, 1_000_000_000 / 60) - Instant::now().duration_since(frame_time));
 		}
