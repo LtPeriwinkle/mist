@@ -19,13 +19,12 @@ pub struct App {
 	canvas: Canvas<Window>,
 	ttf: sdl2::ttf::Sdl2TtfContext,
 	state: TimerState
-}
+} 
 
 enum TimerState {
-	Running,
-	Paused
+	Running { color: Color },
+	Paused { time: u128 },
 }
-
 
 impl App {
 	pub fn init() -> Self {
@@ -45,7 +44,7 @@ impl App {
 			ev_pump: ev_pump,
 			canvas: canvas,
 			ttf: ttf,
-			state: TimerState::Paused
+			state: TimerState::Paused { time: 0 }
 		}
 	}
 
@@ -68,6 +67,7 @@ impl App {
 		let mut frame_time: Instant;
 		let mut total_time = Instant::now();
 		let mut time_str: String;
+		let mut before_pause = Duration::from_millis(0);
 		self.canvas.present();
 		'running: loop {
 			self.canvas.clear();
@@ -104,22 +104,27 @@ impl App {
 						}
 					},
 					Event::KeyDown { keycode: Some(Keycode::Return), ..} => {
-						if let TimerState::Paused = self.state {
-							self.state = TimerState::Running;
+						if let TimerState::Paused { time } = self.state {
 							total_time = Instant::now();
+							before_pause = Duration::from_millis(time as u64);
+							self.state = TimerState::Running { color: Color::GREEN };
 						} else {
-							self.state = TimerState::Paused;
+							self.state =  TimerState::Paused { time: total_time.elapsed().as_millis() + before_pause.as_millis()}
 						}
-
 					}
 					_ => {}
 				}
 			}
 			let window_width = self.canvas.viewport().width();
 			render::render_rows(&on_screen, &mut self.canvas, window_width);
-			if let TimerState::Running = self.state {
-				time_str = timing::ms_to_readable(total_time.elapsed().as_millis());
-				let time_surface = timer_font.render(&time_str).shaded(Color::WHITE, Color::BLACK).unwrap();
+			if let TimerState::Running { color } = self.state {
+				time_str = timing::ms_to_readable(total_time.elapsed().as_millis() + before_pause.as_millis());
+				let time_surface = timer_font.render(&time_str).shaded(color, Color::BLACK).unwrap();
+				let texture = creator.create_texture_from_surface(&time_surface).unwrap();
+				render::render_time(texture, &mut self.canvas);
+			} else if let TimerState::Paused { time } = self.state {
+				time_str = timing::ms_to_readable(time);
+				let time_surface = timer_font.render(&time_str).shaded(Color::GRAY, Color::BLACK).unwrap();
 				let texture = creator.create_texture_from_surface(&time_surface).unwrap();
 				render::render_time(texture, &mut self.canvas);
 			}
@@ -128,7 +133,7 @@ impl App {
 		}
 	}
 	//will move to something like `parser.rs` once split files are a thing
-	fn get_splits() -> [&'static str; 11] {
-		["Something", "else", "words", "text", "split 5 idk", "q", "asdf", "words 2", "no", "yes", "another one"]
+	fn get_splits() -> Vec<&'static str> {
+		vec!["Something", "else", "words", "text", "split 5 idk", "q", "asdf", "words 2", "no", "yes", "another one"]
 	}
 }
