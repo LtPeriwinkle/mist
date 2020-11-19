@@ -1,17 +1,26 @@
 [package]
 name = "mist"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[target.'cfg(windows)'.dependencies.sdl2]
-version = "^0.34.3"
-default-features = false
-features = ["ttf", "use-vcpkg"]
+# to compile for windows, uncomment this and comment the block below
+#[dependencies.sdl2]
+#version = "^0.34.3"
+#default-features = false
+#features = ["ttf", "use-vcpkg"]
 
-[target.'cfg(target_os = "linux")'.dependencies.sdl2]
+[dependencies.sdl2]
 version = "^0.34.3"
 default-features = false
 features = ["ttf", "bundled"]
+
+[package.metadata.vcpkg]
+dependencies = ["sdl2", "sdl2-ttf"]
+git = "https://github.com/microsoft/vcpkg"
+branch = "master"
+
+[package.metadata.vcpkg.target]
+x86_64-pc-windows-msvc = { triplet = "x64-windows-static-md" }
