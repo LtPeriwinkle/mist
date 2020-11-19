@@ -19,7 +19,7 @@ pub struct App {
 	canvas: Canvas<Window>,
 	ttf: sdl2::ttf::Sdl2TtfContext,
 	state: TimerState
-} 
+}
 
 enum TimerState {
 	Running { color: Color },
@@ -27,9 +27,8 @@ enum TimerState {
 }
 
 impl App {
-	pub fn init() -> Self {
+	pub fn init(context: sdl2::Sdl) -> Self {
 		//sdl setup boilerplate
-		let context = sdl2::init().expect("could not initialize SDL");
 		let video = context.video().expect("could not initialize SDL video");
 		let window = video.window("mist", 300, 500)
 			.position_centered()
