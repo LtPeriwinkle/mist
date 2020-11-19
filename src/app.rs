@@ -1,4 +1,3 @@
-extern crate sdl2;
 use sdl2::pixels::Color;
 use sdl2::event::{Event};
 use sdl2::ttf;
@@ -13,6 +12,8 @@ use crate::timing;
 
 const SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
 
+// struct that does all the everything
+#[allow(dead_code)]
 pub struct App {
 	context: sdl2::Sdl,
 	ev_pump: sdl2::EventPump,
@@ -21,6 +22,7 @@ pub struct App {
 	state: TimerState
 }
 
+// state of timer, a finished and notstarted will likely be added
 enum TimerState {
 	Running { color: Color },
 	Paused { time: u128 },
@@ -28,7 +30,7 @@ enum TimerState {
 
 impl App {
 	pub fn init(context: sdl2::Sdl) -> Self {
-		//sdl setup boilerplate
+		// sdl setup boilerplate
 		let video = context.video().expect("could not initialize SDL video");
 		let window = video.window("mist", 300, 500)
 			.position_centered()
@@ -43,19 +45,19 @@ impl App {
 			ev_pump: ev_pump,
 			canvas: canvas,
 			ttf: ttf,
-			state: TimerState::Paused { time: 0 }
+			state: TimerState::Paused { time: 0 } // might be a notstarted variant sometime down the line
 		}
 	}
 
 	pub fn run(&mut self) {
+		// set up some stuff that's a pain to do elsewhere
 		self.canvas.clear();
-
 		let mut current_index = SPLITS_ON_SCREEN;
 		let timer_font = self.ttf.load_font("assets/segoe-ui-bold.ttf", 60).expect("could not open font file");
 		let font = self.ttf.load_font("assets/segoe-ui-bold.ttf", 30).expect("could not open font file");
 		let creator = self.canvas.texture_creator();
 
-		//get first vec of split name textures
+		// get first vec of split name textures
 		let splits = App::get_splits();
 		let mut on_screen: Vec<Texture> = vec![];
 		for item in splits[0..current_index].iter() {
@@ -64,25 +66,32 @@ impl App {
 			on_screen.push(texture);
 		}
 
-		//set up variables used in the mainloop
+		// set up variables used in the mainloop
 		let mut frame_time: Instant;
 		let mut total_time = Instant::now();
 		let mut time_str: String;
 		let mut before_pause: Option<Duration> = None;
 		self.canvas.present();
+
+		// main loop
 		'running: loop {
-			self.canvas.clear();
 			frame_time = Instant::now();
+			self.canvas.clear();
 			for event in self.ev_pump.poll_iter() {
+
+				// print events to terminal if running in debug
+				#[cfg(debug_assertions)]
 				if let Event::KeyDown { scancode, .. } = event {
 					println!("{:?}", scancode);
 				}
+
 				match event {
 					Event::Quit {..} |
 					Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
 						break 'running
 					},
-					Event::KeyDown { keycode: Some(Keycode::Space), .. } | Event::MouseWheel { y: -1, .. } => {
+					// if scroll down and there are enough splits, scroll splits down
+					Event::MouseWheel { y: -1, .. } => {
 						if current_index < splits.len() {
 							current_index += 1;
 							on_screen = vec![];
@@ -93,6 +102,7 @@ impl App {
 							}
 						}
 					},
+					// if scroll up and there are enough splits in the list, scroll splits up
 					Event::MouseWheel { y: 1, .. } => {
 						if current_index != SPLITS_ON_SCREEN {
 							current_index -= 1;
@@ -104,6 +114,7 @@ impl App {
 							}
 						}
 					},
+					// enter as placeholder for stop/start, will be configurable eventually
 					Event::KeyDown { keycode: Some(Keycode::Return), ..} => {
 						if let TimerState::Paused { time } = self.state {
 							total_time = Instant::now();
@@ -117,8 +128,7 @@ impl App {
 								None => {
 									self.state = TimerState::Paused { time: total_time.elapsed().as_millis() };
 								}
-    							}
-
+    						}
 						}
 					}
 					_ => {}
@@ -126,24 +136,17 @@ impl App {
 			}
 			let window_width = self.canvas.viewport().width();
 			render::render_rows(&on_screen, &mut self.canvas, window_width);
-			if let TimerState::Running { color } = self.state {
-    				match before_pause {
-					Some(x) => {
-						time_str = timing::ms_to_readable(total_time.elapsed().as_millis() + x.as_millis());
-					},
-					None => {
-						time_str = timing::ms_to_readable(total_time.elapsed().as_millis());
-					}
-    				}
-    				let time_surface = timer_font.render(&time_str).shaded(color, Color::BLACK).unwrap();
-				let texture = creator.create_texture_from_surface(&time_surface).unwrap();
-				render::render_time(texture, &mut self.canvas);
-			} else if let TimerState::Paused { time } = self.state {
-				time_str = timing::ms_to_readable(time);
-				let time_surface = timer_font.render(&time_str).shaded(Color::WHITE, Color::BLACK).unwrap();
-				let texture = creator.create_texture_from_surface(&time_surface).unwrap();
-				render::render_time(texture, &mut self.canvas);
+			time_str = self.update_time(before_pause, total_time);
+			let color: Color;
+			if let TimerState::Running {..} = self.state {
+				// will eventually calculate whether run is ahead/behind/gaining/losing and adjust appropriately
+				color = Color::GREEN;
+			} else {
+				color = Color::WHITE;
 			}
+			let time_surface = timer_font.render(&time_str).shaded(color, Color::BLACK).unwrap();
+			let texture = creator.create_texture_from_surface(&time_surface).unwrap();
+			render::render_time(texture, &mut self.canvas);
 			self.canvas.present();
 			thread::sleep(Duration::new(0, 1_000_000_000 / 60) - Instant::now().duration_since(frame_time));
 		}
@@ -151,5 +154,25 @@ impl App {
 	//will move to something like `parser.rs` once split files are a thing
 	fn get_splits() -> Vec<&'static str> {
 		vec!["Something", "else", "words", "text", "split 5 idk", "q", "asdf", "words 2", "no", "yes", "another one"]
+	}
+
+	// updates time string based on timer state, basically leaves it the same if timer is paused
+	fn update_time(&self, before_pause: Option<Duration>, total_time: Instant) -> String {
+		let time_str: String;
+		if let TimerState::Running {..} = self.state {
+    		match before_pause {
+				Some(x) => {
+					time_str = timing::ms_to_readable(total_time.elapsed().as_millis() + x.as_millis());
+				},
+				None => {
+					time_str = timing::ms_to_readable(total_time.elapsed().as_millis());
+				}
+    		}
+		} else if let TimerState::Paused { time } = self.state {
+			time_str = timing::ms_to_readable(time);
+		} else {
+			time_str = "a".to_string(); //have to do this because compiler doesn't know that there are a finite number of states
+		}
+		return time_str;
 	}
 }
