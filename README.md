@@ -7,7 +7,7 @@ More will probably be added to this list in the future
 - [ ] Livesplit split file transposing
 - [ ] (limited) customizability (i.e custom colors, perhaps fonts and layouts)
 - [ ] split file creation tool
-- [ ] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time)
+- [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
 - [ ] dynamic run comparisons and colors
 
 ## Unplanned features
