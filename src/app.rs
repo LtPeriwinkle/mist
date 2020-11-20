@@ -4,6 +4,7 @@ use sdl2::ttf;
 use sdl2::keyboard::Keycode;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
+use sdl2::surface::Surface;
 use std::time::{Instant, Duration};
 use std::thread;
 
@@ -24,8 +25,8 @@ pub struct App {
 
 // state of timer, a finished and notstarted will likely be added
 enum TimerState {
-	Running { color: Color },
-	Paused { time: u128 },
+	Running { color: Color, timestamp: u32 },
+	Paused { time: u128, time_str: String },
 }
 
 impl App {
@@ -45,7 +46,7 @@ impl App {
 			ev_pump: ev_pump,
 			canvas: canvas,
 			ttf: ttf,
-			state: TimerState::Paused { time: 0 } // might be a notstarted variant sometime down the line
+			state: TimerState::Paused { time: 0, time_str: "0.000".to_string() } // might be a notstarted variant sometime down the line
 		}
 	}
 
@@ -60,9 +61,11 @@ impl App {
 		// get first vec of split name textures
 		let splits = App::get_splits();
 		let mut on_screen: Vec<Texture> = vec![];
+		let mut text_surface: Surface;
+		let mut texture: Texture;
 		for item in splits[0..current_index].iter() {
-			let text_surface = font.render(item).blended(Color::WHITE).unwrap();
-			let texture = creator.create_texture_from_surface(&text_surface).unwrap();
+			text_surface = font.render(item).blended(Color::WHITE).unwrap();
+			texture = creator.create_texture_from_surface(&text_surface).unwrap();
 			on_screen.push(texture);
 		}
 
@@ -81,9 +84,7 @@ impl App {
 
 				// print events to terminal if running in debug
 				#[cfg(debug_assertions)]
-				if let Event::KeyDown { scancode, .. } = event {
-					println!("{:?}", scancode);
-				}
+					println!("{:?}", event);
 
 				match event {
 					Event::Quit {..} |
@@ -96,8 +97,8 @@ impl App {
 							current_index += 1;
 							on_screen = vec![];
 							for item in splits[current_index - SPLITS_ON_SCREEN..current_index].iter() {
-								let text_surface = font.render(item).blended(Color::WHITE).unwrap();
-								let texture = creator.create_texture_from_surface(&text_surface).unwrap();
+								text_surface = font.render(item).blended(Color::WHITE).unwrap();
+								texture = creator.create_texture_from_surface(&text_surface).unwrap();
 								on_screen.push(texture);
 							}
 						}
@@ -108,25 +109,27 @@ impl App {
 							current_index -= 1;
 							on_screen = vec![];
 							for item in splits[current_index - SPLITS_ON_SCREEN..current_index].iter() {
-								let text_surface = font.render(item).blended(Color::WHITE).unwrap();
-								let texture = creator.create_texture_from_surface(&text_surface).unwrap();
+								text_surface = font.render(item).blended(Color::WHITE).unwrap();
+								texture = creator.create_texture_from_surface(&text_surface).unwrap();
 								on_screen.push(texture);
 							}
 						}
 					},
 					// enter as placeholder for stop/start, will be configurable eventually
-					Event::KeyDown { keycode: Some(Keycode::Return), ..} => {
-						if let TimerState::Paused { time } = self.state {
+					Event::KeyDown { keycode: Some(Keycode::Return), timestamp: event_time, ..} => {
+						if let TimerState::Paused { time, .. } = self.state {
 							total_time = Instant::now();
 							before_pause = Some(Duration::from_millis(time as u64));
-							self.state = TimerState::Running { color: Color::GREEN };
-						} else {
+							self.state = TimerState::Running { color: Color::GREEN, timestamp: event_time };
+						} else if let TimerState::Running { timestamp: start_running_time, .. }  = self.state {
     							match before_pause {
 								Some(x) => {
-    									self.state =  TimerState::Paused { time: total_time.elapsed().as_millis() + x.as_millis()};
+    									self.state =  TimerState::Paused { time: (event_time - start_running_time) as u128 + x.as_millis(),
+    										time_str: timing::ms_to_readable((event_time - start_running_time) as u128 + x.as_millis(), true)};
 								},
 								None => {
-									self.state = TimerState::Paused { time: total_time.elapsed().as_millis() };
+									self.state = TimerState::Paused { time: (event_time - start_running_time) as u128,
+										time_str: timing::ms_to_readable((event_time - start_running_time) as u128, true)};
 								}
     						}
 						}
@@ -144,8 +147,8 @@ impl App {
 				color = Color::WHITE;
 			}
 			time_str = self.update_time(before_pause, total_time);
-			let time_surface = timer_font.render(&time_str).shaded(color, Color::BLACK).unwrap();
-			let texture = creator.create_texture_from_surface(&time_surface).unwrap();
+			text_surface = timer_font.render(&time_str).shaded(color, Color::BLACK).unwrap();
+			texture = creator.create_texture_from_surface(&text_surface).unwrap();
 			render::render_time(&texture, &mut self.canvas);
 			self.canvas.present();
 			thread::sleep(Duration::new(0, 1_000_000_000 / 60) - Instant::now().duration_since(frame_time));
@@ -158,21 +161,21 @@ impl App {
 
 	// updates time string based on timer state, basically leaves it the same if timer is paused
 	fn update_time(&self, before_pause: Option<Duration>, total_time: Instant) -> String {
-		let time_str: String;
+		let time: String;
 		if let TimerState::Running {..} = self.state {
     		match before_pause {
 				Some(x) => {
-					time_str = timing::ms_to_readable(total_time.elapsed().as_millis() + x.as_millis(), false);
+					time = timing::ms_to_readable(total_time.elapsed().as_millis() + x.as_millis(), false);
 				},
 				None => {
-					time_str = timing::ms_to_readable(total_time.elapsed().as_millis(), false);
+					time = timing::ms_to_readable(total_time.elapsed().as_millis(), false);
 				}
     		}
-		} else if let TimerState::Paused { time } = self.state {
-			time_str = timing::ms_to_readable(time, true);
+		} else if let TimerState::Paused { time_str, .. } = &self.state {
+			time = time_str.to_string();
 		} else {
-			time_str = "a".to_string(); // have to do this because compiler doesn't know that there are a finite number of states
+			time = "a".to_string(); // have to do this because compiler doesn't know that there are a finite number of states
 		}
-		return time_str;
+		return time;
 	}
 }
