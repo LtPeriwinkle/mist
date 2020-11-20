@@ -19,7 +19,7 @@ pub fn render_rows(on_screen: &Vec<Texture>, canvas: &mut Canvas<Window>, window
 	}
 }
 
-pub fn render_time(texture: Texture, canvas: &mut Canvas<Window>) {
+pub fn render_time(texture: &Texture, canvas: &mut Canvas<Window>) {
 	let vp = canvas.viewport();
 	let h = vp.height();
 	let w = vp.width();

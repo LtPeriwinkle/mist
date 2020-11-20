@@ -136,7 +136,6 @@ impl App {
 			}
 			let window_width = self.canvas.viewport().width();
 			render::render_rows(&on_screen, &mut self.canvas, window_width);
-			time_str = self.update_time(before_pause, total_time);
 			let color: Color;
 			if let TimerState::Running {..} = self.state {
 				// will eventually calculate whether run is ahead/behind/gaining/losing and adjust appropriately
@@ -144,9 +143,10 @@ impl App {
 			} else {
 				color = Color::WHITE;
 			}
+			time_str = self.update_time(before_pause, total_time);
 			let time_surface = timer_font.render(&time_str).shaded(color, Color::BLACK).unwrap();
 			let texture = creator.create_texture_from_surface(&time_surface).unwrap();
-			render::render_time(texture, &mut self.canvas);
+			render::render_time(&texture, &mut self.canvas);
 			self.canvas.present();
 			thread::sleep(Duration::new(0, 1_000_000_000 / 60) - Instant::now().duration_since(frame_time));
 		}
@@ -171,7 +171,7 @@ impl App {
 		} else if let TimerState::Paused { time } = self.state {
 			time_str = timing::ms_to_readable(time, true);
 		} else {
-			time_str = "a".to_string(); //have to do this because compiler doesn't know that there are a finite number of states
+			time_str = "a".to_string(); // have to do this because compiler doesn't know that there are a finite number of states
 		}
 		return time_str;
 	}
