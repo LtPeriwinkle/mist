@@ -151,7 +151,7 @@ impl App {
 			thread::sleep(Duration::new(0, 1_000_000_000 / 60) - Instant::now().duration_since(frame_time));
 		}
 	}
-	//will move to something like `parser.rs` once split files are a thing
+	// will move to something like `parser.rs` once split files are a thing
 	fn get_splits() -> Vec<&'static str> {
 		vec!["Something", "else", "words", "text", "split 5 idk", "q", "asdf", "words 2", "no", "yes", "another one"]
 	}
@@ -162,14 +162,14 @@ impl App {
 		if let TimerState::Running {..} = self.state {
     		match before_pause {
 				Some(x) => {
-					time_str = timing::ms_to_readable(total_time.elapsed().as_millis() + x.as_millis());
+					time_str = timing::ms_to_readable(total_time.elapsed().as_millis() + x.as_millis(), false);
 				},
 				None => {
-					time_str = timing::ms_to_readable(total_time.elapsed().as_millis());
+					time_str = timing::ms_to_readable(total_time.elapsed().as_millis(), false);
 				}
     		}
 		} else if let TimerState::Paused { time } = self.state {
-			time_str = timing::ms_to_readable(time);
+			time_str = timing::ms_to_readable(time, true);
 		} else {
 			time_str = "a".to_string(); //have to do this because compiler doesn't know that there are a finite number of states
 		}
