@@ -41,7 +41,7 @@ Clone this repo (`git clone https://github.com/LtPeriwinkle/mist`), enter the di
 Follow [this guide](https://github.com/Rust-SDL2/rust-sdl2#windows-msvc) to set up your SDL dependencies. You will have to follow this process for SDL2 and SDL2\_TTF,
 whose development stuff is available [here](http://libsdl.org/projects/SDL_ttf/).
 
-Clone the repository as shown in the linux section, and enter the folder. Remove `Cargo.lock` and rename `Cargo.lock.windows` `cargo build --release --locked`. The .exe will be in `.\target\release\`. Move it into 
+Clone the repository as shown in the linux section, and enter the folder. Remove `Cargo.lock` and rename `Cargo.lock.windows` to `Cargo.lock`. Then run `cargo build --release --locked`. The .exe will be in `.\target\release\`. Move it into
 the same folder as `assets\`, as well as all of the SDL2 and SDL2\_TTF related dll files in order to run it.
 
 # Licensing
