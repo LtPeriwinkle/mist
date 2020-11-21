@@ -1,13 +1,13 @@
 #![windows_subsystem = "windows"]
 extern crate sdl2;
 
-mod timing;
-mod render;
 mod app;
+mod render;
+mod timing;
 use app::App;
 
 fn main() {
-	let context = sdl2::init().expect("could not initialize SDL");
-	let mut app = App::init(context);
-	app.run();
+    let context = sdl2::init().expect("could not initialize SDL");
+    let mut app = App::init(context);
+    app.run();
 }
