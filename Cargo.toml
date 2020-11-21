@@ -6,21 +6,7 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-# to compile for windows, uncomment this and comment the block below
-#[dependencies.sdl2]
-#version = "^0.34.3"
-#default-features = false
-#features = ["ttf"]
-
 [dependencies.sdl2]
 version = "^0.34.3"
 default-features = false
-features = ["ttf", "bundled"]
-
-[package.metadata.vcpkg]
-dependencies = ["sdl2", "sdl2-ttf"]
-git = "https://github.com/microsoft/vcpkg"
-branch = "master"
-
-[package.metadata.vcpkg.target]
-x86_64-pc-windows-msvc = { triplet = "x64-windows-static-md" }
+features = ["ttf"]
