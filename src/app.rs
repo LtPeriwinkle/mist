@@ -1,15 +1,15 @@
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::render::{WindowCanvas, Texture};
+use sdl2::render::{Texture, WindowCanvas};
 use sdl2::surface::Surface;
 use sdl2::ttf;
 use std::thread;
 use std::time::{Duration, Instant};
 
 use crate::render;
-use crate::timing;
 use crate::splits;
+use crate::timing;
 
 const SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
 
@@ -90,7 +90,10 @@ impl App {
         }
 
         for item in split_times_raw {
-            text_surface = font.render(&timing::ms_to_readable(item, false)).blended(Color::WHITE).unwrap();
+            text_surface = font
+                .render(&timing::ms_to_readable(item, false))
+                .blended(Color::WHITE)
+                .unwrap();
             texture = creator.create_texture_from_surface(text_surface).unwrap();
             split_times.push(texture);
         }
@@ -132,8 +135,7 @@ impl App {
                             on_screen = vec![];
                             on_screen_times = vec![];
                             let mut index = bottom_split_index - SPLITS_ON_SCREEN;
-                            while index < bottom_split_index
-                            {
+                            while index < bottom_split_index {
                                 on_screen.push(&splits[index]);
                                 on_screen_times.push(&split_times[index]);
                                 index += 1;
@@ -147,8 +149,7 @@ impl App {
                             on_screen = vec![];
                             on_screen_times = vec![];
                             let mut index = bottom_split_index - SPLITS_ON_SCREEN;
-                            while index < bottom_split_index
-                            {
+                            while index < bottom_split_index {
                                 on_screen.push(&splits[index]);
                                 on_screen_times.push(&split_times[index]);
                                 index += 1;

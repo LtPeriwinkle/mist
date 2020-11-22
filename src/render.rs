@@ -6,7 +6,12 @@ use sdl2::render::{Canvas, Texture, TextureQuery};
 use sdl2::video::Window;
 
 //draws split names that have been made into textures previously
-pub fn render_rows(on_screen: &Vec<&Texture>, times: &Vec<&Texture>, canvas: &mut Canvas<Window>, window_width: u32) {
+pub fn render_rows(
+    on_screen: &Vec<&Texture>,
+    times: &Vec<&Texture>,
+    canvas: &mut Canvas<Window>,
+    window_width: u32,
+) {
     let mut y = 0;
     let mut row: Rect;
     for item in on_screen {
@@ -18,7 +23,8 @@ pub fn render_rows(on_screen: &Vec<&Texture>, times: &Vec<&Texture>, canvas: &mu
             .draw_line(
                 Point::new(0, y + height as i32 + 3),
                 Point::new(window_width as i32, y + height as i32 + 3),
-            ).unwrap();
+            )
+            .unwrap();
         y += height as i32 + 5;
         canvas.set_draw_color(Color::BLACK);
     }
@@ -31,7 +37,6 @@ pub fn render_rows(on_screen: &Vec<&Texture>, times: &Vec<&Texture>, canvas: &mu
         canvas.set_draw_color(Color::GRAY);
         y += height as i32 + 5;
         canvas.set_draw_color(Color::BLACK);
-        
     }
 }
 
