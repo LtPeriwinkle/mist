@@ -6,7 +6,7 @@ use sdl2::render::{Canvas, Texture, TextureQuery};
 use sdl2::video::Window;
 
 //draws split names that have been made into textures previously
-pub fn render_rows(on_screen: &Vec<&Texture>, times: &Vec<Texture>, canvas: &mut Canvas<Window>, window_width: u32) {
+pub fn render_rows(on_screen: &Vec<&Texture>, times: &Vec<&Texture>, canvas: &mut Canvas<Window>, window_width: u32) {
     let mut y = 0;
     let mut row: Rect;
     for item in on_screen {

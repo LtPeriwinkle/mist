@@ -1,10 +1,9 @@
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::render::{Canvas, Texture};
+use sdl2::render::{WindowCanvas, Texture};
 use sdl2::surface::Surface;
 use sdl2::ttf;
-use sdl2::video::Window;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -19,7 +18,7 @@ const SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
 pub struct App {
     context: sdl2::Sdl,
     ev_pump: sdl2::EventPump,
-    canvas: Canvas<Window>,
+    canvas: WindowCanvas,
     ttf: sdl2::ttf::Sdl2TtfContext,
     state: TimerState,
 }
@@ -76,10 +75,11 @@ impl App {
 
         // get first vec of split name textures
         let split_names = splits::get_splits();
-        let split_times_raw = splits::get_split_times(0, SPLITS_ON_SCREEN);
+        let split_times_raw = splits::get_split_times();
         let mut text_surface: Surface;
         let mut texture: Texture;
         let mut on_screen: Vec<&Texture> = vec![];
+        let mut on_screen_times: Vec<&Texture> = vec![];
         let mut splits: Vec<Texture> = vec![];
         let mut split_times: Vec<Texture> = vec![];
 
@@ -89,14 +89,18 @@ impl App {
             splits.push(texture);
         }
 
-        for item in splits[0..bottom_split_index].iter() {
-            on_screen.push(item);
-        }
-
         for item in split_times_raw {
             text_surface = font.render(&timing::ms_to_readable(item, false)).blended(Color::WHITE).unwrap();
             texture = creator.create_texture_from_surface(text_surface).unwrap();
             split_times.push(texture);
+        }
+
+        for item in splits[0..bottom_split_index].iter() {
+            on_screen.push(item);
+        }
+
+        for item in split_times[0..bottom_split_index].iter() {
+            on_screen_times.push(item);
         }
 
         // set up variables used in the mainloop
@@ -126,9 +130,13 @@ impl App {
                         if bottom_split_index < splits.len() {
                             bottom_split_index += 1;
                             on_screen = vec![];
-                            for item in splits[bottom_split_index - SPLITS_ON_SCREEN..bottom_split_index].iter()
+                            on_screen_times = vec![];
+                            let mut index = bottom_split_index - SPLITS_ON_SCREEN;
+                            while index < bottom_split_index
                             {
-                                on_screen.push(item);
+                                on_screen.push(&splits[index]);
+                                on_screen_times.push(&split_times[index]);
+                                index += 1;
                             }
                         }
                     }
@@ -137,9 +145,13 @@ impl App {
                         if bottom_split_index != SPLITS_ON_SCREEN {
                             bottom_split_index -= 1;
                             on_screen = vec![];
-                            for item in splits[bottom_split_index - SPLITS_ON_SCREEN..bottom_split_index].iter()
+                            on_screen_times = vec![];
+                            let mut index = bottom_split_index - SPLITS_ON_SCREEN;
+                            while index < bottom_split_index
                             {
-                                on_screen.push(item);
+                                on_screen.push(&splits[index]);
+                                on_screen_times.push(&split_times[index]);
+                                index += 1;
                             }
                         }
                     }
@@ -189,7 +201,7 @@ impl App {
                 }
             }
             let window_width = self.canvas.viewport().width();
-            render::render_rows(&on_screen, &split_times, &mut self.canvas, window_width);
+            render::render_rows(&on_screen, &on_screen_times, &mut self.canvas, window_width);
             let color: Color;
             if let TimerState::Running { .. } = self.state {
                 // will eventually calculate whether run is ahead/behind/gaining/losing and adjust appropriately
