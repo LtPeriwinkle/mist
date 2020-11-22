@@ -10,6 +10,7 @@ use std::time::{Duration, Instant};
 
 use crate::render;
 use crate::timing;
+use crate::splits;
 
 const SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
 
@@ -48,10 +49,10 @@ impl App {
             .event_pump()
             .expect("could not initialize SDL event handler");
         App {
-            context: context,
-            ev_pump: ev_pump,
-            canvas: canvas,
-            ttf: ttf,
+            context,
+            ev_pump,
+            canvas,
+            ttf,
             state: TimerState::Paused {
                 time: 0,
                 time_str: "0.000".to_string(),
@@ -62,7 +63,7 @@ impl App {
     pub fn run(&mut self) {
         // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
-        let mut current_index = SPLITS_ON_SCREEN;
+        let mut bottom_split_index = SPLITS_ON_SCREEN;
         let timer_font = self
             .ttf
             .load_font("assets/segoe-ui-bold.ttf", 60)
@@ -74,11 +75,12 @@ impl App {
         let creator = self.canvas.texture_creator();
 
         // get first vec of split name textures
-        let splits = App::get_splits();
+        let splits = splits::get_splits();
+        let split_times = splits::get_split_times(0, SPLITS_ON_SCREEN);
         let mut on_screen: Vec<Texture> = vec![];
         let mut text_surface: Surface;
         let mut texture: Texture;
-        for item in splits[0..current_index].iter() {
+        for item in splits[0..bottom_split_index].iter() {
             text_surface = font.render(item).blended(Color::WHITE).unwrap();
             texture = creator.create_texture_from_surface(&text_surface).unwrap();
             on_screen.push(texture);
@@ -108,10 +110,10 @@ impl App {
                     } => break 'running,
                     // if scroll down and there are enough splits, scroll splits down
                     Event::MouseWheel { y: -1, .. } => {
-                        if current_index < splits.len() {
-                            current_index += 1;
+                        if bottom_split_index < splits.len() {
+                            bottom_split_index += 1;
                             on_screen = vec![];
-                            for item in splits[current_index - SPLITS_ON_SCREEN..current_index].iter()
+                            for item in splits[bottom_split_index - SPLITS_ON_SCREEN..bottom_split_index].iter()
                             {
                                 text_surface = font.render(item).blended(Color::WHITE).unwrap();
                                 texture = creator.create_texture_from_surface(&text_surface).unwrap();
@@ -121,10 +123,10 @@ impl App {
                     }
                     // if scroll up and there are enough splits in the list, scroll splits up
                     Event::MouseWheel { y: 1, .. } => {
-                        if current_index != SPLITS_ON_SCREEN {
-                            current_index -= 1;
+                        if bottom_split_index != SPLITS_ON_SCREEN {
+                            bottom_split_index -= 1;
                             on_screen = vec![];
-                            for item in splits[current_index - SPLITS_ON_SCREEN..current_index].iter()
+                            for item in splits[bottom_split_index - SPLITS_ON_SCREEN..bottom_split_index].iter()
                             {
                                 text_surface = font.render(item).blended(Color::WHITE).unwrap();
                                 texture = creator.create_texture_from_surface(&text_surface).unwrap();
@@ -178,7 +180,7 @@ impl App {
                 }
             }
             let window_width = self.canvas.viewport().width();
-            render::render_rows(&on_screen, &mut self.canvas, window_width);
+            render::render_rows(&on_screen, &split_times, &mut self.canvas, window_width);
             let color: Color;
             if let TimerState::Running { .. } = self.state {
                 // will eventually calculate whether run is ahead/behind/gaining/losing and adjust appropriately
@@ -199,23 +201,6 @@ impl App {
             );
         }
     }
-    // will move to something like `parser.rs` once split files are a thing
-    fn get_splits() -> Vec<&'static str> {
-        vec![
-            "Something",
-            "else",
-            "words",
-            "text",
-            "split 5 idk",
-            "q",
-            "asdf",
-            "words 2",
-            "no",
-            "yes",
-            "another one",
-        ]
-    }
-
     // updates time string based on timer state, basically leaves it the same if timer is paused
     fn update_time(&self, before_pause: Option<Duration>, total_time: Instant) -> String {
         let time: String;

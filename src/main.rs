@@ -4,6 +4,7 @@ extern crate sdl2;
 mod app;
 mod render;
 mod timing;
+mod splits;
 use app::App;
 
 fn main() {
