@@ -111,12 +111,10 @@ impl App {
                         if current_index < splits.len() {
                             current_index += 1;
                             on_screen = vec![];
-                            for item in
-                                splits[current_index - SPLITS_ON_SCREEN..current_index].iter()
+                            for item in splits[current_index - SPLITS_ON_SCREEN..current_index].iter()
                             {
                                 text_surface = font.render(item).blended(Color::WHITE).unwrap();
-                                texture =
-                                    creator.create_texture_from_surface(&text_surface).unwrap();
+                                texture = creator.create_texture_from_surface(&text_surface).unwrap();
                                 on_screen.push(texture);
                             }
                         }
@@ -126,12 +124,10 @@ impl App {
                         if current_index != SPLITS_ON_SCREEN {
                             current_index -= 1;
                             on_screen = vec![];
-                            for item in
-                                splits[current_index - SPLITS_ON_SCREEN..current_index].iter()
+                            for item in splits[current_index - SPLITS_ON_SCREEN..current_index].iter()
                             {
                                 text_surface = font.render(item).blended(Color::WHITE).unwrap();
-                                texture =
-                                    creator.create_texture_from_surface(&text_surface).unwrap();
+                                texture = creator.create_texture_from_surface(&text_surface).unwrap();
                                 on_screen.push(texture);
                             }
                         }
