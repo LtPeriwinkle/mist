@@ -70,24 +70,33 @@ impl App {
             .expect("could not open font file");
         let font = self
             .ttf
-            .load_font("assets/segoe-ui-bold.ttf", 30)
+            .load_font("assets/segoe-ui-bold.ttf", 25)
             .expect("could not open font file");
         let creator = self.canvas.texture_creator();
 
         // get first vec of split name textures
         let split_names = splits::get_splits();
-        let split_times = splits::get_split_times(0, SPLITS_ON_SCREEN);
-        let mut on_screen: Vec<Texture> = vec![];
+        let split_times_raw = splits::get_split_times(0, SPLITS_ON_SCREEN);
         let mut text_surface: Surface;
         let mut texture: Texture;
+        let mut on_screen: Vec<&Texture> = vec![];
         let mut splits: Vec<Texture> = vec![];
+        let mut split_times: Vec<Texture> = vec![];
+
         for item in split_names {
             text_surface = font.render(item).blended(Color::WHITE).unwrap();
             texture = creator.create_texture_from_surface(text_surface).unwrap();
             splits.push(texture);
         }
+
         for item in splits[0..bottom_split_index].iter() {
-            on_screen.push(texture);
+            on_screen.push(item);
+        }
+
+        for item in split_times_raw {
+            text_surface = font.render(&timing::ms_to_readable(item, false)).blended(Color::WHITE).unwrap();
+            texture = creator.create_texture_from_surface(text_surface).unwrap();
+            split_times.push(texture);
         }
 
         // set up variables used in the mainloop
@@ -119,7 +128,7 @@ impl App {
                             on_screen = vec![];
                             for item in splits[bottom_split_index - SPLITS_ON_SCREEN..bottom_split_index].iter()
                             {
-                                on_screen.push(texture);
+                                on_screen.push(item);
                             }
                         }
                     }
@@ -130,7 +139,7 @@ impl App {
                             on_screen = vec![];
                             for item in splits[bottom_split_index - SPLITS_ON_SCREEN..bottom_split_index].iter()
                             {
-                                on_screen.push(texture);
+                                on_screen.push(item);
                             }
                         }
                     }
