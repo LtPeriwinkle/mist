@@ -75,14 +75,18 @@ impl App {
         let creator = self.canvas.texture_creator();
 
         // get first vec of split name textures
-        let splits = splits::get_splits();
+        let split_names = splits::get_splits();
         let split_times = splits::get_split_times(0, SPLITS_ON_SCREEN);
         let mut on_screen: Vec<Texture> = vec![];
         let mut text_surface: Surface;
         let mut texture: Texture;
-        for item in splits[0..bottom_split_index].iter() {
+        let mut splits: Vec<Texture> = vec![];
+        for item in split_names {
             text_surface = font.render(item).blended(Color::WHITE).unwrap();
-            texture = creator.create_texture_from_surface(&text_surface).unwrap();
+            texture = creator.create_texture_from_surface(text_surface).unwrap();
+            splits.push(texture);
+        }
+        for item in splits[0..bottom_split_index].iter() {
             on_screen.push(texture);
         }
 
@@ -115,8 +119,6 @@ impl App {
                             on_screen = vec![];
                             for item in splits[bottom_split_index - SPLITS_ON_SCREEN..bottom_split_index].iter()
                             {
-                                text_surface = font.render(item).blended(Color::WHITE).unwrap();
-                                texture = creator.create_texture_from_surface(&text_surface).unwrap();
                                 on_screen.push(texture);
                             }
                         }
@@ -128,8 +130,6 @@ impl App {
                             on_screen = vec![];
                             for item in splits[bottom_split_index - SPLITS_ON_SCREEN..bottom_split_index].iter()
                             {
-                                text_surface = font.render(item).blended(Color::WHITE).unwrap();
-                                texture = creator.create_texture_from_surface(&text_surface).unwrap();
                                 on_screen.push(texture);
                             }
                         }
