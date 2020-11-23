@@ -9,6 +9,12 @@ More will probably be added to this list in the future
 - [ ] split file creation tool
 - [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
 - [ ] dynamic run comparisons and colors
+- [ ] integrated notes (like SpeedGuidesLive)
+
+## Requested features
+Features that people have asked for but i'm not sure if i can implement go here
+* Gif split icons
+* Gif timer background
 
 ## Unplanned features
 These features are *highly unlikely* be implemented, in the spirit of minimalism. This does not always mean they will *never* happen.
