@@ -5,7 +5,7 @@ use sdl2::rect::{Point, Rect};
 use sdl2::render::{Canvas, Texture, TextureQuery};
 use sdl2::video::Window;
 
-//draws split names that have been made into textures previously
+// Puts split name textures and their associated times into the SDL backbuffer
 pub fn render_rows(
     on_screen: &Vec<&Texture>,
     times: &Vec<&Texture>,
@@ -40,6 +40,7 @@ pub fn render_rows(
     }
 }
 
+// Puts the big display timer at the bottom into the SDL backbuffer
 pub fn render_time(texture: &Texture, canvas: &mut Canvas<Window>) {
     let vp = canvas.viewport();
     let h = vp.height();

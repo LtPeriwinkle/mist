@@ -13,7 +13,7 @@ use crate::timing;
 
 const SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
 
-// struct that does all the everything
+// struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
     context: sdl2::Sdl,
@@ -162,6 +162,7 @@ impl App {
                         timestamp: event_time,
                         ..
                     } => {
+                        // if the timer is paused, tell it to run and set the timestamp of when it was started
                         if let TimerState::Paused { time, .. } = self.state {
                             total_time = Instant::now();
                             before_pause = Some(Duration::from_millis(time as u64));
@@ -169,11 +170,13 @@ impl App {
                                 color: Color::GREEN,
                                 timestamp: event_time,
                             };
+                        // if the timer is already running, pause it and calculate the display time
                         } else if let TimerState::Running {
                             timestamp: start_running_time,
                             ..
                         } = self.state
                         {
+                            // if the timer was running before it was paused, add the time it ran for to the displayed time
                             match before_pause {
                                 Some(x) => {
                                     self.state = TimerState::Paused {
@@ -219,6 +222,7 @@ impl App {
             render::render_time(&texture, &mut self.canvas);
             self.canvas.present();
             thread::sleep(
+                // if the entire loop pass was completed in under 1/60 second, delay to keep the framerate at ~60fps
                 Duration::new(0, 1_000_000_000 / 60) - Instant::now().duration_since(frame_time),
             );
         }

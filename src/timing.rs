@@ -1,4 +1,4 @@
-// Functions used for timing and formatting of times
+// Functions used for formatting of times
 
 // Takes a number in milliseconds, divides it out into hours, minutes, seconds, and remaining millis
 // then gets a time string with those values

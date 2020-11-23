@@ -2,6 +2,8 @@ use std::fs::OpenOptions;
 use ron::de::from_reader;
 use serde::{Deserialize, Serialize};
 
+// The struct that contains data about a speedrun.
+// More fields will be added for other split time comparisons, like average and worst times.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Run {
 	game_title: String,
@@ -12,6 +14,7 @@ pub struct Run {
 }
 
 impl Run {
+    	// parse a RON file into a run. Real error handling will come... eventually
 	pub fn from_file(filename: &str) -> Self {
 		let file = OpenOptions::new().read(true).open(filename).unwrap();
 		let mut run: Self = from_reader(&file).unwrap();
