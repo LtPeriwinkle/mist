@@ -17,14 +17,14 @@ pub fn render_rows(
     for item in on_screen {
         let TextureQuery { width, height, .. } = item.query();
         row = Rect::new(0, y, width, height);
-        canvas.copy(&item, None, Some(row)).unwrap();
+        canvas.copy(&item, None, Some(row)).expect("split texture copy failed");
         canvas.set_draw_color(Color::GRAY);
         canvas
             .draw_line(
                 Point::new(0, y + height as i32 + 3),
                 Point::new(window_width as i32, y + height as i32 + 3),
             )
-            .unwrap();
+            .expect("line draw failed");
         y += height as i32 + 5;
         canvas.set_draw_color(Color::BLACK);
     }
@@ -33,7 +33,7 @@ pub fn render_rows(
     for item in times {
         let TextureQuery { width, height, .. } = item.query();
         row = Rect::new((vpw - width) as i32, y, width, height);
-        canvas.copy(&item, None, Some(row)).unwrap();
+        canvas.copy(&item, None, Some(row)).expect("split time texture copy failed");
         canvas.set_draw_color(Color::GRAY);
         y += height as i32 + 5;
         canvas.set_draw_color(Color::BLACK);
@@ -47,5 +47,5 @@ pub fn render_time(texture: &Texture, canvas: &mut Canvas<Window>) {
     let w = vp.width();
     let TextureQuery { width, height, .. } = texture.query();
     let rect = Rect::new((w - width) as i32, (h - height) as i32, width, height);
-    canvas.copy(&texture, None, Some(rect)).unwrap();
+    canvas.copy(&texture, None, Some(rect)).expect("time texture copy failed");
 }

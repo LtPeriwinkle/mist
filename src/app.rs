@@ -84,8 +84,8 @@ impl App {
         let mut split_times: Vec<Texture> = vec![];
 
         for item in split_names {
-            text_surface = font.render(item).blended(Color::WHITE).unwrap();
-            texture = creator.create_texture_from_surface(text_surface).unwrap();
+            text_surface = font.render(item).blended(Color::WHITE).expect("split name font render failed");
+            texture = creator.create_texture_from_surface(text_surface).expect("split name texture creation failed");
             splits.push(texture);
         }
 
@@ -93,8 +93,8 @@ impl App {
             text_surface = font
                 .render(&timing::ms_to_readable(item, false))
                 .blended(Color::WHITE)
-                .unwrap();
-            texture = creator.create_texture_from_surface(text_surface).unwrap();
+                .expect("split time font render failed");
+            texture = creator.create_texture_from_surface(text_surface).expect("split time texture creation failed");
             split_times.push(texture);
         }
 
@@ -200,6 +200,9 @@ impl App {
                                 }
                             }
                         }
+                    },
+                    Event::KeyDown {keycode: Some(Keycode::R), ..} => {
+                        self.state = TimerState::Paused {time: 0, time_str: "0.000".to_string()};
                     }
                     _ => {}
                 }
@@ -217,8 +220,8 @@ impl App {
             text_surface = timer_font
                 .render(&time_str)
                 .shaded(color, Color::BLACK)
-                .unwrap();
-            texture = creator.create_texture_from_surface(&text_surface).unwrap();
+                .expect("time font render failed");
+            texture = creator.create_texture_from_surface(&text_surface).expect("time texture creation failed");
             render::render_time(&texture, &mut self.canvas);
             self.canvas.present();
             thread::sleep(
