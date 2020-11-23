@@ -3,18 +3,24 @@ a minimal, improved speedrun timer
 
 ## Planned features
 More will probably be added to this list in the future
+- [ ] Cross platform
+	* [X] Linux
+	* [X] Windows
+	* [ ] MacOS (untested as I don't have a mac, but should work)
 - [ ] Human-readable split file
 - [ ] Livesplit split file transposing
 - [ ] (limited) customizability (i.e custom colors, perhaps fonts and layouts)
 - [ ] split file creation tool
 - [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
 - [ ] dynamic run comparisons and colors
+- [ ] last 5 run avg comparison
 - [ ] integrated notes (like SpeedGuidesLive)
 
 ## Requested features
 Features that people have asked for but i'm not sure if i can implement go here
 * Gif split icons
 * Gif timer background
+* Subsplits
 
 ## Unplanned features
 These features are *highly unlikely* be implemented, in the spirit of minimalism. This does not always mean they will *never* happen.
