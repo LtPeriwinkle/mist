@@ -1,3 +1,24 @@
+use std::fs::OpenOptions;
+use ron::de::from_reader;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Run {
+	game_title: String,
+	category: String,
+	pb: u128,
+	splits: Vec<String>,
+	best_times: Vec<u128>
+}
+
+impl Run {
+	pub fn from_file(filename: &str) -> Self {
+		let file = OpenOptions::new().read(true).open(filename).unwrap();
+		let mut run: Self = from_reader(&file).unwrap();
+		return run;
+	}
+}
+
 // will do something eventually
 pub fn get_splits() -> Vec<&'static str> {
     vec![
