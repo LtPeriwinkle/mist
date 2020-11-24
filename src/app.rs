@@ -8,10 +8,10 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use crate::render;
-use crate::splits;
+use crate::splits::{self, Run};
 use crate::timing;
 
-const SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
+const SPLITS_ON_SCREEN: usize = 4; //used to limit number of splits displayed
 
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
@@ -21,6 +21,7 @@ pub struct App {
     canvas: WindowCanvas,
     ttf: sdl2::ttf::Sdl2TtfContext,
     state: TimerState,
+    run: splits::Run,
 }
 
 // state of timer, a finished and notstarted will likely be added
@@ -56,6 +57,7 @@ impl App {
                 time: 0,
                 time_str: "0.000".to_string(),
             }, // might be a notstarted variant sometime down the line
+            run: Run::new()
         }
     }
 
@@ -74,8 +76,9 @@ impl App {
         let creator = self.canvas.texture_creator();
 
         // get first vec of split name textures
-        let split_names = splits::get_splits();
-        let split_times_raw = splits::get_split_times();
+        self.run = Run::from_file("test.msf");
+        let split_names = &self.run.splits;
+        let split_times_raw: Vec<u128> = self.run.best_times.iter().cloned().collect();
         let mut text_surface: Surface;
         let mut texture: Texture;
         let mut on_screen: Vec<&Texture> = vec![];
@@ -161,6 +164,7 @@ impl App {
                     Event::KeyDown {
                         keycode: Some(Keycode::Return),
                         timestamp: event_time,
+                        repeat: false,
                         ..
                     } => {
                         // if the timer is paused, tell it to run and set the timestamp of when it was started
