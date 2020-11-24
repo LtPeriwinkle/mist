@@ -111,6 +111,7 @@ impl App {
         let mut total_time = Instant::now();
         let mut time_str: String;
         let mut before_pause: Option<Duration> = None;
+        let one_sixtieth = Duration::new(0, 1_000_000_000 / 60);
         self.canvas.present();
 
         // main loop
@@ -224,10 +225,12 @@ impl App {
             texture = creator.create_texture_from_surface(&text_surface).expect("time texture creation failed");
             render::render_time(&texture, &mut self.canvas);
             self.canvas.present();
-            thread::sleep(
-                // if the entire loop pass was completed in under 1/60 second, delay to keep the framerate at ~60fps
-                Duration::new(0, 1_000_000_000 / 60) - Instant::now().duration_since(frame_time),
-            );
+            if Instant::now().duration_since(frame_time) <=  one_sixtieth {
+                thread::sleep(
+                    // if the entire loop pass was completed in under 1/60 second, delay to keep the framerate at ~60fps
+                    Duration::new(0, 1_000_000_000 / 60) - Instant::now().duration_since(frame_time),
+                );
+            }
         }
     }
     // updates time string based on timer state, basically leaves it the same if timer is paused
