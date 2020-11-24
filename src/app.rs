@@ -11,7 +11,7 @@ use crate::render;
 use crate::splits::{self, Run};
 use crate::timing;
 
-static SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
+const SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
 
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
@@ -57,7 +57,7 @@ impl App {
                 time: 0,
                 time_str: "0.000".to_string(),
             }, // might be a notstarted variant sometime down the line
-            run: Run::new()
+            run: Run::new(),
         }
     }
 
@@ -86,15 +86,22 @@ impl App {
         let mut on_screen_times: Vec<&Texture> = vec![];
         let mut splits: Vec<Texture> = vec![];
         let mut split_times: Vec<Texture> = vec![];
-	if SPLITS_ON_SCREEN > split_names.len() {
-		bottom_split_index = split_names.len();
-		max_splits = split_names.len();
-	} else {
-		max_splits = SPLITS_ON_SCREEN;
-	}
+
+        // set up max splits dynamically in case there are too few splits
+        if SPLITS_ON_SCREEN > split_names.len() {
+            bottom_split_index = split_names.len();
+            max_splits = split_names.len();
+        } else {
+            max_splits = SPLITS_ON_SCREEN;
+        }
         for item in split_names {
-            text_surface = font.render(item).blended(Color::WHITE).expect("split name font render failed");
-            texture = creator.create_texture_from_surface(text_surface).expect("split name texture creation failed");
+            text_surface = font
+                .render(item)
+                .blended(Color::WHITE)
+                .expect("split name font render failed");
+            texture = creator
+                .create_texture_from_surface(text_surface)
+                .expect("split name texture creation failed");
             splits.push(texture);
         }
 
@@ -103,7 +110,9 @@ impl App {
                 .render(&timing::ms_to_readable(item, false))
                 .blended(Color::WHITE)
                 .expect("split time font render failed");
-            texture = creator.create_texture_from_surface(text_surface).expect("split time texture creation failed");
+            texture = creator
+                .create_texture_from_surface(text_surface)
+                .expect("split time texture creation failed");
             split_times.push(texture);
         }
 
@@ -211,9 +220,15 @@ impl App {
                                 }
                             }
                         }
-                    },
-                    Event::KeyDown {keycode: Some(Keycode::R), ..} => {
-                        self.state = TimerState::Paused {time: 0, time_str: "0.000".to_string()};
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::R),
+                        ..
+                    } => {
+                        self.state = TimerState::Paused {
+                            time: 0,
+                            time_str: "0.000".to_string(),
+                        };
                     }
                     _ => {}
                 }
@@ -232,13 +247,16 @@ impl App {
                 .render(&time_str)
                 .shaded(color, Color::BLACK)
                 .expect("time font render failed");
-            texture = creator.create_texture_from_surface(&text_surface).expect("time texture creation failed");
+            texture = creator
+                .create_texture_from_surface(&text_surface)
+                .expect("time texture creation failed");
             render::render_time(&texture, &mut self.canvas);
             self.canvas.present();
-            if Instant::now().duration_since(frame_time) <=  one_sixtieth {
+            if Instant::now().duration_since(frame_time) <= one_sixtieth {
                 thread::sleep(
                     // if the entire loop pass was completed in under 1/60 second, delay to keep the framerate at ~60fps
-                    Duration::new(0, 1_000_000_000 / 60) - Instant::now().duration_since(frame_time),
+                    Duration::new(0, 1_000_000_000 / 60)
+                        - Instant::now().duration_since(frame_time),
                 );
             }
         }
