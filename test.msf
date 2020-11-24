@@ -1,0 +1,19 @@
+(
+    game_title: "game title idk",
+    category: "any%",
+    pb: 1234,
+    splits: [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+    ],
+    best_times: [
+        34,
+        100,
+        800,
+        150,
+        150,
+    ],
+)
