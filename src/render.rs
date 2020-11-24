@@ -50,8 +50,10 @@ pub fn render_time(texture: &Texture, canvas: &mut Canvas<Window>) {
     let h = vp.height();
     let w = vp.width();
     let TextureQuery { width, height, .. } = texture.query();
-    let rect = Rect::new((w - width) as i32, (h - height) as i32, width, height);
-    canvas
-        .copy(&texture, None, Some(rect))
-        .expect("time texture copy failed");
+    if w > width {
+    	let rect = Rect::new((w - width) as i32, (h - height) as i32, width, height);
+    	canvas
+            .copy(&texture, None, Some(rect))
+            .expect("time texture copy failed");
+    }
 }
