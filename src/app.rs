@@ -11,7 +11,7 @@ use crate::render;
 use crate::splits::{self, Run};
 use crate::timing;
 
-const SPLITS_ON_SCREEN: usize = 4; //used to limit number of splits displayed
+static SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
 
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
@@ -65,6 +65,7 @@ impl App {
         // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
         let mut bottom_split_index = SPLITS_ON_SCREEN;
+        let max_splits: usize;
         let timer_font = self
             .ttf
             .load_font("assets/segoe-ui-bold.ttf", 60)
@@ -85,7 +86,12 @@ impl App {
         let mut on_screen_times: Vec<&Texture> = vec![];
         let mut splits: Vec<Texture> = vec![];
         let mut split_times: Vec<Texture> = vec![];
-
+	if SPLITS_ON_SCREEN > split_names.len() {
+		bottom_split_index = split_names.len();
+		max_splits = split_names.len();
+	} else {
+		max_splits = SPLITS_ON_SCREEN;
+	}
         for item in split_names {
             text_surface = font.render(item).blended(Color::WHITE).expect("split name font render failed");
             texture = creator.create_texture_from_surface(text_surface).expect("split name texture creation failed");
@@ -138,7 +144,7 @@ impl App {
                             bottom_split_index += 1;
                             on_screen = vec![];
                             on_screen_times = vec![];
-                            let mut index = bottom_split_index - SPLITS_ON_SCREEN;
+                            let mut index = bottom_split_index - max_splits;
                             while index < bottom_split_index {
                                 on_screen.push(&splits[index]);
                                 on_screen_times.push(&split_times[index]);
@@ -148,11 +154,11 @@ impl App {
                     }
                     // if scroll up and there are enough splits in the list, scroll splits up
                     Event::MouseWheel { y: 1, .. } => {
-                        if bottom_split_index != SPLITS_ON_SCREEN {
+                        if bottom_split_index != max_splits {
                             bottom_split_index -= 1;
                             on_screen = vec![];
                             on_screen_times = vec![];
-                            let mut index = bottom_split_index - SPLITS_ON_SCREEN;
+                            let mut index = bottom_split_index - max_splits;
                             while index < bottom_split_index {
                                 on_screen.push(&splits[index]);
                                 on_screen_times.push(&split_times[index]);
