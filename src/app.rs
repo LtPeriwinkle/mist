@@ -79,7 +79,8 @@ impl App {
         // get first vec of split name textures
         self.run = Run::from_file("test.msf");
         let split_names = &self.run.splits;
-        let split_times_raw: Vec<u128> = self.run.best_times.iter().cloned().collect();
+        let split_times_ms: Vec<u128> = self.run.best_times.iter().cloned().collect();
+        let split_times_raw: Vec<String> = timing::split_time_sum(split_times_ms);
         let mut text_surface: Surface;
         let mut texture: Texture;
         let mut on_screen: Vec<&Texture> = vec![];
@@ -107,7 +108,7 @@ impl App {
 
         for item in split_times_raw {
             text_surface = font
-                .render(&timing::ms_to_readable(item, false))
+                .render(&item)
                 .blended(Color::WHITE)
                 .expect("split time font render failed");
             texture = creator
@@ -264,22 +265,23 @@ impl App {
     // updates time string based on timer state, basically leaves it the same if timer is paused
     fn update_time(&self, before_pause: Option<Duration>, total_time: Instant) -> String {
         let time: String;
-        if let TimerState::Running { .. } = self.state {
-            match before_pause {
-                Some(x) => {
-                    time = timing::ms_to_readable(
-                        total_time.elapsed().as_millis() + x.as_millis(),
-                        false,
-                    );
-                }
-                None => {
-                    time = timing::ms_to_readable(total_time.elapsed().as_millis(), false);
-                }
+        match &self.state {
+            TimerState::Running { .. } => { 
+          	match before_pause {
+                    Some(x) => {
+                        time = timing::ms_to_readable(
+                            total_time.elapsed().as_millis() + x.as_millis(),
+                            false,
+                        );
+                    }
+                    None => {
+                        time = timing::ms_to_readable(total_time.elapsed().as_millis(), false);
+                    }
+          	}
             }
-        } else if let TimerState::Paused { time_str, .. } = &self.state {
-            time = time_str.to_string();
-        } else {
-            time = "a".to_string(); // have to do this because compiler doesn't know that there are a finite number of states
+            TimerState::Paused { time_str: display, .. } => {
+            time = display.to_string();
+            }
         }
         return time;
     }
