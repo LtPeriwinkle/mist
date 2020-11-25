@@ -136,6 +136,7 @@ impl App {
         // main loop
         'running: loop {
             frame_time = Instant::now();
+            self.canvas.set_draw_color(Color::BLACK);
             self.canvas.clear();
             for event in self.ev_pump.poll_iter() {
                 // print events to terminal if running in debug

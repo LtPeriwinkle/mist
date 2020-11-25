@@ -28,7 +28,6 @@ pub fn render_rows(
             )
             .expect("line draw failed");
         y += height as i32 + 5;
-        canvas.set_draw_color(Color::BLACK);
     }
     y = 0;
     for item in times {
@@ -37,9 +36,7 @@ pub fn render_rows(
         canvas
             .copy(&item, None, Some(row))
             .expect("split time texture copy failed");
-        canvas.set_draw_color(Color::GRAY);
         y += height as i32 + 5;
-        canvas.set_draw_color(Color::BLACK);
     }
 }
 
