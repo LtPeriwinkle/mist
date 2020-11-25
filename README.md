@@ -7,7 +7,7 @@ More will probably be added to this list in the future
 	* [X] Linux
 	* [X] Windows
 	* [ ] MacOS (untested as I don't have a mac, but should work)
-- [ ] Human-readable split file
+- [X] Human-readable split file (using [ron](https://github.com/ron-rs/ron))
 - [ ] Livesplit split file transposing
 - [ ] (limited) customizability (i.e custom colors, perhaps fonts and layouts)
 - [ ] split file creation tool
