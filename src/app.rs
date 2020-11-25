@@ -1,4 +1,4 @@
-use sdl2::event::Event;
+use sdl2::event::{Event, WindowEvent};
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::render::{Texture, WindowCanvas};
@@ -65,7 +65,7 @@ impl App {
         // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
         let mut bottom_split_index = SPLITS_ON_SCREEN;
-        let max_splits: usize;
+        let mut max_splits: usize;
         let timer_font = self
             .ttf
             .load_font("assets/segoe-ui-bold.ttf", 60)
@@ -75,6 +75,8 @@ impl App {
             .load_font("assets/segoe-ui-bold.ttf", 25)
             .expect("could not open font file");
         let creator = self.canvas.texture_creator();
+        let timer_height = timer_font.size_of("0123456789").unwrap().1;
+        let splits_height = font.size_of("qwertyuiopasdfghjklzxcvbnm").unwrap().1;
 
         // get first vec of split name textures
         self.run = Run::from_file("test.msf");
@@ -231,7 +233,28 @@ impl App {
                             time: 0,
                             time_str: "0.000".to_string(),
                         };
-                    }
+                    },
+                    Event::Window { win_event: WindowEvent::Resized(_, y), .. } => {
+                        //println!("{}", y as u32 - timer_height);
+                        //println!("{}", timer_height);
+                        println!("{}", (max_splits as u32 * (splits_height as u32 + 5)));
+			if (y - timer_height as i32) >= 0 && (y - timer_height as i32) < max_splits as i32 * (splits_height as i32 + 5) {
+				let diff = ((max_splits as u32 * (splits_height as u32 + 5)) - (y as u32 - timer_height)) / (max_splits as u32);
+    				println!("{}", diff);
+				max_splits -= diff as usize;
+                        	if bottom_split_index != max_splits {
+                            		bottom_split_index -= 1;
+                            		on_screen = vec![];
+                            		on_screen_times = vec![];
+                            		let mut index = bottom_split_index - max_splits;
+                            		while index < bottom_split_index {
+                                		on_screen.push(&splits[index]);
+                                		on_screen_times.push(&split_times[index]);
+                                		index += 1;
+                            		}
+                        	}
+			}
+                    },
                     _ => {}
                 }
             }
