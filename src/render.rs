@@ -31,10 +31,9 @@ pub fn render_rows(
         canvas.set_draw_color(Color::BLACK);
     }
     y = 0;
-    let vpw = canvas.viewport().width();
     for item in times {
         let TextureQuery { width, height, .. } = item.query();
-        row = Rect::new((vpw - width) as i32, y, width, height);
+        row = Rect::new((window_width - width) as i32, y, width, height);
         canvas
             .copy(&item, None, Some(row))
             .expect("split time texture copy failed");
