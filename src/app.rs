@@ -77,6 +77,7 @@ impl App {
         let creator = self.canvas.texture_creator();
         let timer_height = timer_font.size_of("0123456789").unwrap().1;
         let splits_height = font.size_of("qwertyuiopasdfghjklzxcvbnm").unwrap().1;
+        self.canvas.window_mut().set_minimum_size(0, timer_height + 10);
 
         // get first vec of split name textures
         self.run = Run::from_file("test.msf");
@@ -235,26 +236,27 @@ impl App {
                         };
                     },
                     Event::Window { win_event: WindowEvent::Resized(_, y), .. } => {
-                        //println!("{}", y as u32 - timer_height);
-                        //println!("{}", timer_height);
-                        println!("{}", (max_splits as u32 * (splits_height as u32 + 5)));
-			if (y - timer_height as i32) >= 0 && (y - timer_height as i32) < max_splits as i32 * (splits_height as i32 + 5) {
-				let diff = ((max_splits as u32 * (splits_height as u32 + 5)) - (y as u32 - timer_height)) / (max_splits as u32);
-    				println!("{}", diff);
-				max_splits -= diff as usize;
-                        	if bottom_split_index != max_splits {
-                            		bottom_split_index -= 1;
-                            		on_screen = vec![];
-                            		on_screen_times = vec![];
-                            		let mut index = bottom_split_index - max_splits;
-                            		while index < bottom_split_index {
-                                		on_screen.push(&splits[index]);
-                                		on_screen_times.push(&split_times[index]);
-                                		index += 1;
-                            		}
-                        	}
+			let height = self.canvas.viewport().height();
+			let rows_height = (max_splits as u32 * (splits_height + 5));
+			if height - timer_height < rows_height {
+				let diff = ((rows_height - (height - timer_height)) / splits_height);// + 1;
+				println!("{}", diff);
+				if max_splits > diff as usize {
+					max_splits -= diff as usize;
+                       			if bottom_split_index != max_splits {
+                           			 bottom_split_index -= 1;
+                           			 on_screen = vec![];
+                           			 on_screen_times = vec![];
+                            		 	 let mut index = bottom_split_index - max_splits;
+                            			 while index < bottom_split_index {
+                                			on_screen.push(&splits[index]);
+                                			on_screen_times.push(&split_times[index]);
+                                			index += 1;
+                            			}
+                        		}
+				}
 			}
-                    },
+		    },
                     _ => {}
                 }
             }
