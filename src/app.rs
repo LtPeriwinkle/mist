@@ -77,7 +77,10 @@ impl App {
         let creator = self.canvas.texture_creator();
         let timer_height = timer_font.size_of("0123456789").unwrap().1;
         let splits_height = font.size_of("qwertyuiopasdfghjklzxcvbnm").unwrap().1;
-        self.canvas.window_mut().set_minimum_size(0, timer_height + 10).unwrap();
+        self.canvas
+            .window_mut()
+            .set_minimum_size(0, timer_height + 10)
+            .unwrap();
 
         // get first vec of split name textures
         self.run = Run::from_file("test.msf");
@@ -234,43 +237,49 @@ impl App {
                             time: 0,
                             time_str: "0.000".to_string(),
                         };
-                    },
-                    Event::Window { win_event: WindowEvent::Resized(..), .. } => {
-			let height = self.canvas.viewport().height();
-			let rows_height = (max_splits as u32 * (splits_height + 5));
-			if height - timer_height < rows_height {
-				let diff = (rows_height - (height - timer_height)) / splits_height;// + 1;
-				println!("{}", diff);
-				if max_splits > diff as usize {
-					max_splits -= diff as usize;
-                       			if bottom_split_index != max_splits {
-                           			 bottom_split_index -= 1;
-                           			 on_screen = vec![];
-                           			 on_screen_times = vec![];
-                            		 	 let mut index = bottom_split_index - max_splits;
-                            			 while index < bottom_split_index {
-                                			on_screen.push(&splits[index]);
-                                			on_screen_times.push(&split_times[index]);
-                                			index += 1;
-                            			}
-                        		}
-				}
-			} else if rows_height < height - timer_height {
-				let diff = ((height - timer_height) - rows_height) / splits_height;
-				if !(max_splits + diff as usize > SPLITS_ON_SCREEN || max_splits + diff as usize > splits.len()) && diff != 0 {
-					max_splits += diff as usize;
-                            		bottom_split_index += 1;
-                            		on_screen = vec![];
-                            		on_screen_times = vec![];
-                            		let mut index = bottom_split_index - max_splits;
-                            		while index < bottom_split_index {
-                                		on_screen.push(&splits[index]);
-                                		on_screen_times.push(&split_times[index]);
-                                		index += 1;
-                            		}
-				}
-			}
-		    },
+                    }
+                    Event::Window {
+                        win_event: WindowEvent::Resized(..),
+                        ..
+                    } => {
+                        let height = self.canvas.viewport().height();
+                        let rows_height = (max_splits as u32 * (splits_height + 5));
+                        if height - timer_height < rows_height {
+                            let diff = (rows_height - (height - timer_height)) / splits_height; // + 1;
+                            println!("{}", diff);
+                            if max_splits > diff as usize {
+                                max_splits -= diff as usize;
+                                if bottom_split_index != max_splits {
+                                    bottom_split_index -= 1;
+                                    on_screen = vec![];
+                                    on_screen_times = vec![];
+                                    let mut index = bottom_split_index - max_splits;
+                                    while index < bottom_split_index {
+                                        on_screen.push(&splits[index]);
+                                        on_screen_times.push(&split_times[index]);
+                                        index += 1;
+                                    }
+                                }
+                            }
+                        } else if rows_height < height - timer_height {
+                            let diff = ((height - timer_height) - rows_height) / splits_height;
+                            if !(max_splits + diff as usize > SPLITS_ON_SCREEN
+                                || max_splits + diff as usize > splits.len())
+                                && diff != 0
+                            {
+                                max_splits += diff as usize;
+                                bottom_split_index += 1;
+                                on_screen = vec![];
+                                on_screen_times = vec![];
+                                let mut index = bottom_split_index - max_splits;
+                                while index < bottom_split_index {
+                                    on_screen.push(&splits[index]);
+                                    on_screen_times.push(&split_times[index]);
+                                    index += 1;
+                                }
+                            }
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -306,21 +315,21 @@ impl App {
     fn update_time(&self, before_pause: Option<Duration>, total_time: Instant) -> String {
         let time: String;
         match &self.state {
-            TimerState::Running { .. } => { 
-          	match before_pause {
-                    Some(x) => {
-                        time = timing::ms_to_readable(
-                            total_time.elapsed().as_millis() + x.as_millis(),
-                            false,
-                        );
-                    }
-                    None => {
-                        time = timing::ms_to_readable(total_time.elapsed().as_millis(), false);
-                    }
-          	}
-            }
-            TimerState::Paused { time_str: display, .. } => {
-            time = display.to_string();
+            TimerState::Running { .. } => match before_pause {
+                Some(x) => {
+                    time = timing::ms_to_readable(
+                        total_time.elapsed().as_millis() + x.as_millis(),
+                        false,
+                    );
+                }
+                None => {
+                    time = timing::ms_to_readable(total_time.elapsed().as_millis(), false);
+                }
+            },
+            TimerState::Paused {
+                time_str: display, ..
+            } => {
+                time = display.to_string();
             }
         }
         return time;

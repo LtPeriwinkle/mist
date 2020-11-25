@@ -55,11 +55,11 @@ fn round_ms_30(ms: u128) -> u128 {
 }
 
 pub fn split_time_sum(ms_vec: Vec<u128>) -> Vec<String> {
-	let mut total = 0;
-	let mut vec = vec![];
-	for num in ms_vec {
-		total += num;
-		vec.push(ms_to_readable(total, false));
-	}
-	vec
+    let mut total = 0;
+    let mut vec = vec![];
+    for num in ms_vec {
+        total += num;
+        vec.push(ms_to_readable(total, false));
+    }
+    vec
 }
