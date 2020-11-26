@@ -242,12 +242,15 @@ impl App {
                                 if current_split + max_splits > len {
 					bottom_split_index = len;
 					on_screen = splits[len - max_splits..bottom_split_index].iter().collect();
+                    on_screen_times = split_times[len - max_splits..bottom_split_index].iter().collect();
                                 } else if current_split < max_splits {
                                     bottom_split_index = max_splits;
 					on_screen = splits[0..max_splits].iter().collect();
+                    on_screen_times = split_times[0..max_splits].iter().collect();
                                 } else if current_split >= max_splits {
                                     bottom_split_index = current_split + max_splits;
 					on_screen = splits[current_split..current_split + max_splits].iter().collect();
+                    on_screen_times = split_times[current_split..current_split + max_splits].iter().collect();
                                 }
                             }
                         } else if rows_height < height - timer_height {
@@ -257,12 +260,15 @@ impl App {
                             	if current_split + max_splits > len {
 					bottom_split_index = len;
 					on_screen = splits[len - max_splits..bottom_split_index].iter().collect();
+                    on_screen_times = split_times[len - max_splits..bottom_split_index].iter().collect();
                             	} else if current_split < max_splits {
                                     bottom_split_index = max_splits;
 					on_screen = splits[0..max_splits].iter().collect();
+                    on_screen_times = split_times[0..max_splits].iter().collect();
                             	} else if current_split < max_splits {
                                     bottom_split_index = current_split + max_splits;
 					on_screen = splits[current_split..current_split + max_splits].iter().collect();
+                    on_screen_times = split_times[current_split..current_split + max_splits].iter().collect();
                             	}
                             }
                         }
