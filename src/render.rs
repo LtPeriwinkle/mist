@@ -49,7 +49,7 @@ pub fn render_time(texture: &Texture, canvas: &mut Canvas<Window>) {
     if w > width {
         let rect = Rect::new(
             (w - width) as i32,
-            (h as i32 - height as i32),
+            h as i32 - height as i32,
             width,
             height,
         );
