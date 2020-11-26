@@ -229,7 +229,7 @@ impl App {
                         ..
                     } => {
                         let height = self.canvas.viewport().height();
-                        let rows_height = (max_splits as u32 * (splits_height + 5));
+                        let rows_height = max_splits as u32 * (splits_height + 5);
                         let len = splits.len();
                         if height - timer_height < rows_height {
                             let diff = (rows_height - (height - timer_height)) / splits_height;
