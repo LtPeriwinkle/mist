@@ -26,7 +26,7 @@ pub struct App {
 
 // state of timer, a finished and notstarted will likely be added
 enum TimerState {
-    Running { color: Color, timestamp: u32 },
+    Running { timestamp: u32 },
     Paused { time: u128, time_str: String },
 }
 
@@ -137,6 +137,7 @@ impl App {
         let mut time_str: String;
         let mut before_pause: Option<Duration> = None;
         let one_sixtieth = Duration::new(0, 1_000_000_000 / 60);
+        let mut current_split = 3;
         self.canvas.present();
 
         // main loop
@@ -159,28 +160,18 @@ impl App {
                     Event::MouseWheel { y: -1, .. } => {
                         if bottom_split_index < splits.len() {
                             bottom_split_index += 1;
-                            on_screen = vec![];
-                            on_screen_times = vec![];
-                            let mut index = bottom_split_index - max_splits;
-                            while index < bottom_split_index {
-                                on_screen.push(&splits[index]);
-                                on_screen_times.push(&split_times[index]);
-                                index += 1;
-                            }
+                            let index = bottom_split_index - max_splits;
+                            on_screen = splits[index..bottom_split_index].iter().collect();
+                            on_screen_times = split_times[index..bottom_split_index].iter().collect();
                         }
                     }
                     // if scroll up and there are enough splits in the list, scroll splits up
                     Event::MouseWheel { y: 1, .. } => {
                         if bottom_split_index != max_splits {
                             bottom_split_index -= 1;
-                            on_screen = vec![];
-                            on_screen_times = vec![];
-                            let mut index = bottom_split_index - max_splits;
-                            while index < bottom_split_index {
-                                on_screen.push(&splits[index]);
-                                on_screen_times.push(&split_times[index]);
-                                index += 1;
-                            }
+                            let index = bottom_split_index - max_splits;
+                            on_screen = splits[index..bottom_split_index].iter().collect();
+                            on_screen_times = split_times[index..bottom_split_index].iter().collect();
                         }
                     }
                     // enter as placeholder for stop/start, will be configurable eventually
@@ -195,7 +186,6 @@ impl App {
                             total_time = Instant::now();
                             before_pause = Some(Duration::from_millis(time as u64));
                             self.state = TimerState::Running {
-                                color: Color::GREEN,
                                 timestamp: event_time,
                             };
                         // if the timer is already running, pause it and calculate the display time
@@ -244,39 +234,32 @@ impl App {
                     } => {
                         let height = self.canvas.viewport().height();
                         let rows_height = (max_splits as u32 * (splits_height + 5));
+                        let len = splits.len();
                         if height - timer_height < rows_height {
-                            let diff = (rows_height - (height - timer_height)) / splits_height; // + 1;
-                            println!("{}", diff);
+                            let diff = (rows_height - (height - timer_height)) / splits_height;
                             if max_splits > diff as usize {
                                 max_splits -= diff as usize;
-                                if bottom_split_index != max_splits {
-                                    bottom_split_index -= 1;
-                                    on_screen = vec![];
-                                    on_screen_times = vec![];
-                                    let mut index = bottom_split_index - max_splits;
-                                    while index < bottom_split_index {
-                                        on_screen.push(&splits[index]);
-                                        on_screen_times.push(&split_times[index]);
-                                        index += 1;
-                                    }
-                                }
+                                if current_split + max_splits > len {
+					bottom_split_index = len;
+					on_screen = splits[len - max_splits..bottom_split_index].iter().collect();
+                                } else if current_split < max_splits {
+					on_screen = splits[0..max_splits].iter().collect();
+                                } else if current_split >= max_splits {
+					on_screen = splits[current_split..current_split + max_splits].iter().collect();
+                                } 
                             }
                         } else if rows_height < height - timer_height {
                             let diff = ((height - timer_height) - rows_height) / splits_height;
-                            if !(max_splits + diff as usize > SPLITS_ON_SCREEN
-                                || max_splits + diff as usize > splits.len())
-                                && diff != 0
-                            {
-                                max_splits += diff as usize;
-                                bottom_split_index += 1;
-                                on_screen = vec![];
-                                on_screen_times = vec![];
-                                let mut index = bottom_split_index - max_splits;
-                                while index < bottom_split_index {
-                                    on_screen.push(&splits[index]);
-                                    on_screen_times.push(&split_times[index]);
-                                    index += 1;
-                                }
+                            if !(max_splits + diff as usize > SPLITS_ON_SCREEN || max_splits + diff as usize > splits.len()) {
+                            	max_splits += diff as usize;
+                            	if current_split + max_splits > len {
+					bottom_split_index = len;
+					on_screen = splits[len - max_splits..bottom_split_index].iter().collect();
+                            	} else if current_split < max_splits {
+					on_screen = splits[0..max_splits].iter().collect();
+                            	} else if current_split < max_splits {
+					on_screen = splits[current_split..current_split + max_splits].iter().collect();
+                            	}
                             }
                         }
                     }
