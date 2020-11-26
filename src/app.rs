@@ -89,8 +89,8 @@ impl App {
         let split_times_raw: Vec<String> = timing::split_time_sum(split_times_ms);
         let mut text_surface: Surface;
         let mut texture: Texture;
-        let mut on_screen: Vec<&Texture> = vec![];
-        let mut on_screen_times: Vec<&Texture> = vec![];
+        let mut on_screen: Vec<&Texture>;
+        let mut on_screen_times: Vec<&Texture>;
         let mut splits: Vec<Texture> = vec![];
         let mut split_times: Vec<Texture> = vec![];
 
@@ -123,14 +123,8 @@ impl App {
             split_times.push(texture);
         }
 
-        for item in splits[0..bottom_split_index].iter() {
-            on_screen.push(item);
-        }
-
-        for item in split_times[0..bottom_split_index].iter() {
-            on_screen_times.push(item);
-        }
-
+        on_screen = splits[0..bottom_split_index].iter().collect();
+        on_screen_times = split_times[0..bottom_split_index].iter().collect();
         // set up variables used in the mainloop
         let mut frame_time: Instant;
         let mut total_time = Instant::now();
