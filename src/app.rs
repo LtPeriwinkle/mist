@@ -133,8 +133,8 @@ impl App {
         let one_sixtieth = Duration::new(0, 1_000_000_000 / 60);
         let mut current_split = 3;
         let mut window_width: u32;
-	let mut color: Color;
-	self.canvas.present();
+        let mut color: Color;
+        self.canvas.present();
 
         // main loop
         'running: loop {
@@ -158,7 +158,8 @@ impl App {
                             bottom_split_index += 1;
                             let index = bottom_split_index - max_splits;
                             on_screen = splits[index..bottom_split_index].iter().collect();
-                            on_screen_times = split_times[index..bottom_split_index].iter().collect();
+                            on_screen_times =
+                                split_times[index..bottom_split_index].iter().collect();
                         }
                     }
                     // if scroll up and there are enough splits in the list, scroll splits up
@@ -167,7 +168,8 @@ impl App {
                             bottom_split_index -= 1;
                             let index = bottom_split_index - max_splits;
                             on_screen = splits[index..bottom_split_index].iter().collect();
-                            on_screen_times = split_times[index..bottom_split_index].iter().collect();
+                            on_screen_times =
+                                split_times[index..bottom_split_index].iter().collect();
                         }
                     }
                     // enter as placeholder for stop/start, will be configurable eventually
@@ -236,36 +238,58 @@ impl App {
                             if max_splits > diff as usize {
                                 max_splits -= diff as usize;
                                 if current_split + max_splits > len {
-					bottom_split_index = len;
-					on_screen = splits[len - max_splits..bottom_split_index].iter().collect();
-                    on_screen_times = split_times[len - max_splits..bottom_split_index].iter().collect();
+                                    bottom_split_index = len;
+                                    on_screen = splits[len - max_splits..bottom_split_index]
+                                        .iter()
+                                        .collect();
+                                    on_screen_times = split_times
+                                        [len - max_splits..bottom_split_index]
+                                        .iter()
+                                        .collect();
                                 } else if current_split < max_splits {
                                     bottom_split_index = max_splits;
-					on_screen = splits[0..max_splits].iter().collect();
-                    on_screen_times = split_times[0..max_splits].iter().collect();
+                                    on_screen = splits[0..max_splits].iter().collect();
+                                    on_screen_times = split_times[0..max_splits].iter().collect();
                                 } else if current_split >= max_splits {
                                     bottom_split_index = current_split + max_splits;
-					on_screen = splits[current_split..current_split + max_splits].iter().collect();
-                    on_screen_times = split_times[current_split..current_split + max_splits].iter().collect();
+                                    on_screen = splits[current_split..current_split + max_splits]
+                                        .iter()
+                                        .collect();
+                                    on_screen_times = split_times
+                                        [current_split..current_split + max_splits]
+                                        .iter()
+                                        .collect();
                                 }
                             }
                         } else if rows_height < height - timer_height {
                             let diff = ((height - timer_height) - rows_height) / splits_height;
-                            if !(max_splits + diff as usize > SPLITS_ON_SCREEN || max_splits + diff as usize > splits.len()) {
-                            	max_splits += diff as usize;
-                            	if current_split + max_splits > len {
-					bottom_split_index = len;
-					on_screen = splits[len - max_splits..bottom_split_index].iter().collect();
-                    on_screen_times = split_times[len - max_splits..bottom_split_index].iter().collect();
-                            	} else if current_split < max_splits {
+                            if !(max_splits + diff as usize > SPLITS_ON_SCREEN
+                                || max_splits + diff as usize > splits.len())
+                            {
+                                max_splits += diff as usize;
+                                if current_split + max_splits > len {
+                                    bottom_split_index = len;
+                                    on_screen = splits[len - max_splits..bottom_split_index]
+                                        .iter()
+                                        .collect();
+                                    on_screen_times = split_times
+                                        [len - max_splits..bottom_split_index]
+                                        .iter()
+                                        .collect();
+                                } else if current_split < max_splits {
                                     bottom_split_index = max_splits;
-					on_screen = splits[0..max_splits].iter().collect();
-                    on_screen_times = split_times[0..max_splits].iter().collect();
-                            	} else if current_split < max_splits {
+                                    on_screen = splits[0..max_splits].iter().collect();
+                                    on_screen_times = split_times[0..max_splits].iter().collect();
+                                } else if current_split < max_splits {
                                     bottom_split_index = current_split + max_splits;
-					on_screen = splits[current_split..current_split + max_splits].iter().collect();
-                    on_screen_times = split_times[current_split..current_split + max_splits].iter().collect();
-                            	}
+                                    on_screen = splits[current_split..current_split + max_splits]
+                                        .iter()
+                                        .collect();
+                                    on_screen_times = split_times
+                                        [current_split..current_split + max_splits]
+                                        .iter()
+                                        .collect();
+                                }
                             }
                         }
                     }
