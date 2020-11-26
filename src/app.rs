@@ -138,7 +138,9 @@ impl App {
         let mut before_pause: Option<Duration> = None;
         let one_sixtieth = Duration::new(0, 1_000_000_000 / 60);
         let mut current_split = 3;
-        self.canvas.present();
+        let mut window_width: u32;
+	let mut color: Color;
+	self.canvas.present();
 
         // main loop
         'running: loop {
@@ -266,9 +268,8 @@ impl App {
                     _ => {}
                 }
             }
-            let window_width = self.canvas.viewport().width();
+            window_width = self.canvas.viewport().width();
             render::render_rows(&on_screen, &on_screen_times, &mut self.canvas, window_width);
-            let color: Color;
             if let TimerState::Running { .. } = self.state {
                 // will eventually calculate whether run is ahead/behind/gaining/losing and adjust appropriately
                 color = Color::GREEN;
