@@ -186,14 +186,7 @@ impl App {
 					self.state = TimerState::Running {timestamp: event_time};
 				},
 				TimerState::Running {timestamp: t} => {
-					match before_pause {
-						Some(x) => {
-							self.state = TimerState::Paused { time: (event_time - t) as u128 + x, time_str: timing::ms_to_readable((event_time - t) as u128 + x, false) };
-						},
-						None => {
-							self.state = TimerState::Paused {time: (event_time - t) as u128, time_str: timing::ms_to_readable((event_time - t) as u128, true)};
-						}
-					}
+					self.state = TimerState::Paused { time: (event_time - t) as u128 + before_pause.unwrap_or(0), time_str: timing::ms_to_readable((event_time - t) as u128 + before_pause.unwrap_or(0), true) };
 				},
 				_ => {}
 			}
