@@ -24,10 +24,13 @@ pub struct App {
     run: splits::Run,
 }
 
-// state of timer, a finished and notstarted will likely be added
+// state of timer
+#[derive(Debug)]
 enum TimerState {
     Running { timestamp: u32 },
-    Paused { time: u128, time_str: String },
+    Paused { time: u128, time_str: String},
+    NotStarted,
+    Finished {time_str: String}
 }
 
 impl App {
@@ -53,10 +56,7 @@ impl App {
             ev_pump,
             canvas,
             ttf,
-            state: TimerState::Paused {
-                time: 0,
-                time_str: "0.000".to_string(),
-            }, // might be a notstarted variant sometime down the line
+            state: TimerState::NotStarted,
             run: Run::new(),
         }
     }
@@ -129,7 +129,7 @@ impl App {
         let mut frame_time: Instant;
         let mut total_time = Instant::now();
         let mut time_str: String;
-        let mut before_pause: Option<Duration> = None;
+        let mut before_pause: Option<u128> = None;
         let one_sixtieth = Duration::new(0, 1_000_000_000 / 60);
         let mut current_split = 3;
         let mut window_width: u32;
@@ -172,59 +172,37 @@ impl App {
                                 split_times[index..bottom_split_index].iter().collect();
                         }
                     }
-                    // enter as placeholder for stop/start, will be configurable eventually
+                    // enter as placeholder for pause/continue
                     Event::KeyDown {
                         keycode: Some(Keycode::Return),
                         timestamp: event_time,
                         repeat: false,
                         ..
                     } => {
-                        // if the timer is paused, tell it to run and set the timestamp of when it was started
-                        if let TimerState::Paused { time, .. } = self.state {
-                            total_time = Instant::now();
-                            before_pause = Some(Duration::from_millis(time as u64));
-                            self.state = TimerState::Running {
-                                timestamp: event_time,
-                            };
-                        // if the timer is already running, pause it and calculate the display time
-                        } else if let TimerState::Running {
-                            timestamp: start_running_time,
-                            ..
-                        } = self.state
-                        {
-                            // if the timer was running before it was paused, add the time it ran for to the displayed time
-                            match before_pause {
-                                Some(x) => {
-                                    self.state = TimerState::Paused {
-                                        time: (event_time - start_running_time) as u128
-                                            + x.as_millis(),
-                                        time_str: timing::ms_to_readable(
-                                            (event_time - start_running_time) as u128
-                                                + x.as_millis(),
-                                            true,
-                                        ),
-                                    };
-                                }
-                                None => {
-                                    self.state = TimerState::Paused {
-                                        time: (event_time - start_running_time) as u128,
-                                        time_str: timing::ms_to_readable(
-                                            (event_time - start_running_time) as u128,
-                                            true,
-                                        ),
-                                    };
-                                }
-                            }
-                        }
+			match self.state {
+				TimerState::Paused {time: t, ..} => {
+    					total_time = Instant::now();
+					before_pause = Some(t);
+					self.state = TimerState::Running {timestamp: event_time};
+				},
+				TimerState::Running {timestamp: t} => {
+					match before_pause {
+						Some(x) => {
+							self.state = TimerState::Paused { time: (event_time - t) as u128 + x, time_str: timing::ms_to_readable((event_time - t) as u128 + x, false) };
+						},
+						None => {
+							self.state = TimerState::Paused {time: (event_time - t) as u128, time_str: timing::ms_to_readable((event_time - t) as u128, true)};
+						}
+					}
+				},
+				_ => {}
+			}
                     }
                     Event::KeyDown {
                         keycode: Some(Keycode::R),
                         ..
                     } => {
-                        self.state = TimerState::Paused {
-                            time: 0,
-                            time_str: "0.000".to_string(),
-                        };
+                        self.state = TimerState::NotStarted;
                     }
                     Event::Window {
                         win_event: WindowEvent::Resized(..),
@@ -293,6 +271,23 @@ impl App {
                             }
                         }
                     }
+                    Event::KeyDown {keycode: Some(Keycode::Space), timestamp: event_time, ..} => {
+			match self.state {
+				TimerState::NotStarted => {
+					total_time = Instant::now();
+					self.state = TimerState::Running {timestamp: event_time};
+					current_split = 0;
+				},
+				TimerState::Running {timestamp: t, ..} => {
+					if current_split < splits.len() {
+						current_split += 1;
+					} else {
+						self.state = TimerState::Finished {time_str: timing::ms_to_readable((event_time - t) as u128 + before_pause.unwrap_or(0), true)};
+					}
+				},
+				_ => {}
+			}
+                    }
                     _ => {}
                 }
             }
@@ -314,6 +309,7 @@ impl App {
                 .expect("time texture creation failed");
             render::render_time(&texture, &mut self.canvas);
             self.canvas.present();
+            println!("{:?}", self.state);
             if Instant::now().duration_since(frame_time) <= one_sixtieth {
                 thread::sleep(
                     // if the entire loop pass was completed in under 1/60 second, delay to keep the framerate at ~60fps
@@ -324,13 +320,13 @@ impl App {
         }
     }
     // updates time string based on timer state, basically leaves it the same if timer is paused
-    fn update_time(&self, before_pause: Option<Duration>, total_time: Instant) -> String {
+    fn update_time(&self, before_pause: Option<u128>, total_time: Instant) -> String {
         let time: String;
         match &self.state {
             TimerState::Running { .. } => match before_pause {
                 Some(x) => {
                     time = timing::ms_to_readable(
-                        total_time.elapsed().as_millis() + x.as_millis(),
+                        total_time.elapsed().as_millis() + x,
                         false,
                     );
                 }
@@ -342,6 +338,12 @@ impl App {
                 time_str: display, ..
             } => {
                 time = display.to_string();
+            },
+            TimerState::NotStarted {} => {
+		time = "0.000".to_string();
+            },
+            TimerState::Finished {time_str: string} => {
+		time = string.to_owned();
             }
         }
         return time;
