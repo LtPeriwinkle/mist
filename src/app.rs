@@ -19,6 +19,7 @@ const SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
 pub struct App {
     context: sdl2::Sdl,
     ev_pump: sdl2::EventPump,
+    timer: sdl2::TimerSubsystem,
     canvas: WindowCanvas,
     ttf: sdl2::ttf::Sdl2TtfContext,
     state: TimerState,
@@ -28,6 +29,7 @@ pub struct App {
 // state of timer
 #[derive(Debug)]
 enum TimerState {
+    OffsetCountdown { amt: u128 },
     Running { timestamp: u32 },
     Paused { time: u128, time_str: String},
     NotStarted,
@@ -52,9 +54,11 @@ impl App {
         let ev_pump = context
             .event_pump()
             .expect("could not initialize SDL event handler");
+        let timer = context.timer().unwrap();
         App {
             context,
             ev_pump,
+            timer,
             canvas,
             ttf,
             state: TimerState::NotStarted,
@@ -149,6 +153,12 @@ impl App {
             frame_time = Instant::now();
             self.canvas.set_draw_color(Color::BLACK);
             self.canvas.clear();
+            if let TimerState::OffsetCountdown {amt} = self.state {
+		if amt <= total_time.elapsed().as_millis() {
+			self.state = TimerState::Running {timestamp: self.timer.ticks()};
+			total_time = Instant::now();
+		}
+            }
             for event in self.ev_pump.poll_iter() {
                 // print events to terminal if running in debug
                 #[cfg(debug_assertions)]
@@ -228,15 +238,16 @@ impl App {
 			match self.state {
 				TimerState::NotStarted => {
 					total_time = Instant::now();
-					self.state = TimerState::Running {timestamp: event_time};
+					//self.state = TimerState::Running {timestamp: event_time};
+					self.state = TimerState::OffsetCountdown {amt: 2500};
 					current_split = 0;
 				},
 				TimerState::Running {timestamp: t, ..} => {
     					time_str = timing::ms_to_readable((event_time - t) as u128 + before_pause.unwrap_or(0), true);
     					text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
     					texture = creator.create_texture_from_surface(&text_surface).unwrap();
-    					on_screen_times = vec![];
-    					mem::replace(&mut split_times[current_split], texture);
+    					//on_screen_times = vec![];
+    					//mem::replace(&mut split_times[current_split], texture);
 					if current_split < splits.len() {
 						current_split += 1;
 					} else {
@@ -331,6 +342,12 @@ impl App {
             },
             TimerState::Finished {time_str: string} => {
 		time = string.to_owned();
+            },
+            TimerState::OffsetCountdown {amt: amount} => {
+                if amount > &total_time.elapsed().as_millis() {
+			let num = timing::ms_to_readable(amount - total_time.elapsed().as_millis(), false);
+			time = format!("-{}", num);
+                } else { time = "0.000".to_string();}
             }
         }
         return time;
