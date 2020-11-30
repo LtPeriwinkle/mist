@@ -6,6 +6,7 @@ use sdl2::surface::Surface;
 use sdl2::ttf;
 use std::thread;
 use std::time::{Duration, Instant};
+use std::mem;
 
 use crate::render;
 use crate::splits::{self, Run};
@@ -89,8 +90,8 @@ impl App {
         let split_times_raw: Vec<String> = timing::split_time_sum(split_times_ms);
         let mut text_surface: Surface;
         let mut texture: Texture;
-        let mut on_screen: Vec<&Texture>;
-        let mut on_screen_times: Vec<&Texture>;
+        let mut on_screen: Vec<&Texture> = vec![];
+        let mut on_screen_times: Vec<&Texture> = vec![];
         let mut splits: Vec<Texture> = vec![];
         let mut split_times: Vec<Texture> = vec![];
 
@@ -123,17 +124,24 @@ impl App {
             split_times.push(texture);
         }
 
-        on_screen = splits[0..bottom_split_index].iter().collect();
-        on_screen_times = split_times[0..bottom_split_index].iter().collect();
         // set up variables used in the mainloop
+        // framerate cap timer
         let mut frame_time: Instant;
         let mut total_time = Instant::now();
+        // display time
         let mut time_str: String;
+        // keeps track of whether timer has been paused and paused value
         let mut before_pause: Option<u128> = None;
+        // this one should be a static but duration isnt allowed to be static apparently
         let one_sixtieth = Duration::new(0, 1_000_000_000 / 60);
-        let mut current_split = 3;
+        let mut current_split = 0;
+        // these two to avoid having to drop and reallocate every loop
         let mut window_width: u32;
         let mut color: Color;
+        // sum of split times for display on rows
+        let mut recreate_on_screen: Option<bool> = Some(true);
+        let mut diff: u32 = 0;
+        let mut len: usize = splits.len();
         self.canvas.present();
 
         // main loop
@@ -203,64 +211,16 @@ impl App {
                     } => {
                         let height = self.canvas.viewport().height();
                         let rows_height = max_splits as u32 * (splits_height + 5);
-                        let len = splits.len();
+                        len = splits.len();
                         if height - timer_height < rows_height {
-                            let diff = (rows_height - (height - timer_height)) / splits_height;
-                            if max_splits > diff as usize {
-                                max_splits -= diff as usize;
-                                if current_split + max_splits > len {
-                                    bottom_split_index = len;
-                                    on_screen = splits[len - max_splits..bottom_split_index]
-                                        .iter()
-                                        .collect();
-                                    on_screen_times = split_times
-                                        [len - max_splits..bottom_split_index]
-                                        .iter()
-                                        .collect();
-                                } else if current_split < max_splits {
-                                    bottom_split_index = max_splits;
-                                    on_screen = splits[0..max_splits].iter().collect();
-                                    on_screen_times = split_times[0..max_splits].iter().collect();
-                                } else if current_split >= max_splits {
-                                    bottom_split_index = current_split + max_splits;
-                                    on_screen = splits[current_split..current_split + max_splits]
-                                        .iter()
-                                        .collect();
-                                    on_screen_times = split_times
-                                        [current_split..current_split + max_splits]
-                                        .iter()
-                                        .collect();
-                                }
-                            }
+                            diff = (rows_height - (height - timer_height)) / splits_height;
+                            recreate_on_screen = Some(false);
                         } else if rows_height < height - timer_height {
-                            let diff = ((height - timer_height) - rows_height) / splits_height;
+                            diff = ((height - timer_height) - rows_height) / splits_height;
                             if !(max_splits + diff as usize > SPLITS_ON_SCREEN
                                 || max_splits + diff as usize > splits.len())
                             {
-                                max_splits += diff as usize;
-                                if current_split + max_splits > len {
-                                    bottom_split_index = len;
-                                    on_screen = splits[len - max_splits..bottom_split_index]
-                                        .iter()
-                                        .collect();
-                                    on_screen_times = split_times
-                                        [len - max_splits..bottom_split_index]
-                                        .iter()
-                                        .collect();
-                                } else if current_split < max_splits {
-                                    bottom_split_index = max_splits;
-                                    on_screen = splits[0..max_splits].iter().collect();
-                                    on_screen_times = split_times[0..max_splits].iter().collect();
-                                } else if current_split < max_splits {
-                                    bottom_split_index = current_split + max_splits;
-                                    on_screen = splits[current_split..current_split + max_splits]
-                                        .iter()
-                                        .collect();
-                                    on_screen_times = split_times
-                                        [current_split..current_split + max_splits]
-                                        .iter()
-                                        .collect();
-                                }
+                                recreate_on_screen = Some(false);
                             }
                         }
                     }
@@ -272,10 +232,15 @@ impl App {
 					current_split = 0;
 				},
 				TimerState::Running {timestamp: t, ..} => {
+    					time_str = timing::ms_to_readable((event_time - t) as u128 + before_pause.unwrap_or(0), true);
+    					text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
+    					texture = creator.create_texture_from_surface(&text_surface).unwrap();
+    					on_screen_times = vec![];
+    					mem::replace(&mut split_times[current_split], texture);
 					if current_split < splits.len() {
 						current_split += 1;
 					} else {
-						self.state = TimerState::Finished {time_str: timing::ms_to_readable((event_time - t) as u128 + before_pause.unwrap_or(0), true)};
+						self.state = TimerState::Finished {time_str};
 					}
 				},
 				_ => {}
@@ -285,6 +250,43 @@ impl App {
                 }
             }
             window_width = self.canvas.viewport().width();
+            match recreate_on_screen {
+		Some(true) => {
+			on_screen = splits[0..bottom_split_index].iter().collect();
+			on_screen_times = split_times[0..bottom_split_index].iter().collect();
+			recreate_on_screen = None;
+		},
+		Some(false) => {
+                        if max_splits > diff as usize {
+                            max_splits -= diff as usize;
+                            if current_split + max_splits > len {
+                                bottom_split_index = len;
+                                on_screen = splits[len - max_splits..bottom_split_index]
+                                    .iter()
+                                    .collect();
+                                on_screen_times = split_times
+                                    [len - max_splits..bottom_split_index]
+                                    .iter()
+                                    .collect();
+                            } else if current_split < max_splits {
+                                bottom_split_index = max_splits;
+                                on_screen = splits[0..max_splits].iter().collect();
+                                on_screen_times = split_times[0..max_splits].iter().collect();
+                            } else if current_split >= max_splits {
+                                bottom_split_index = current_split + max_splits;
+                                on_screen = splits[current_split..current_split + max_splits]
+                                    .iter()
+                                    .collect();
+                                on_screen_times = split_times
+                                    [current_split..current_split + max_splits]
+                                    .iter()
+                                    .collect();
+                            }
+                        }
+			recreate_on_screen = None;
+		},
+		_ => {}
+            }
             render::render_rows(&on_screen, &on_screen_times, &mut self.canvas, window_width);
             if let TimerState::Running { .. } = self.state {
                 // will eventually calculate whether run is ahead/behind/gaining/losing and adjust appropriately
@@ -302,11 +304,11 @@ impl App {
                 .expect("time texture creation failed");
             render::render_time(&texture, &mut self.canvas);
             self.canvas.present();
-            println!("{:?}", self.state);
+            //println!("{:?}", self.state);
             if Instant::now().duration_since(frame_time) <= one_sixtieth {
                 thread::sleep(
                     // if the entire loop pass was completed in under 1/60 second, delay to keep the framerate at ~60fps
-                    Duration::new(0, 1_000_000_000 / 60)
+                    one_sixtieth
                         - Instant::now().duration_since(frame_time),
                 );
             }
@@ -316,16 +318,8 @@ impl App {
     fn update_time(&self, before_pause: Option<u128>, total_time: Instant) -> String {
         let time: String;
         match &self.state {
-            TimerState::Running { .. } => match before_pause {
-                Some(x) => {
-                    time = timing::ms_to_readable(
-                        total_time.elapsed().as_millis() + x,
-                        false,
-                    );
-                }
-                None => {
-                    time = timing::ms_to_readable(total_time.elapsed().as_millis(), false);
-                }
+            TimerState::Running { .. } => {
+		time = timing::ms_to_readable(total_time.elapsed().as_millis() + before_pause.unwrap_or(0), false);
             },
             TimerState::Paused {
                 time_str: display, ..
