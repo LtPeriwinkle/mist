@@ -8,6 +8,7 @@ use std::fs::OpenOptions;
 pub struct Run {
     pub game_title: String,
     pub category: String,
+    pub offset: Option<u128>,
     pub pb: u128,
     pub splits: Vec<String>,
     pub best_times: Vec<u128>,
@@ -25,6 +26,7 @@ impl Run {
         Self {
             game_title: "".to_string(),
             category: "".to_string(),
+            offset: None,
             pb: 0,
             splits: Vec::new(),
             best_times: Vec::new(),

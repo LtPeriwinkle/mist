@@ -1,33 +1,10 @@
 (
     game_title: "game title idk",
     category: "any%",
-    pb: 1234,
+    offset: Some(2500),
+    pb: 12345,
     splits: [
-        "a",
-        "b",
-        "c",
-        "d",
-        "e",
-	"f",
-	"g",
-	"h",
-	"i",
-	"j",
-	"k",
-	"l"
     ],
     best_times: [
-        34,
-        100,
-        800,
-        150,
-        150,
-	200,
-	210,
-	300,
-	600,
-	800,
-	450,
-	500
     ],
 )

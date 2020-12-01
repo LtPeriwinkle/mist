@@ -32,7 +32,7 @@ enum TimerState {
     OffsetCountdown { amt: u128 },
     Running { timestamp: u32 },
     Paused { time: u128, time_str: String},
-    NotStarted,
+    NotStarted { time_str: String },
     Finished {time_str: String}
 }
 
@@ -61,7 +61,7 @@ impl App {
             timer,
             canvas,
             ttf,
-            state: TimerState::NotStarted,
+            state: TimerState::NotStarted {time_str: "".to_string()},
             run: Run::new(),
         }
     }
@@ -90,6 +90,8 @@ impl App {
         // get first vec of split name textures
         self.run = Run::from_file("test.msf");
         let split_names = &self.run.splits;
+        let offset = self.run.offset;
+        match offset {Some(x) => {self.state = TimerState::NotStarted {time_str: format!("-{}", timing::ms_to_readable(x, false))};}, _ => {}}
         let split_times_ms: Vec<u128> = self.run.best_times.iter().cloned().collect();
         let split_times_raw: Vec<String> = timing::split_time_sum(split_times_ms);
         let mut text_surface: Surface;
@@ -213,7 +215,15 @@ impl App {
                         keycode: Some(Keycode::R),
                         ..
                     } => {
-                        self.state = TimerState::NotStarted;
+                        match offset {
+				Some(x) => {
+    					before_pause = None;
+					self.state = TimerState::NotStarted {time_str: format!("-{}", timing::ms_to_readable(x, false))};
+				},
+				None => {
+					self.state = TimerState::NotStarted {time_str: "0.000".to_owned()};
+				}
+                        }
                     }
                     Event::Window {
                         win_event: WindowEvent::Resized(..),
@@ -236,10 +246,12 @@ impl App {
                     }
                     Event::KeyDown {keycode: Some(Keycode::Space), timestamp: event_time, ..} => {
 			match self.state {
-				TimerState::NotStarted => {
+				TimerState::NotStarted {..} => {
 					total_time = Instant::now();
-					//self.state = TimerState::Running {timestamp: event_time};
-					self.state = TimerState::OffsetCountdown {amt: 2500};
+					match offset {
+						Some(x) => {self.state = TimerState::OffsetCountdown {amt: x};},
+						None => {self.state = TimerState::Running {timestamp: event_time};}
+					}
 					current_split = 0;
 				},
 				TimerState::Running {timestamp: t, ..} => {
@@ -337,10 +349,7 @@ impl App {
             } => {
                 time = display.to_string();
             },
-            TimerState::NotStarted {} => {
-		time = "0.000".to_string();
-            },
-            TimerState::Finished {time_str: string} => {
+            TimerState::Finished {time_str: string} | TimerState::NotStarted {time_str: string} => {
 		time = string.to_owned();
             },
             TimerState::OffsetCountdown {amt: amount} => {
