@@ -13,7 +13,7 @@ use crate::splits::{self, Run};
 use crate::timing;
 
 const SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
-
+static mut RECREATE_DEFAULT: Option<u8> = Some(3); // used to determine whether to recreate slice every loop
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
@@ -147,8 +147,12 @@ impl App {
         let mut color: Color;
         // sum of split times for display on rows
         let mut recreate_on_screen: Option<u8> = Some(0);
+	if self.run.splits.len() == 0 {
+		unsafe {RECREATE_DEFAULT = None;}
+	}
         let mut diff: u32 = 0;
         let mut len: usize = splits.len();
+        let mut index: usize;
         self.canvas.present();
 
         // main loop
@@ -272,11 +276,10 @@ impl App {
 		Some(0) => {
 			on_screen = &splits[0..bottom_split_index];
 			on_screen_times = &split_times[0..bottom_split_index];
-			recreate_on_screen = None;
+			unsafe {recreate_on_screen = RECREATE_DEFAULT};
 		},
 		Some(1) => {
                         if max_splits > diff as usize {
-                            //let mut on_screen_times = vec![];
                             max_splits -= diff as usize;
                             if current_split + max_splits > len {
                                 bottom_split_index = len;
@@ -294,18 +297,20 @@ impl App {
                                     [current_split..current_split + max_splits];
                             }
                         }
-			recreate_on_screen = None;
+			unsafe {recreate_on_screen = RECREATE_DEFAULT}
 		},
 		Some(2) => {
-    			//let mut on_screen_times = vec![];
-                        let index = bottom_split_index - max_splits;
+                        index = bottom_split_index - max_splits;
                         on_screen = &splits[index..bottom_split_index];
                         on_screen_times =
                             &split_times[index..bottom_split_index];
-                        recreate_on_screen = None;
+                        unsafe {recreate_on_screen = RECREATE_DEFAULT}
 		},
-		_ => {
-		}
+		Some(3) => {
+			index = bottom_split_index - max_splits;
+			on_screen_times = &split_times[index..bottom_split_index];
+		},
+		_ => {}
             }
             render::render_rows(&on_screen, &on_screen_times, &mut self.canvas, window_width);
             if let TimerState::Running { .. } = self.state {
