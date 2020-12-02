@@ -96,8 +96,8 @@ impl App {
         let split_times_raw: Vec<String> = timing::split_time_sum(split_times_ms);
         let mut text_surface: Surface;
         let mut texture: Texture;
-        let mut on_screen: Vec<&Texture> = vec![];
-        let mut on_screen_times: Vec<&Texture> = vec![];
+        let mut on_screen: &[Texture] = &[];
+        let on_screen_times: &[Texture] = &[];//: Vec<&Texture> = vec![];
         let mut splits: Vec<Texture> = vec![];
         let mut split_times: Vec<Texture> = vec![];
 
@@ -128,6 +128,7 @@ impl App {
                 .create_texture_from_surface(text_surface)
                 .expect("split time texture creation failed");
             split_times.push(texture);
+            println!("{}", item);
         }
 
         // set up variables used in the mainloop
@@ -145,7 +146,7 @@ impl App {
         let mut window_width: u32;
         let mut color: Color;
         // sum of split times for display on rows
-        let mut recreate_on_screen: Option<bool> = Some(true);
+        let mut recreate_on_screen: Option<u8> = Some(0);
         let mut diff: u32 = 0;
         let mut len: usize = splits.len();
         self.canvas.present();
@@ -176,20 +177,14 @@ impl App {
                     Event::MouseWheel { y: -1, .. } => {
                         if bottom_split_index < splits.len() {
                             bottom_split_index += 1;
-                            let index = bottom_split_index - max_splits;
-                            on_screen = splits[index..bottom_split_index].iter().collect();
-                            on_screen_times =
-                                split_times[index..bottom_split_index].iter().collect();
+                            recreate_on_screen = Some(2);
                         }
                     }
                     // if scroll up and there are enough splits in the list, scroll splits up
                     Event::MouseWheel { y: 1, .. } => {
                         if bottom_split_index != max_splits {
                             bottom_split_index -= 1;
-                            let index = bottom_split_index - max_splits;
-                            on_screen = splits[index..bottom_split_index].iter().collect();
-                            on_screen_times =
-                                split_times[index..bottom_split_index].iter().collect();
+                            recreate_on_screen = Some(2);
                         }
                     }
                     // enter as placeholder for pause/continue
@@ -234,13 +229,13 @@ impl App {
                         len = splits.len();
                         if height - timer_height < rows_height {
                             diff = (rows_height - (height - timer_height)) / splits_height;
-                            recreate_on_screen = Some(false);
+                            recreate_on_screen = Some(1);
                         } else if rows_height < height - timer_height {
                             diff = ((height - timer_height) - rows_height) / splits_height;
                             if !(max_splits + diff as usize > SPLITS_ON_SCREEN
                                 || max_splits + diff as usize > splits.len())
                             {
-                                recreate_on_screen = Some(false);
+                                recreate_on_screen = Some(1);
                             }
                         }
                     }
@@ -258,9 +253,8 @@ impl App {
     					time_str = timing::ms_to_readable((event_time - t) as u128 + before_pause.unwrap_or(0), true);
     					text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
     					texture = creator.create_texture_from_surface(&text_surface).unwrap();
-    					//on_screen_times = vec![];
-    					//mem::replace(&mut split_times[current_split], texture);
-					if current_split < splits.len() {
+    					split_times[current_split] = texture;
+					if current_split < splits.len() - 1 {
 						current_split += 1;
 					} else {
 						self.state = TimerState::Finished {time_str};
@@ -273,42 +267,45 @@ impl App {
                 }
             }
             window_width = self.canvas.viewport().width();
+            let mut on_screen_times: &[Texture] = &[];
             match recreate_on_screen {
-		Some(true) => {
-			on_screen = splits[0..bottom_split_index].iter().collect();
-			on_screen_times = split_times[0..bottom_split_index].iter().collect();
+		Some(0) => {
+			on_screen = &splits[0..bottom_split_index];
+			on_screen_times = &split_times[0..bottom_split_index];
 			recreate_on_screen = None;
 		},
-		Some(false) => {
+		Some(1) => {
                         if max_splits > diff as usize {
+                            //let mut on_screen_times = vec![];
                             max_splits -= diff as usize;
                             if current_split + max_splits > len {
                                 bottom_split_index = len;
-                                on_screen = splits[len - max_splits..bottom_split_index]
-                                    .iter()
-                                    .collect();
-                                on_screen_times = split_times
-                                    [len - max_splits..bottom_split_index]
-                                    .iter()
-                                    .collect();
+                                on_screen = &splits[len - max_splits..bottom_split_index];
+                                on_screen_times = &split_times
+                                    [len - max_splits..bottom_split_index];
                             } else if current_split < max_splits {
                                 bottom_split_index = max_splits;
-                                on_screen = splits[0..max_splits].iter().collect();
-                                on_screen_times = split_times[0..max_splits].iter().collect();
+                                on_screen = &splits[0..max_splits];
+                                on_screen_times = &split_times[0..max_splits];
                             } else if current_split >= max_splits {
                                 bottom_split_index = current_split + max_splits;
-                                on_screen = splits[current_split..current_split + max_splits]
-                                    .iter()
-                                    .collect();
-                                on_screen_times = split_times
-                                    [current_split..current_split + max_splits]
-                                    .iter()
-                                    .collect();
+                                on_screen = &splits[current_split..current_split + max_splits];
+                                on_screen_times = &split_times
+                                    [current_split..current_split + max_splits];
                             }
                         }
 			recreate_on_screen = None;
 		},
-		_ => {}
+		Some(2) => {
+    			//let mut on_screen_times = vec![];
+                        let index = bottom_split_index - max_splits;
+                        on_screen = &splits[index..bottom_split_index];
+                        on_screen_times =
+                            &split_times[index..bottom_split_index];
+                        recreate_on_screen = None;
+		},
+		_ => {
+		}
             }
             render::render_rows(&on_screen, &on_screen_times, &mut self.canvas, window_width);
             if let TimerState::Running { .. } = self.state {

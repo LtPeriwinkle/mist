@@ -7,8 +7,8 @@ use sdl2::video::Window;
 
 // Puts split name textures and their associated times into the SDL backbuffer
 pub fn render_rows(
-    on_screen: &Vec<&Texture>,
-    times: &Vec<&Texture>,
+    on_screen: &[Texture],
+    times: &[Texture],
     canvas: &mut Canvas<Window>,
     window_width: u32,
 ) {
