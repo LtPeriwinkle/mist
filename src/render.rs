@@ -11,12 +11,18 @@ pub fn render_rows(
     times: &[Texture],
     canvas: &mut Canvas<Window>,
     window_width: u32,
+    current: usize
 ) {
     let mut y = 0;
     let mut row: Rect;
+    let mut index = 0;
     // draw each split name on the left of the screen
     for item in on_screen {
         let TextureQuery { width, height, .. } = item.query();
+        if index == current {
+        	canvas.set_draw_color(Color::BLUE);
+        	canvas.fill_rect(Rect::new(0, y - 1, window_width, height + 3)).unwrap();
+        }
         row = Rect::new(0, y, width, height);
         canvas
             .copy(&item, None, Some(row))
@@ -29,6 +35,7 @@ pub fn render_rows(
             )
             .expect("line draw failed");
         y += height as i32 + 5;
+        index += 1;
     }
     y = 0;
     // draw each time on the right of the screen at the same y level as corresponding name

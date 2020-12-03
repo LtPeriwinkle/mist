@@ -174,6 +174,8 @@ impl App {
         let mut len: usize = splits.len();
         // index of top split on screen
         let mut index: usize;
+	// current split in the slice of splits sent to render_time()
+        let mut cur = 0;
 
         self.canvas.present();
 
@@ -389,7 +391,14 @@ impl App {
                 }
                 _ => {}
             }
-            render::render_rows(&on_screen, &on_screen_times, &mut self.canvas, window_width);
+            if current_split >= bottom_split_index - 1 {
+		cur = max_splits - 1;
+            } else if let TimerState::Running {..} = self.state{
+		cur = current_split;
+            } else {
+		cur = usize::MAX;
+            }
+            render::render_rows(&on_screen, &on_screen_times, &mut self.canvas, window_width, cur);
             if let TimerState::Running { .. } = self.state {
                 // will eventually calculate whether run is ahead/behind/gaining/losing and adjust appropriately
                 color = Color::GREEN;
