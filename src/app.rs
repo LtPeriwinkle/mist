@@ -4,6 +4,7 @@ use sdl2::pixels::Color;
 use sdl2::render::{Texture, WindowCanvas};
 use sdl2::surface::Surface;
 use sdl2::ttf;
+use sdl2::image::LoadSurface;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -40,12 +41,14 @@ impl App {
     pub fn init(context: sdl2::Sdl) -> Self {
         // sdl setup boilerplate
         let video = context.video().expect("could not initialize SDL video");
-        let window = video
+        let mut window = video
             .window("mist", 300, 500)
             .position_centered()
             .resizable()
             .build()
             .expect("could not initialize SDL window");
+        let icon = Surface::from_file("assets/MIST.png").expect("could not load icon");
+        window.set_icon(icon);
         let canvas = window
             .into_canvas()
             .build()
