@@ -296,6 +296,10 @@ impl App {
                             } else {
                                 self.state = TimerState::Finished { time_str };
                             }
+                            if current_split + 1 > bottom_split_index {
+				bottom_split_index += 1;
+				recreate_on_screen = Some(2);
+                            }
                         }
                         _ => {}
                     },
