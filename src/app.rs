@@ -175,7 +175,7 @@ impl App {
         // index of top split on screen
         let mut index: usize;
 	// current split in the slice of splits sent to render_time()
-        let mut cur = 0;
+        let mut cur: usize;
 
         self.canvas.present();
 
