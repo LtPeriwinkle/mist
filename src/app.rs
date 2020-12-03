@@ -4,7 +4,6 @@ use sdl2::pixels::Color;
 use sdl2::render::{Texture, WindowCanvas};
 use sdl2::surface::Surface;
 use sdl2::ttf;
-use std::mem;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -12,9 +11,10 @@ use crate::render;
 use crate::splits::{self, Run};
 use crate::timing;
 
-const SPLITS_ON_SCREEN: usize = 8; //used to limit number of splits displayed
+const SPLITS_ON_SCREEN: usize = 8; // used to limit number of splits displayed
 static mut RECREATE_DEFAULT: Option<u8> = Some(3); // used to determine whether to recreate slice every loop
-                                                   // struct that holds information about the running app and its state
+
+// struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
     context: sdl2::Sdl,
@@ -84,15 +84,17 @@ impl App {
         let creator = self.canvas.texture_creator();
         let timer_height = timer_font.size_of("0123456789").unwrap().1;
         let splits_height = font.size_of("qwertyuiopasdfghjklzxcvbnm").unwrap().1;
+        // set the minimum height of the window to the size of the time texture
         self.canvas
             .window_mut()
             .set_minimum_size(0, timer_height + 10)
             .unwrap();
 
-        // get first vec of split name textures
+        // get first vec of split name textures from file
         self.run = Run::from_file("test.msf");
         let split_names = &self.run.splits;
         let offset = self.run.offset;
+        // if there is an offset, display it properly
         match offset {
             Some(x) => {
                 self.state = TimerState::NotStarted {
@@ -101,12 +103,14 @@ impl App {
             }
             _ => {}
         }
+        // get ms split times then convert them to pretty, summed times
         let split_times_ms: Vec<u128> = self.run.best_times.iter().cloned().collect();
         let split_times_raw: Vec<String> = timing::split_time_sum(split_times_ms);
+        // initialize variables that are used in the loop for replacing timer texture
         let mut text_surface: Surface;
         let mut texture: Texture;
         let mut on_screen: &[Texture] = &[];
-        let on_screen_times: &[Texture] = &[]; //: Vec<&Texture> = vec![];
+        // vectors that hold the textures for split names and their associated times
         let mut splits: Vec<Texture> = vec![];
         let mut split_times: Vec<Texture> = vec![];
 
@@ -117,6 +121,8 @@ impl App {
         } else {
             max_splits = SPLITS_ON_SCREEN;
         }
+
+        // convert the split names into textures and add them to the split name vec
         for item in split_names {
             text_surface = font
                 .render(item)
@@ -128,7 +134,9 @@ impl App {
             splits.push(texture);
         }
 
+        // same as above but for times
         for item in split_times_raw {
+            // blended text render does antialias and removes background box, is slower though
             text_surface = font
                 .render(&item)
                 .blended(Color::WHITE)
@@ -137,7 +145,6 @@ impl App {
                 .create_texture_from_surface(text_surface)
                 .expect("split time texture creation failed");
             split_times.push(texture);
-            println!("{}", item);
         }
 
         // set up variables used in the mainloop
@@ -156,21 +163,30 @@ impl App {
         let mut color: Color;
         // sum of split times for display on rows
         let mut recreate_on_screen: Option<u8> = Some(0);
+        // if there are no splits, dont waste time remaking the on screen ones every loop
         if self.run.splits.len() == 0 {
             unsafe {
-                RECREATE_DEFAULT = None;
+                RECREATE_DEFAULT = None; // RECREATE_DEFAULT is mutable static, requires unsafe
             }
         }
+        // diff between max on screen and current, used when resizing window
         let mut diff: u32 = 0;
         let mut len: usize = splits.len();
+        // index of top split on screen
         let mut index: usize;
+
         self.canvas.present();
 
         // main loop
         'running: loop {
+            // start measuring the time this loop pass took
             frame_time = Instant::now();
+            // remove stuff from the backbuffer and fill the space with black
             self.canvas.set_draw_color(Color::BLACK);
             self.canvas.clear();
+
+            // if the timer is doing an offset, make sure it should still be negative
+            // if it shouldnt, convert to running state
             if let TimerState::OffsetCountdown { amt } = self.state {
                 if amt <= total_time.elapsed().as_millis() {
                     self.state = TimerState::Running {
@@ -179,17 +195,22 @@ impl App {
                     total_time = Instant::now();
                 }
             }
+
+            // repeat stuff in here for every event that occured between frames
+            // in order to properly respond to them
             for event in self.ev_pump.poll_iter() {
                 // print events to terminal if running in debug
                 #[cfg(debug_assertions)]
                 println!("{:?}", event);
 
                 match event {
+                    // quit program on esc or being told by wm to close
                     Event::Quit { .. }
                     | Event::KeyDown {
                         keycode: Some(Keycode::Escape),
                         ..
                     } => break 'running,
+
                     // if scroll down and there are enough splits, scroll splits down
                     Event::MouseWheel { y: -1, .. } => {
                         if bottom_split_index < splits.len() {
@@ -197,6 +218,7 @@ impl App {
                             recreate_on_screen = Some(2);
                         }
                     }
+
                     // if scroll up and there are enough splits in the list, scroll splits up
                     Event::MouseWheel { y: 1, .. } => {
                         if bottom_split_index != max_splits {
@@ -204,6 +226,7 @@ impl App {
                             recreate_on_screen = Some(2);
                         }
                     }
+
                     // enter as placeholder for pause/continue
                     Event::KeyDown {
                         keycode: Some(Keycode::Return),
@@ -211,6 +234,8 @@ impl App {
                         repeat: false,
                         ..
                     } => match self.state {
+                        // if timer is paused, unpause it, put the amount of time before the pause in a variable
+                        // and set the state to running
                         TimerState::Paused { time: t, .. } => {
                             total_time = Instant::now();
                             before_pause = Some(t);
@@ -218,6 +243,7 @@ impl App {
                                 timestamp: event_time,
                             };
                         }
+                        // if the timer is already running, set it to paused.
                         TimerState::Running { timestamp: t } => {
                             self.state = TimerState::Paused {
                                 time: (event_time - t) as u128 + before_pause.unwrap_or(0),
@@ -229,10 +255,13 @@ impl App {
                         }
                         _ => {}
                     },
+
+                    // R key to reset timer
                     Event::KeyDown {
                         keycode: Some(Keycode::R),
                         ..
                     } => match offset {
+                        // if there is an offset, reset the timer to that, if not, reset timer to 0
                         Some(x) => {
                             before_pause = None;
                             self.state = TimerState::NotStarted {
@@ -245,6 +274,8 @@ impl App {
                             };
                         }
                     },
+
+                    // handle vertical window resize by changing number of splits
                     Event::Window {
                         win_event: WindowEvent::Resized(..),
                         ..
@@ -252,6 +283,8 @@ impl App {
                         let height = self.canvas.viewport().height();
                         let rows_height = max_splits as u32 * (splits_height + 5);
                         len = splits.len();
+                        // if there are too many splits, calculate how many and set flag to make a new list to display
+                        // otherwise if there are too few and there are enough to display more, set recreate flag
                         if height - timer_height < rows_height {
                             diff = (rows_height - (height - timer_height)) / splits_height;
                             recreate_on_screen = Some(1);
@@ -264,14 +297,18 @@ impl App {
                             }
                         }
                     }
+
+                    // space being used to start, stop, and split for now
                     Event::KeyDown {
                         keycode: Some(Keycode::Space),
                         timestamp: event_time,
                         ..
                     } => match self.state {
+                        // if timer isnt started, start it.
                         TimerState::NotStarted { .. } => {
                             total_time = Instant::now();
                             match offset {
+                                // if we are in the start offset, tell it to offset
                                 Some(x) => {
                                     self.state = TimerState::OffsetCountdown { amt: x };
                                 }
@@ -283,6 +320,7 @@ impl App {
                             }
                             current_split = 0;
                         }
+                        // if it is running, either split or end
                         TimerState::Running { timestamp: t, .. } => {
                             time_str = timing::ms_to_readable(
                                 (event_time - t) as u128 + before_pause.unwrap_or(0),
@@ -297,8 +335,8 @@ impl App {
                                 self.state = TimerState::Finished { time_str };
                             }
                             if current_split + 1 > bottom_split_index {
-				bottom_split_index += 1;
-				recreate_on_screen = Some(2);
+                                bottom_split_index += 1;
+                                recreate_on_screen = Some(2);
                             }
                         }
                         _ => {}
@@ -308,12 +346,15 @@ impl App {
             }
             window_width = self.canvas.viewport().width();
             let mut on_screen_times: &[Texture] = &[];
+            // recreate texture slice to display based on flags set earlier
             match recreate_on_screen {
+                // set at the start, creates the initial set of splits
                 Some(0) => {
                     on_screen = &splits[0..bottom_split_index];
                     on_screen_times = &split_times[0..bottom_split_index];
                     unsafe { recreate_on_screen = RECREATE_DEFAULT };
                 }
+                // set on window resize, creates new slices based on diff and number of splits
                 Some(1) => {
                     if max_splits > diff as usize {
                         max_splits -= diff as usize;
@@ -334,12 +375,14 @@ impl App {
                     }
                     unsafe { recreate_on_screen = RECREATE_DEFAULT }
                 }
+                // set on mouse scroll, creates new slices based on the current top and bottom split
                 Some(2) => {
                     index = bottom_split_index - max_splits;
                     on_screen = &splits[index..bottom_split_index];
                     on_screen_times = &split_times[index..bottom_split_index];
                     unsafe { recreate_on_screen = RECREATE_DEFAULT }
                 }
+                // default if there are >0 total splits, recreates times every loop to dodge lifetime problems
                 Some(3) => {
                     index = bottom_split_index - max_splits;
                     on_screen_times = &split_times[index..bottom_split_index];
@@ -363,7 +406,6 @@ impl App {
                 .expect("time texture creation failed");
             render::render_time(&texture, &mut self.canvas);
             self.canvas.present();
-            //println!("{:?}", self.state);
             if Instant::now().duration_since(frame_time) <= one_sixtieth {
                 thread::sleep(
                     // if the entire loop pass was completed in under 1/60 second, delay to keep the framerate at ~60fps

@@ -2,6 +2,7 @@
 
 // Takes a number in milliseconds, divides it out into hours, minutes, seconds, and remaining millis
 // then gets a time string with those values
+// if it is told to round the times to 30fps, calls round_ms_30 on the remaining millis
 pub fn ms_to_readable(mut ms: u128, round: bool) -> String {
     if ms >= 1000 {
         let mut remain_ms = ms % 1000;
@@ -41,6 +42,7 @@ pub fn ms_to_readable(mut ms: u128, round: bool) -> String {
 fn round_ms_30(ms: u128) -> u128 {
     let mut rounded = ms;
     let mut hundreds = 0;
+    // ugliest possible way to get only the tens and ones digits
     while rounded >= 100 {
         rounded -= 100;
         hundreds += 100;

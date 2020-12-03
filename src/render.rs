@@ -14,6 +14,7 @@ pub fn render_rows(
 ) {
     let mut y = 0;
     let mut row: Rect;
+    // draw each split name on the left of the screen
     for item in on_screen {
         let TextureQuery { width, height, .. } = item.query();
         row = Rect::new(0, y, width, height);
@@ -30,6 +31,7 @@ pub fn render_rows(
         y += height as i32 + 5;
     }
     y = 0;
+    // draw each time on the right of the screen at the same y level as corresponding name
     for item in times {
         let TextureQuery { width, height, .. } = item.query();
         row = Rect::new((window_width - width) as i32, y, width, height);
@@ -47,6 +49,7 @@ pub fn render_time(texture: &Texture, canvas: &mut Canvas<Window>) {
     let w = vp.width();
     let TextureQuery { width, height, .. } = texture.query();
     if w > width {
+        // aligns texture with right side of window
         let rect = Rect::new((w - width) as i32, h as i32 - height as i32, width, height);
         canvas
             .copy(&texture, None, Some(rect))

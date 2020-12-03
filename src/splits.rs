@@ -21,7 +21,7 @@ impl Run {
         let run: Self = from_reader(&file).unwrap();
         return run;
     }
-
+    // create an empty run with default values. could implement `Default` but meh
     pub fn new() -> Self {
         Self {
             game_title: "".to_string(),
