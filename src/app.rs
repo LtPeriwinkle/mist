@@ -394,10 +394,12 @@ impl App {
                 }
                 _ => {}
             }
-            if current_split >= bottom_split_index - 1 {
-		cur = max_splits - 1;
-            } else if let TimerState::Running {..} = self.state{
-		cur = current_split;
+            if let TimerState::Running {..} = self.state{
+                if current_split >= bottom_split_index - 1 {
+			cur = max_splits - 1;
+                } else {
+			cur = current_split;
+                }
             } else {
 		cur = usize::MAX;
             }
