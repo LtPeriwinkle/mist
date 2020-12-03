@@ -1,6 +1,11 @@
 # mist
 a minimal, improved speedrun timer
 
+---
+
+The goal of this project is not to have more features than LiveSplit or to look better than LiveSplit.
+Rather, the goal is to be lighter and more efficient than LiveSplit and to maintain compatibility with 
+many platforms.
 ## Planned features
 More will probably be added to this list in the future
 - [ ] Cross platform
@@ -8,7 +13,7 @@ More will probably be added to this list in the future
 	* [X] Windows
 	* [ ] MacOS (untested as I don't have a mac, but should work)
 - [X] Human-readable split file (using [ron](https://github.com/ron-rs/ron))
-- [ ] Livesplit split file transposing
+- [ ] LiveSplit split file transposing (for now, check out [this site](https://lsstomist.komali09.repl.co))
 - [ ] (limited) customizability (i.e custom colors, perhaps fonts and layouts)
 - [ ] split file creation tool
 - [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
@@ -56,7 +61,7 @@ whose development stuff is available [here](http://libsdl.org/projects/SDL_ttf/)
 Clone the repository as shown in the linux section, and enter the folder. Then run `cargo build --release --locked`. The .exe will be in `.\target\release\`. Move it into
 the same folder as `assets\`, as well as all of the SDL2 and SDL2\_TTF related dll files in order to run it.
 
-# Licensing
+## Licensing
 Like Rust itself, mist is licensed under MIT or Apache 2.0, at your option.
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you shall be dual licensed as above, without any
