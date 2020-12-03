@@ -1,4 +1,4 @@
-# mist
+# <img src="assets/MIST.png" width="70" height="70"/> mist
 a minimal, improved speedrun timer
 
 ---
