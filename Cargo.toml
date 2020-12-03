@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies.sdl2]
 version = "0.34.3"
 default-features = false
-features = ["ttf"]
+features = ["ttf", "image"]
 
 [dependencies.ron]
 version = "0.6.2"
