@@ -14,6 +14,8 @@ use crate::timing;
 
 const SPLITS_ON_SCREEN: usize = 8; // used to limit number of splits displayed
 static mut RECREATE_DEFAULT: Option<u8> = Some(3); // used to determine whether to recreate slice every loop
+static MAKING_UP_TIME: Color = Color::RGB(255, 60, 60); // color for when behind but gaining
+static LOSING_TIME: Color = Color::RGB(60, 255, 60); // color for when ahead but losing
 
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
@@ -108,7 +110,8 @@ impl App {
         }
         // get ms split times then convert them to pretty, summed times
         let split_times_ms: Vec<u128> = self.run.best_times.iter().cloned().collect();
-        let split_times_raw: Vec<String> = timing::split_time_sum(split_times_ms);
+        let summed_times = timing::split_time_sum(&split_times_ms);
+        let split_times_raw: Vec<String> = summed_times.iter().map(|val| {timing::ms_to_readable(*val, true)}).collect();
         // initialize variables that are used in the loop for replacing timer texture
         let mut text_surface: Surface;
         let mut texture: Texture;
@@ -179,7 +182,8 @@ impl App {
         let mut index: usize;
 	// current split in the slice of splits sent to render_time()
         let mut cur: usize;
-
+	let mut split_time_ticks = 0;
+	let mut last_split_state = 0;
         self.canvas.present();
 
         // main loop
@@ -197,6 +201,7 @@ impl App {
                     self.state = TimerState::Running {
                         timestamp: self.timer.ticks(),
                     };
+                    split_time_ticks = self.timer.ticks();
                     total_time = Instant::now();
                 }
             }
@@ -327,6 +332,7 @@ impl App {
                         }
                         // if it is running, either split or end
                         TimerState::Running { timestamp: t, .. } => {
+                            split_time_ticks = self.timer.ticks();
                             time_str = timing::ms_to_readable(
                                 (event_time - t) as u128 + before_pause.unwrap_or(0),
                                 true,
@@ -394,10 +400,22 @@ impl App {
                 }
                 _ => {}
             }
-            render::render_rows(&on_screen, &on_screen_times, &mut self.canvas, window_width, cur);
-            if let TimerState::Running { .. } = self.state {
-                // will eventually calculate whether run is ahead/behind/gaining/losing and adjust appropriately
-                color = Color::GREEN;
+            if let TimerState::Running { timestamp } = self.state {
+                // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
+                let ticks = self.timer.ticks();
+                if u128::from(ticks - timestamp) + before_pause.unwrap_or(0) < summed_times[current_split] {
+			if u128::from(ticks - split_time_ticks) < split_times_ms[current_split] {
+				color = Color::GREEN;
+			} else {
+    				color = LOSING_TIME;
+			}
+		} else {
+			if u128::from(ticks - split_time_ticks) < split_times_ms[current_split] {
+				color = MAKING_UP_TIME;
+			} else {
+				color = Color::RED;
+			}
+    		}
                 if current_split >= bottom_split_index - 1 {
 			cur = max_splits - 1;
                 } else {
@@ -407,6 +425,7 @@ impl App {
                 cur = usize::MAX;
                 color = Color::WHITE;
             }
+            render::render_rows(&on_screen, &on_screen_times, &mut self.canvas, window_width, cur);
             time_str = self.update_time(before_pause, total_time);
             text_surface = timer_font
                 .render(&time_str)
