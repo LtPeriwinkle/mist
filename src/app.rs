@@ -394,20 +394,17 @@ impl App {
                 }
                 _ => {}
             }
-            if let TimerState::Running {..} = self.state{
+            render::render_rows(&on_screen, &on_screen_times, &mut self.canvas, window_width, cur);
+            if let TimerState::Running { .. } = self.state {
+                // will eventually calculate whether run is ahead/behind/gaining/losing and adjust appropriately
+                color = Color::GREEN;
                 if current_split >= bottom_split_index - 1 {
 			cur = max_splits - 1;
                 } else {
 			cur = current_split;
                 }
             } else {
-		cur = usize::MAX;
-            }
-            render::render_rows(&on_screen, &on_screen_times, &mut self.canvas, window_width, cur);
-            if let TimerState::Running { .. } = self.state {
-                // will eventually calculate whether run is ahead/behind/gaining/losing and adjust appropriately
-                color = Color::GREEN;
-            } else {
+                cur = usize::MAX;
                 color = Color::WHITE;
             }
             time_str = self.update_time(before_pause, total_time);
