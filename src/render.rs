@@ -8,7 +8,7 @@ use sdl2::video::Window;
 
 // Puts split name textures and their associated times into the SDL backbuffer
 pub fn render_rows(
-    on_screen: Vec<Split>,
+    on_screen: &[Split],
     canvas: &mut Canvas<Window>,
     window_width: u32,
     current: usize,
@@ -18,7 +18,7 @@ pub fn render_rows(
     let mut index = 0;
     // draw each split name on the left of the screen
     for item in on_screen {
-        let TextureQuery { width, height, .. } = item.query();
+        let TextureQuery { width, height, .. } = item.name().query();
         if index == current {
             canvas.set_draw_color(Color::BLUE);
             canvas
@@ -27,14 +27,19 @@ pub fn render_rows(
         }
         row = Rect::new(0, y, width, height);
         canvas
-            .copy(&item.name_texture, None, Some(row))
+            .copy(&item.name(), None, Some(row))
             .expect("split texture copy failed");
-        match item.current_texture {
+
+        match item.cur() {
 		Some(x) => {
-			canvas.copy(x, None, Some(row)).expect("split time texture copy failed");
+    			let TextureQuery {width, height} = x.query();
+        		row = Rect::new((window_width - width) as i32, y, width, height);
+			canvas.copy(&x, None, Some(row)).expect("split time texture copy failed");
 		},
 		None => {
-			canvas.copy(item.pb_texture, None, Some(row)).expect("split time texture copy failed");
+    			let TextureQuery {width, height} = item.pb().query();
+        		row = Rect::new((window_width - width) as i32, y, width, height);
+			canvas.copy(&item.pb(), None, Some(row)).expect("split time texture copy failed");
 		}
         }
         canvas.set_draw_color(Color::GRAY);
