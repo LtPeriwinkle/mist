@@ -11,7 +11,7 @@ pub fn render_rows(
     times: &[Texture],
     canvas: &mut Canvas<Window>,
     window_width: u32,
-    current: usize
+    current: usize,
 ) {
     let mut y = 0;
     let mut row: Rect;
@@ -20,8 +20,10 @@ pub fn render_rows(
     for item in on_screen {
         let TextureQuery { width, height, .. } = item.query();
         if index == current {
-        	canvas.set_draw_color(Color::BLUE);
-        	canvas.fill_rect(Rect::new(0, y - 1, window_width, height + 3)).unwrap();
+            canvas.set_draw_color(Color::BLUE);
+            canvas
+                .fill_rect(Rect::new(0, y - 1, window_width, height + 3))
+                .unwrap();
         }
         row = Rect::new(0, y, width, height);
         canvas

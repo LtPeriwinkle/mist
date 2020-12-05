@@ -6,9 +6,9 @@ pub static LOSING_TIME: Color = Color::RGB(60, 255, 60);
 
 #[derive(Debug)]
 pub enum TimerState {
-	OffsetCountdown {amt: u128},
-	Running {timestamp: u32},
-	Paused {time: u128, time_str: String},
-	NotStarted {time_str: String},
-	Finished {time_str: String}
+    OffsetCountdown { amt: u128 },
+    Running { timestamp: u32 },
+    Paused { time: u128, time_str: String },
+    NotStarted { time_str: String },
+    Finished { time_str: String },
 }

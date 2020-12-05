@@ -1,17 +1,17 @@
 use sdl2::event::{Event, WindowEvent};
+use sdl2::image::LoadSurface;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::render::{Texture, WindowCanvas};
 use sdl2::surface::Surface;
 use sdl2::ttf;
-use sdl2::image::LoadSurface;
 use std::thread;
 use std::time::{Duration, Instant};
 
+use crate::components::*;
 use crate::render;
 use crate::splits::{self, Run};
 use crate::timing;
-use crate::components::*;
 
 static mut RECREATE_DEFAULT: Option<u8> = Some(3); // used to determine whether to recreate slice every loop
 
@@ -99,7 +99,10 @@ impl App {
         // get ms split times then convert them to pretty, summed times
         let split_times_ms: Vec<u128> = self.run.best_times.iter().cloned().collect();
         let summed_times = timing::split_time_sum(&split_times_ms);
-        let split_times_raw: Vec<String> = summed_times.iter().map(|val| {timing::ms_to_readable(*val, true)}).collect();
+        let split_times_raw: Vec<String> = summed_times
+            .iter()
+            .map(|val| timing::ms_to_readable(*val, true))
+            .collect();
         // initialize variables that are used in the loop for replacing timer texture
         let mut text_surface: Surface;
         let mut texture: Texture;
@@ -168,9 +171,9 @@ impl App {
         let mut len: usize = splits.len();
         // index of top split on screen
         let mut index: usize;
-	// current split in the slice of splits sent to render_time()
+        // current split in the slice of splits sent to render_time()
         let mut cur: usize;
-	let mut split_time_ticks = 0;
+        let mut split_time_ticks = 0;
         self.canvas.present();
 
         // main loop
@@ -390,29 +393,37 @@ impl App {
             if let TimerState::Running { timestamp } = self.state {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
                 let ticks = self.timer.ticks();
-                if u128::from(ticks - timestamp) + before_pause.unwrap_or(0) < summed_times[current_split] {
-			if u128::from(ticks - split_time_ticks) < split_times_ms[current_split] {
-				color = Color::GREEN;
-			} else {
-    				color = LOSING_TIME;
-			}
-		} else {
-			if u128::from(ticks - split_time_ticks) < split_times_ms[current_split] {
-				color = MAKING_UP_TIME;
-			} else {
-				color = Color::RED;
-			}
-    		}
-                if current_split >= bottom_split_index - 1 {
-			cur = max_splits - 1;
+                if u128::from(ticks - timestamp) + before_pause.unwrap_or(0)
+                    < summed_times[current_split]
+                {
+                    if u128::from(ticks - split_time_ticks) < split_times_ms[current_split] {
+                        color = Color::GREEN;
+                    } else {
+                        color = LOSING_TIME;
+                    }
                 } else {
-			cur = current_split;
+                    if u128::from(ticks - split_time_ticks) < split_times_ms[current_split] {
+                        color = MAKING_UP_TIME;
+                    } else {
+                        color = Color::RED;
+                    }
+                }
+                if current_split >= bottom_split_index - 1 {
+                    cur = max_splits - 1;
+                } else {
+                    cur = current_split;
                 }
             } else {
                 cur = usize::MAX;
                 color = Color::WHITE;
             }
-            render::render_rows(&on_screen, &on_screen_times, &mut self.canvas, window_width, cur);
+            render::render_rows(
+                &on_screen,
+                &on_screen_times,
+                &mut self.canvas,
+                window_width,
+                cur,
+            );
             time_str = self.update_time(before_pause, total_time);
             text_surface = timer_font
                 .render(&time_str)
