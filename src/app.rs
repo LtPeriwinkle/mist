@@ -118,16 +118,26 @@ impl App {
         } else {
             max_splits = SPLITS_ON_SCREEN;
         }
-	let mut index = 0;
+        let mut index = 0;
         // convert the split names into textures and add them to the split name vec
         while index < split_names.len() {
-		let text_surface = font.render(&split_names[index]).blended(Color::WHITE).expect("split name render failed");
-		let texture = creator.create_texture_from_surface(&text_surface).expect("split name texture failed");
-		let pb = font.render(&split_times_raw[index]).blended(Color::WHITE).expect("split time render failed");
-		let pb_texture = creator.create_texture_from_surface(&pb).expect("split time texture failed");
-		let split = splits::Split::new(split_times_ms[index], texture, pb_texture, None);
-		splits.push(split);
-		index += 1;
+            let text_surface = font
+                .render(&split_names[index])
+                .blended(Color::WHITE)
+                .expect("split name render failed");
+            let texture = creator
+                .create_texture_from_surface(&text_surface)
+                .expect("split name texture failed");
+            let pb = font
+                .render(&split_times_raw[index])
+                .blended(Color::WHITE)
+                .expect("split time render failed");
+            let pb_texture = creator
+                .create_texture_from_surface(&pb)
+                .expect("split time texture failed");
+            let split = splits::Split::new(split_times_ms[index], texture, pb_texture, None);
+            splits.push(split);
+            index += 1;
         }
         // set up variables used in the mainloop
         // framerate cap timer
@@ -382,7 +392,7 @@ impl App {
                         if current_split + max_splits > len {
                             bottom_split_index = len;
                             top_split_index = len - max_splits;
-                       } else if current_split < max_splits {
+                        } else if current_split < max_splits {
                             bottom_split_index = max_splits;
                             top_split_index = 0;
                         } else if current_split >= max_splits {
@@ -401,7 +411,12 @@ impl App {
                 }
                 _ => {}
             }
-            render::render_rows(&splits[top_split_index..bottom_split_index], &mut self.canvas, window_width, cur);
+            render::render_rows(
+                &splits[top_split_index..bottom_split_index],
+                &mut self.canvas,
+                window_width,
+                cur,
+            );
             time_str = self.update_time(before_pause, total_time);
             text_surface = timer_font
                 .render(&time_str)

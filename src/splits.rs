@@ -1,6 +1,6 @@
-use sdl2::render::Texture;
 use ron::de::from_reader;
 use ron::ser::{to_string_pretty, PrettyConfig};
+use sdl2::render::Texture;
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -48,29 +48,39 @@ impl Run {
 }
 
 pub struct Split<'a> {
-	pb_time: u128,
-	name_texture: Texture<'a>,
-	pb_texture: Texture<'a>,
-	current_texture: Option<Texture<'a>>
+    pb_time: u128,
+    name_texture: Texture<'a>,
+    pb_texture: Texture<'a>,
+    current_texture: Option<Texture<'a>>,
 }
 
 impl<'a> Split<'a> {
-	pub fn new(pb_time: u128, name_texture: Texture<'a>, pb_texture: Texture<'a>, current_texture: Option<Texture<'a>>) -> Self {
-		Self {pb_time, name_texture, pb_texture, current_texture}
-	}
-	pub fn time(&self) -> u128 {
-		self.pb_time
-	}
-	pub fn name(&self) -> &Texture {
-		&self.name_texture
-	}
-	pub fn pb(&self) -> &Texture {
-		&self.pb_texture
-	}
-	pub fn cur(&self) -> &Option<Texture> {
-		&self.current_texture
-	}
-	pub fn set_cur(&mut self, cur: Option<Texture<'a>>) {
-		self.current_texture = cur;
-	}
+    pub fn new(
+        pb_time: u128,
+        name_texture: Texture<'a>,
+        pb_texture: Texture<'a>,
+        current_texture: Option<Texture<'a>>,
+    ) -> Self {
+        Self {
+            pb_time,
+            name_texture,
+            pb_texture,
+            current_texture,
+        }
+    }
+    pub fn time(&self) -> u128 {
+        self.pb_time
+    }
+    pub fn name(&self) -> &Texture {
+        &self.name_texture
+    }
+    pub fn pb(&self) -> &Texture {
+        &self.pb_texture
+    }
+    pub fn cur(&self) -> &Option<Texture> {
+        &self.current_texture
+    }
+    pub fn set_cur(&mut self, cur: Option<Texture<'a>>) {
+        self.current_texture = cur;
+    }
 }

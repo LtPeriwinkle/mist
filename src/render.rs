@@ -31,16 +31,20 @@ pub fn render_rows(
             .expect("split texture copy failed");
 
         match item.cur() {
-		Some(x) => {
-    			let TextureQuery {width, height, ..} = x.query();
-        		row = Rect::new((window_width - width) as i32, y, width, height);
-			canvas.copy(&x, None, Some(row)).expect("split time texture copy failed");
-		},
-		None => {
-    			let TextureQuery {width, height, ..} = item.pb().query();
-        		row = Rect::new((window_width - width) as i32, y, width, height);
-			canvas.copy(&item.pb(), None, Some(row)).expect("split time texture copy failed");
-		}
+            Some(x) => {
+                let TextureQuery { width, height, .. } = x.query();
+                row = Rect::new((window_width - width) as i32, y, width, height);
+                canvas
+                    .copy(&x, None, Some(row))
+                    .expect("split time texture copy failed");
+            }
+            None => {
+                let TextureQuery { width, height, .. } = item.pb().query();
+                row = Rect::new((window_width - width) as i32, y, width, height);
+                canvas
+                    .copy(&item.pb(), None, Some(row))
+                    .expect("split time texture copy failed");
+            }
         }
         canvas.set_draw_color(Color::GRAY);
         canvas
