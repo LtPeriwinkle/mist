@@ -1,5 +1,6 @@
 //Functions related to rendering information to the SDL window
 
+use crate::splits::Split;
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::{Canvas, Texture, TextureQuery};
@@ -7,8 +8,7 @@ use sdl2::video::Window;
 
 // Puts split name textures and their associated times into the SDL backbuffer
 pub fn render_rows(
-    on_screen: &[Texture],
-    times: &[Texture],
+    on_screen: Vec<Split>,
     canvas: &mut Canvas<Window>,
     window_width: u32,
     current: usize,
@@ -27,8 +27,19 @@ pub fn render_rows(
         }
         row = Rect::new(0, y, width, height);
         canvas
-            .copy(&item, None, Some(row))
+            .copy(&item.name_texture, None, Some(row))
             .expect("split texture copy failed");
+        match item.current_texture {
+		Some(x) => {
+			canvas.copy(x, None, Some(row)).expect("split time texture copy failed");
+		},
+		None => {
+			canvas.copy(item.pb_texture, None, Some(row)).expect("split time texture copy failed");
+		}
+        }
+        canvas
+            .copy(&item., None, Some(row))
+            .expect("split time texture copy failed");
         canvas.set_draw_color(Color::GRAY);
         canvas
             .draw_line(

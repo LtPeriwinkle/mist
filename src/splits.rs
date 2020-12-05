@@ -1,3 +1,4 @@
+use sdl2::render::Texture;
 use ron::de::from_reader;
 use ron::ser::{to_string_pretty, PrettyConfig};
 use serde::{Deserialize, Serialize};
@@ -44,4 +45,17 @@ impl Run {
         let string = to_string_pretty(self, PrettyConfig::new()).unwrap();
         file.write(&string.as_bytes()).unwrap();
     }
+}
+
+pub struct Split {
+	pb_time: u128,
+	name_texture: Texture
+	pb_texture: Texture,
+	current_texture: Option<Texture>
+}
+
+impl Split {
+	pub fn new(pb_time: u128, name_texture: Texture, pb_texture: Texture, current_texture: Option<Texture>) -> Self {
+		Self {pb_time, name_texture, pb_texture, current_texture}
+	}
 }
