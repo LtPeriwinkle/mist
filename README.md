@@ -1,6 +1,9 @@
 # <img src="assets/MIST.png" width="30" height="30"/> mist
 a minimal, improved speedrun timer
-[Changelog](CHANGELOG.md)
+
+[Changelog](CHANGELOG.md) \
+[Latest Release](https://github.com/LtPeriwinkle/mist/releases/tag/v1.0.0)
+
 ---
 
 The goal of this project is not to have more features than LiveSplit or to look better than LiveSplit.
