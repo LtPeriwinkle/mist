@@ -32,12 +32,12 @@ pub fn render_rows(
 
         match item.cur() {
 		Some(x) => {
-    			let TextureQuery {width, height} = x.query();
+    			let TextureQuery {width, height, ..} = x.query();
         		row = Rect::new((window_width - width) as i32, y, width, height);
 			canvas.copy(&x, None, Some(row)).expect("split time texture copy failed");
 		},
 		None => {
-    			let TextureQuery {width, height} = item.pb().query();
+    			let TextureQuery {width, height, ..} = item.pb().query();
         		row = Rect::new((window_width - width) as i32, y, width, height);
 			canvas.copy(&item.pb(), None, Some(row)).expect("split time texture copy failed");
 		}
