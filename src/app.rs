@@ -10,10 +10,8 @@ use std::time::{Duration, Instant};
 
 use crate::components::*;
 use crate::render;
-use crate::splits::{self, Run};
+use crate::splits::{self, Run, Split};
 use crate::timing;
-
-static mut RECREATE_DEFAULT: Option<u8> = Some(3); // used to determine whether to recreate slice every loop
 
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
@@ -27,11 +25,6 @@ pub struct App {
     run: splits::Run,
 }
 
-struct Split {
-	pb_time: u128,
-	pb_texture: Texture,
-	current_texture: Texture
-}
 impl App {
     pub fn init(context: sdl2::Sdl) -> Self {
         // sdl setup boilerplate
@@ -69,7 +62,6 @@ impl App {
     pub fn run(&mut self) {
         // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
-        let mut bottom_split_index = SPLITS_ON_SCREEN;
         let mut max_splits: usize;
         let timer_font = self
             .ttf
@@ -114,11 +106,12 @@ impl App {
         // initialize variables that are used in the loop for replacing timer texture
         let mut text_surface: Surface;
         let mut texture: Texture;
-        let mut on_screen: &[Texture] = &[];
         // vectors that hold the textures for split names and their associated times
         let mut splits: Vec<Split> = vec![];
 
         // set up max splits dynamically in case there are too few splits
+        let mut bottom_split_index = SPLITS_ON_SCREEN;
+        let mut top_split_index = 0;
         if SPLITS_ON_SCREEN > split_names.len() {
             bottom_split_index = split_names.len();
             max_splits = split_names.len();
@@ -130,7 +123,7 @@ impl App {
         while index < split_names.len() {
 		let text_surface = font.render(&split_names[index]).blended(Color::WHITE).expect("split name render failed");
 		let texture = creator.create_texture_from_surface(&text_surface).expect("split name texture failed");
-		let pb = font.render(split_times_raw[index]).blended(Color::WHITE).expect("split time render failed");
+		let pb = font.render(&split_times_raw[index]).blended(Color::WHITE).expect("split time render failed");
 		let pb_texture = creator.create_texture_from_surface(&pb).expect("split time texture failed");
 		let split = splits::Split::new(split_times_ms[index], texture, pb_texture, None);
 		splits.push(split);
@@ -152,17 +145,9 @@ impl App {
         let mut color: Color;
         // sum of split times for display on rows
         let mut recreate_on_screen: Option<u8> = Some(0);
-        // if there are no splits, dont waste time remaking the on screen ones every loop
-        if self.run.splits.len() == 0 {
-            unsafe {
-                RECREATE_DEFAULT = None; // RECREATE_DEFAULT is mutable static, requires unsafe
-            }
-        }
         // diff between max on screen and current, used when resizing window
         let mut diff: u32 = 0;
-        let mut len: usize = splits.len();
-        // index of top split on screen
-        let mut index: usize;
+        let len: usize = splits.len();
         // current split in the slice of splits sent to render_time()
         let mut cur: usize;
         // sdl timer ticks when last split occurred
@@ -280,7 +265,6 @@ impl App {
                     } => {
                         let height = self.canvas.viewport().height();
                         let rows_height = max_splits as u32 * (splits_height + 5);
-                        len = splits.len();
                         // if there are too many splits, calculate how many and set flag to make a new list to display
                         // otherwise if there are too few and there are enough to display more, set recreate flag
                         if height - timer_height < rows_height {
@@ -289,7 +273,7 @@ impl App {
                         } else if rows_height < height - timer_height {
                             diff = ((height - timer_height) - rows_height) / splits_height;
                             if !(max_splits + diff as usize > SPLITS_ON_SCREEN
-                                || max_splits + diff as usize > splits.len())
+                                || max_splits + diff as usize > len)
                             {
                                 recreate_on_screen = Some(1);
                             }
@@ -329,7 +313,7 @@ impl App {
                             );
                             text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
-                            split_times[current_split] = texture;
+                            splits[current_split].set_cur(Some(texture));
                             if current_split < splits.len() - 1 {
                                 current_split += 1;
                             } else {
@@ -356,50 +340,8 @@ impl App {
                 }
             }
             window_width = self.canvas.viewport().width();
-            let mut on_screen_times: &[Texture] = &[];
-            // recreate texture slice to display based on flags set earlier
-            match recreate_on_screen {
-                // set at the start, creates the initial set of splits
-                Some(0) => {
-                    on_screen = &splits[0..bottom_split_index];
-                    on_screen_times = &split_times[0..bottom_split_index];
-                    unsafe { recreate_on_screen = RECREATE_DEFAULT };
-                }
-                // set on window resize, creates new slices based on diff and number of splits
-                Some(1) => {
-                    if max_splits > diff as usize {
-                        max_splits -= diff as usize;
-                        if current_split + max_splits > len {
-                            bottom_split_index = len;
-                            on_screen = &splits[len - max_splits..bottom_split_index];
-                            on_screen_times = &split_times[len - max_splits..bottom_split_index];
-                        } else if current_split < max_splits {
-                            bottom_split_index = max_splits;
-                            on_screen = &splits[0..max_splits];
-                            on_screen_times = &split_times[0..max_splits];
-                        } else if current_split >= max_splits {
-                            bottom_split_index = current_split + max_splits;
-                            on_screen = &splits[current_split..current_split + max_splits];
-                            on_screen_times =
-                                &split_times[current_split..current_split + max_splits];
-                        }
-                    }
-                    unsafe { recreate_on_screen = RECREATE_DEFAULT }
-                }
-                // set on mouse scroll, creates new slices based on the current top and bottom split
-                Some(2) => {
-                    index = bottom_split_index - max_splits;
-                    on_screen = &splits[index..bottom_split_index];
-                    on_screen_times = &split_times[index..bottom_split_index];
-                    unsafe { recreate_on_screen = RECREATE_DEFAULT }
-                }
-                // default if there are >0 total splits, recreates times every loop to dodge lifetime problems
-                Some(3) => {
-                    index = bottom_split_index - max_splits;
-                    on_screen_times = &split_times[index..bottom_split_index];
-                }
-                _ => {}
-            }
+
+            // make some changes to stuff before updating screen based on what happened in past loop
             if let TimerState::Running { timestamp } = self.state {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
                 let ticks = self.timer.ticks();
@@ -427,13 +369,39 @@ impl App {
                 cur = usize::MAX;
                 color = Color::WHITE;
             }
-            render::render_rows(
-                &on_screen,
-                &on_screen_times,
-                &mut self.canvas,
-                window_width,
-                cur,
-            );
+            // change top and bottom split indices based on flags set earlier in loop
+            match recreate_on_screen.take() {
+                // set at the start, creates the initial set of splits
+                Some(0) => {
+                    top_split_index = 0;
+                }
+                // set on window resize, creates new slices based on diff and number of splits
+                Some(1) => {
+                    if max_splits > diff as usize {
+                        max_splits -= diff as usize;
+                        if current_split + max_splits > len {
+                            bottom_split_index = len;
+                            top_split_index = len - max_splits;
+                       } else if current_split < max_splits {
+                            bottom_split_index = max_splits;
+                            top_split_index = 0;
+                        } else if current_split >= max_splits {
+                            bottom_split_index = current_split + max_splits;
+                            top_split_index = current_split;
+                        }
+                    }
+                }
+                // set on mouse scroll, creates new slices based on the current top and bottom split
+                Some(2) => {
+                    top_split_index = bottom_split_index - max_splits;
+                }
+                // default if there are >0 total splits, recreates times every loop to dodge lifetime problems
+                Some(3) => {
+                    top_split_index = bottom_split_index - max_splits;
+                }
+                _ => {}
+            }
+            render::render_rows(&splits[top_split_index..bottom_split_index], &mut self.canvas, window_width, cur);
             time_str = self.update_time(before_pause, total_time);
             text_surface = timer_font
                 .render(&time_str)
