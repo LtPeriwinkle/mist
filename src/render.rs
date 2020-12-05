@@ -37,9 +37,6 @@ pub fn render_rows(
 			canvas.copy(item.pb_texture, None, Some(row)).expect("split time texture copy failed");
 		}
         }
-        canvas
-            .copy(&item., None, Some(row))
-            .expect("split time texture copy failed");
         canvas.set_draw_color(Color::GRAY);
         canvas
             .draw_line(
@@ -49,16 +46,6 @@ pub fn render_rows(
             .expect("line draw failed");
         y += height as i32 + 5;
         index += 1;
-    }
-    y = 0;
-    // draw each time on the right of the screen at the same y level as corresponding name
-    for item in times {
-        let TextureQuery { width, height, .. } = item.query();
-        row = Rect::new((window_width - width) as i32, y, width, height);
-        canvas
-            .copy(&item, None, Some(row))
-            .expect("split time texture copy failed");
-        y += height as i32 + 5;
     }
 }
 
