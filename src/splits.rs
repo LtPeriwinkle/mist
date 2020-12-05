@@ -55,19 +55,22 @@ pub struct Split<'a> {
 }
 
 impl<'a> Split<'a> {
-	pub fn new(pb_time: u128, name_texture: Texture<'a>, pb_texture: Texture<'a>, current_texture: Option<Texture<'a>) -> Self {
+	pub fn new(pb_time: u128, name_texture: Texture<'a>, pb_texture: Texture<'a>, current_texture: Option<Texture<'a>>) -> Self {
 		Self {pb_time, name_texture, pb_texture, current_texture}
 	}
 	pub fn time(&self) -> u128 {
 		self.pb_time
 	}
-	pub fn name(&self) -> Texture {
-		self.name_texture
+	pub fn name(&self) -> &Texture {
+		&self.name_texture
 	}
-	pub fn pb(&self) -> Texture {
-		self.pb_texture
+	pub fn pb(&self) -> &Texture {
+		&self.pb_texture
 	}
-	pub fn cur(&self) -> Texture {
-		self.current_texture
+	pub fn cur(&self) -> &Option<Texture> {
+		&self.current_texture
+	}
+	pub fn set_cur(&mut self, cur: Option<Texture<'a>>) {
+		self.current_texture = cur;
 	}
 }
