@@ -1,6 +1,8 @@
 use ron::de::from_reader;
+use ron::ser::{to_string_pretty, PrettyConfig};
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
+use std::io::Write;
 
 // The struct that contains data about a speedrun.
 // More fields will be added for other split time comparisons, like average and worst times.
@@ -32,4 +34,11 @@ impl Run {
             best_times: Vec::new(),
         }
     }
+
+    pub fn save(&self, filename: &str) {
+	let mut file = OpenOptions::new().write(true).truncate(true).open(filename).unwrap();
+	let string = to_string_pretty(self, PrettyConfig::new()).unwrap();
+	file.write(&string.as_bytes()).unwrap();
+    }
+    
 }
