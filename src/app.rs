@@ -27,6 +27,11 @@ pub struct App {
     run: splits::Run,
 }
 
+struct Split {
+	pb_time: u128,
+	pb_texture: Texture,
+	current_texture: Texture
+}
 impl App {
     pub fn init(context: sdl2::Sdl) -> Self {
         // sdl setup boilerplate
@@ -111,8 +116,7 @@ impl App {
         let mut texture: Texture;
         let mut on_screen: &[Texture] = &[];
         // vectors that hold the textures for split names and their associated times
-        let mut splits: Vec<Texture> = vec![];
-        let mut split_times: Vec<Texture> = vec![];
+        let mut splits: Vec<Split> = vec![];
 
         // set up max splits dynamically in case there are too few splits
         if SPLITS_ON_SCREEN > split_names.len() {
@@ -121,32 +125,17 @@ impl App {
         } else {
             max_splits = SPLITS_ON_SCREEN;
         }
-
+	let mut index = 0;
         // convert the split names into textures and add them to the split name vec
-        for item in split_names {
-            text_surface = font
-                .render(item)
-                .blended(Color::WHITE)
-                .expect("split name font render failed");
-            texture = creator
-                .create_texture_from_surface(text_surface)
-                .expect("split name texture creation failed");
-            splits.push(texture);
+        while index < split_names.len() {
+		let text_surface = font.render(&split_names[index]).blended(Color::WHITE).expect("split name render failed");
+		let texture = creator.create_texture_from_surface(&text_surface).expect("split name texture failed");
+		let pb = font.render(split_times_raw[index]).blended(Color::WHITE).expect("split time render failed");
+		let pb_texture = creator.create_texture_from_surface(&pb).expect("split time texture failed");
+		let split = splits::Split::new(split_times_ms[index], texture, pb_texture, None);
+		splits.push(split);
+		index += 1;
         }
-
-        // same as above but for times
-        for item in split_times_raw {
-            // blended text render does antialias and removes background box, is slower though
-            text_surface = font
-                .render(&item)
-                .blended(Color::WHITE)
-                .expect("split time font render failed");
-            texture = creator
-                .create_texture_from_surface(text_surface)
-                .expect("split time texture creation failed");
-            split_times.push(texture);
-        }
-
         // set up variables used in the mainloop
         // framerate cap timer
         let mut frame_time: Instant;
