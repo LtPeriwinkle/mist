@@ -1,6 +1,6 @@
 # <img src="assets/MIST.png" width="30" height="30"/> mist
 a minimal, improved speedrun timer
-
+[Changelog](CHANGELOG.md)
 ---
 
 The goal of this project is not to have more features than LiveSplit or to look better than LiveSplit.
@@ -11,13 +11,13 @@ More will probably be added to this list in the future
 - [ ] Cross platform
 	* [X] Linux
 	* [X] Windows
-	* [ ] MacOS (untested as I don't have a mac, but should work)
+	* [X] MacOS (compiled & tested in macOS catalina VM)
 - [X] Human-readable split file (using [ron](https://github.com/ron-rs/ron))
 - [ ] LiveSplit split file transposing (for now, check out [this site](https://lsstomist.komali09.repl.co))
 - [ ] (limited) customizability (i.e custom colors, perhaps fonts and layouts)
 - [ ] split file creation tool
 - [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
-- [ ] dynamic run comparisons and colors
+- [X] dynamic run comparisons and colors
 - [ ] last 5 run avg comparison
 - [ ] integrated notes (like SpeedGuidesLive)
 
