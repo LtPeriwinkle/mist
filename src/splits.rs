@@ -47,15 +47,15 @@ impl Run {
     }
 }
 
-pub struct Split {
+pub struct Split<'a> {
 	pb_time: u128,
-	name_texture: Texture
-	pb_texture: Texture,
-	current_texture: Option<Texture>
+	name_texture: Texture<'a>,
+	pb_texture: Texture<'a>,
+	current_texture: Option<Texture<'a>>
 }
 
-impl Split {
-	pub fn new(pb_time: u128, name_texture: Texture, pb_texture: Texture, current_texture: Option<Texture>) -> Self {
+impl<'a> Split<'a> {
+	pub fn new(pb_time: u128, name_texture: Texture<'a>, pb_texture: Texture<'a>, current_texture: Option<Texture<'a>) -> Self {
 		Self {pb_time, name_texture, pb_texture, current_texture}
 	}
 }
