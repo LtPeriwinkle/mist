@@ -5,6 +5,7 @@ mod app;
 mod render;
 mod splits;
 mod timing;
+mod components;
 use app::App;
 
 fn main() {

@@ -11,11 +11,9 @@ use std::time::{Duration, Instant};
 use crate::render;
 use crate::splits::{self, Run};
 use crate::timing;
+use crate::components::*;
 
-const SPLITS_ON_SCREEN: usize = 8; // used to limit number of splits displayed
 static mut RECREATE_DEFAULT: Option<u8> = Some(3); // used to determine whether to recreate slice every loop
-static MAKING_UP_TIME: Color = Color::RGB(255, 60, 60); // color for when behind but gaining
-static LOSING_TIME: Color = Color::RGB(60, 255, 60); // color for when ahead but losing
 
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
@@ -27,16 +25,6 @@ pub struct App {
     ttf: sdl2::ttf::Sdl2TtfContext,
     state: TimerState,
     run: splits::Run,
-}
-
-// state of timer
-#[derive(Debug)]
-enum TimerState {
-    OffsetCountdown { amt: u128 },
-    Running { timestamp: u32 },
-    Paused { time: u128, time_str: String },
-    NotStarted { time_str: String },
-    Finished { time_str: String },
 }
 
 impl App {
@@ -183,7 +171,6 @@ impl App {
 	// current split in the slice of splits sent to render_time()
         let mut cur: usize;
 	let mut split_time_ticks = 0;
-	let mut last_split_state = 0;
         self.canvas.present();
 
         // main loop
