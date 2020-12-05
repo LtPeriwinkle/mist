@@ -11,7 +11,7 @@ Rather, the goal is to be lighter and more efficient than LiveSplit and to maint
 many platforms.
 ## Planned features
 More will probably be added to this list in the future
-- [ ] Cross platform
+- [X] Cross platform
 	* [X] Linux
 	* [X] Windows
 	* [X] MacOS (compiled & tested in macOS catalina VM)
