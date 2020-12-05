@@ -34,11 +34,14 @@ impl Run {
             best_times: Vec::new(),
         }
     }
-
+    // save a run struct to a file (also will get error handling eventually)
     pub fn save(&self, filename: &str) {
-	let mut file = OpenOptions::new().write(true).truncate(true).open(filename).unwrap();
-	let string = to_string_pretty(self, PrettyConfig::new()).unwrap();
-	file.write(&string.as_bytes()).unwrap();
+        let mut file = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(filename)
+            .unwrap();
+        let string = to_string_pretty(self, PrettyConfig::new()).unwrap();
+        file.write(&string.as_bytes()).unwrap();
     }
-    
 }

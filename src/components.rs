@@ -1,9 +1,10 @@
 use sdl2::pixels::Color;
 
-pub const SPLITS_ON_SCREEN: usize = 8;
-pub static MAKING_UP_TIME: Color = Color::RGB(255, 60, 60);
-pub static LOSING_TIME: Color = Color::RGB(60, 255, 60);
+pub const SPLITS_ON_SCREEN: usize = 8; // max splits allowed on screen
+pub static MAKING_UP_TIME: Color = Color::RGB(255, 60, 60); // color used when behind but gaining
+pub static LOSING_TIME: Color = Color::RGB(60, 255, 60); // color used when ahead but losing
 
+// state of timer, might implement real state switching eventually
 #[derive(Debug)]
 pub enum TimerState {
     OffsetCountdown { amt: u128 },

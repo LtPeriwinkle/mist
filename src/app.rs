@@ -76,7 +76,10 @@ impl App {
             .expect("could not open font file");
         let creator = self.canvas.texture_creator();
         let timer_height = timer_font.size_of("0123456789").unwrap().1;
-        let splits_height = font.size_of("qwertyuiopasdfghjklzxcvbnm01234567890").unwrap().1;
+        let splits_height = font
+            .size_of("qwertyuiopasdfghjklzxcvbnm01234567890")
+            .unwrap()
+            .1;
         // set the minimum height of the window to the size of the time texture
         self.canvas
             .window_mut()
@@ -173,7 +176,9 @@ impl App {
         let mut index: usize;
         // current split in the slice of splits sent to render_time()
         let mut cur: usize;
+        // sdl timer ticks when last split occurred
         let mut split_time_ticks = 0;
+        // split times of current run
         let mut active_run_times: Vec<u128> = vec![];
         self.canvas.present();
 
@@ -264,20 +269,20 @@ impl App {
                     } => {
                         active_run_times = vec![];
                         match offset {
-                        	// if there is an offset, reset the timer to that, if not, reset timer to 0
-                        	Some(x) => {
-	                            before_pause = None;
-        	                    self.state = TimerState::NotStarted {
-                	                time_str: format!("-{}", timing::ms_to_readable(x, false)),
-                        	    };
-	                        }
-        	                None => {
-                	            self.state = TimerState::NotStarted {
-                        	        time_str: "0.000".to_owned(),
-      	                            };
-              	               }
+                            // if there is an offset, reset the timer to that, if not, reset timer to 0
+                            Some(x) => {
+                                before_pause = None;
+                                self.state = TimerState::NotStarted {
+                                    time_str: format!("-{}", timing::ms_to_readable(x, false)),
+                                };
+                            }
+                            None => {
+                                self.state = TimerState::NotStarted {
+                                    time_str: "0.000".to_owned(),
+                                };
+                            }
                         }
-                    },
+                    }
 
                     // handle vertical window resize by changing number of splits
                     Event::Window {
@@ -326,7 +331,8 @@ impl App {
                         }
                         // if it is running, either split or end
                         TimerState::Running { timestamp: t, .. } => {
-                            active_run_times.push(u128::from(self.timer.ticks() - split_time_ticks));
+                            active_run_times
+                                .push(u128::from(self.timer.ticks() - split_time_ticks));
                             split_time_ticks = self.timer.ticks();
                             time_str = timing::ms_to_readable(
                                 (event_time - t) as u128 + before_pause.unwrap_or(0),
@@ -343,11 +349,15 @@ impl App {
                             if current_split + 1 > bottom_split_index {
                                 bottom_split_index += 1;
                                 recreate_on_screen = Some(2);
-                                if (event_time - t) as u128 + before_pause.unwrap_or(0) < self.run.pb {
-					self.run.pb = (event_time - t) as u128 + before_pause.unwrap_or(0);
-					self.run.best_times = active_run_times;
-					active_run_times = vec![];
-					self.run.save("run.msf");
+                                if (event_time - t) as u128 + before_pause.unwrap_or(0)
+                                    < self.run.pb
+                                {
+                                    // save run on end timer if it was a PB
+                                    self.run.pb =
+                                        (event_time - t) as u128 + before_pause.unwrap_or(0);
+                                    self.run.best_times = active_run_times;
+                                    active_run_times = vec![];
+                                    self.run.save("run.msf");
                                 }
                             }
                         }
