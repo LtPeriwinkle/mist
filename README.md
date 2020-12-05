@@ -42,23 +42,23 @@ These features are *highly unlikely* be implemented, in the spirit of minimalism
 Currently the only way to try this out is to compile it from source. To do this you need rust installed, and an installation guide
 for that can be found [here](https://www.rust-lang.org/tools/install).
 ### Linux
-Requirements are SDL2 and SDL2_TTF shared libraries, as well as development libraries. On ubuntu:
+Requirements are SDL2, SDL2\_Image and SDL2\_TTF shared libraries, as well as development libraries. On ubuntu:
 ```bash
-sudo apt-get install libsdl2 libsdl2-ttf libsdl2-dev libsdl2-ttf-dev
+sudo apt-get install libsdl2 libsdl2-ttf libsdl2-image libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev
 ```
 
 (i think)
 
 On arch:
 ```bash
-sudo pacman -S sdl2 sdl2_ttf
+sudo pacman -S sdl2 sdl2_ttf sdl2_image
 ```
 
 Clone this repo (`git clone https://github.com/LtPeriwinkle/mist`), enter the directory, and run `cargo build --release --locked`. The resulting binary will be in
 `./target/release/`. When you run it, make sure it is in the same directory as `assets/` or else it won't work.
 
 ### Windows
-Follow [this guide](https://github.com/Rust-SDL2/rust-sdl2#windows-msvc) to set up your SDL dependencies. You will have to follow this process for SDL2 and SDL2\_TTF,
+Follow [this guide](https://github.com/Rust-SDL2/rust-sdl2#windows-msvc) to set up your SDL dependencies. You will have to follow this process for SDL2, SDL\_Image and SDL2\_TTF,
 whose development stuff is available [here](http://libsdl.org/projects/SDL_ttf/).
 
 Clone the repository as shown in the linux section, and enter the folder. Then run `cargo build --release --locked`. The .exe will be in `.\target\release\`. Move it into
