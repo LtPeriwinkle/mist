@@ -49,7 +49,7 @@ fn round_ms_30(ms: u128) -> u128 {
         67..=99 => 67,
         _ => 0,
     };
-    rounded + hundreds
+    rounded + (hundreds * 100)
 }
 
 // add up the times from split files to get the total real time
