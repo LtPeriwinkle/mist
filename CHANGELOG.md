@@ -1,4 +1,9 @@
 # Changelog
+### 1.1.2
+- fix dynamic timer color calculation
+	* now properly uses making up time color and losing time color
+	* still breaks after a pause, will be fixed in a later patch as pausing isnt horribly common
+
 ### 1.1.1
 - use instant everywhere instead of SDL timer
 	* this reduces the number of u32 -> u128 casts
