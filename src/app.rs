@@ -146,7 +146,7 @@ impl App {
         // display time
         let mut time_str: String;
         // keeps track of whether timer has been paused and paused value
-        let mut before_pause: Option<u128> = None;
+        let mut before_pause = 0;
         // this one should be a static but duration isnt allowed to be static apparently
         let one_sixtieth = Duration::new(0, 1_000_000_000 / 60);
         let mut current_split = 0;
@@ -230,17 +230,17 @@ impl App {
                             // and set the state to running
                             TimerState::Paused { time: t, .. } => {
                                 total_time = Instant::now();
-                                before_pause = Some(t);
+                                before_pause = t;
                                 self.state = TimerState::Running { timestamp: elapsed };
                             }
                             // if the timer is already running, set it to paused.
                             TimerState::Running { .. } => {
                                 self.state = TimerState::Paused {
                                     time: total_time.elapsed().as_millis()
-                                        + before_pause.unwrap_or(0),
+                                        + before_pause,
                                     time_str: timing::ms_to_readable(
                                         total_time.elapsed().as_millis()
-                                            + before_pause.unwrap_or(0),
+                                            + before_pause,
                                         true,
                                     ),
                                 };
@@ -259,7 +259,7 @@ impl App {
                         match offset {
                             // if there is an offset, reset the timer to that, if not, reset timer to 0
                             Some(x) => {
-                                before_pause = None;
+                                before_pause = 0;
                                 self.state = TimerState::NotStarted {
                                     time_str: format!("-{}", timing::ms_to_readable(x, false)),
                                 };
@@ -320,7 +320,7 @@ impl App {
                             active_run_times.push(elapsed - split_time_ticks);
                             split_time_ticks = elapsed;
                             time_str = timing::ms_to_readable(
-                                (elapsed - t) + before_pause.unwrap_or(0),
+                                (elapsed - t) + before_pause,
                                 true,
                             );
                             text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
@@ -339,9 +339,9 @@ impl App {
                             if current_split + 1 > bottom_split_index {
                                 bottom_split_index += 1;
                                 recreate_on_screen = Some(2);
-                                if (elapsed - t) + before_pause.unwrap_or(0) < self.run.pb {
+                                if (elapsed - t) + before_pause < self.run.pb {
                                     // save run on end timer if it was a PB
-                                    self.run.pb = (elapsed - t) + before_pause.unwrap_or(0);
+                                    self.run.pb = (elapsed - t) + before_pause;
                                     self.run.set_times(&active_run_times);
                                     active_run_times = vec![];
                                     self.run.save("run.msf");
@@ -440,12 +440,12 @@ impl App {
         }
     }
     // updates time string based on timer state, basically leaves it the same if timer is paused
-    fn update_time(&self, before_pause: Option<u128>, total_time: Instant) -> String {
+    fn update_time(&self, before_pause: u128, total_time: Instant) -> String {
         let time: String;
         match &self.state {
             TimerState::Running { .. } => {
                 time = timing::ms_to_readable(
-                    total_time.elapsed().as_millis() + before_pause.unwrap_or(0),
+                    total_time.elapsed().as_millis() + before_pause,
                     false,
                 );
             }
