@@ -38,6 +38,51 @@ pub fn ms_to_readable(mut ms: u128, round: bool) -> String {
     }
 }
 
+pub fn diff_text(mut ms: i128) -> String {
+	let mut negative = false;
+	if ms < 0 {
+		negative = true;
+		ms *= -1;
+	}
+	let mut tenths = ms / 100;
+	let mut full_s: i128;
+	if tenths > 10 {
+		full_s = tenths / 10;
+		tenths -= full_s * 10;
+		if full_s >= 60 {
+			let mut min = full_s / 60;
+			full_s -= min * 60;
+			if min >= 60 {
+				let hr = min / 60;
+				min -= hr * 60;
+				if negative {
+					return format!("-{}:{}:{}.{}", hr, min, full_s, tenths);
+				} else {
+					return format!("{}:{}:{}.{}", hr, min, full_s, tenths);
+				}
+			} else {
+    				if negative {
+					return format!("-{}:{}.{}", min, full_s, tenths);
+    				} else {
+					return format!("{}:{}.{}", min, full_s, tenths);
+    				}
+			}
+		} else {
+    			if negative {
+				return format!("-{}.{}", full_s, tenths);
+    			} else {
+				return format!("{}.{}", full_s, tenths);
+    			}
+		}
+	} else {
+    		if negative {
+			return format!("-0.{}", tenths);
+    		} else {
+			return format!("0.{}", tenths);
+    		}
+	}
+}
+
 // quick and dirty solution for outputting valid 30fps times on pause/stop
 fn round_ms_30(ms: u128) -> u128 {
     let mut rounded = ms;
