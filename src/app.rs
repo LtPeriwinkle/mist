@@ -62,7 +62,6 @@ impl App {
     pub fn run(&mut self) {
         // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
-        let mut max_splits: usize;
         let timer_font = self
             .ttf
             .load_font("assets/segoe-ui-bold.ttf", 60)
@@ -109,15 +108,6 @@ impl App {
         // vectors that hold the textures for split names and their associated times
         let mut splits: Vec<Split> = vec![];
 
-        // set up max splits dynamically in case there are too few splits
-        let mut bottom_split_index = SPLITS_ON_SCREEN;
-        let mut top_split_index = 0;
-        if SPLITS_ON_SCREEN > split_names.len() {
-            bottom_split_index = split_names.len();
-            max_splits = split_names.len();
-        } else {
-            max_splits = SPLITS_ON_SCREEN;
-        }
         let mut index = 0;
         // convert the split names into textures and add them to the split name vec
         while index < split_names.len() {
@@ -139,6 +129,21 @@ impl App {
             splits.push(split);
             index += 1;
         }
+
+        // set up max splits dynamically in case there are too few splits
+        let mut max_splits: usize;
+        let mut bottom_split_index = SPLITS_ON_SCREEN;
+        let mut top_split_index = 0;
+        if SPLITS_ON_SCREEN > split_names.len() {
+            bottom_split_index = split_names.len();
+            max_splits = split_names.len();
+        } else {
+            max_splits = SPLITS_ON_SCREEN;
+        }
+        // drop stuff that isnt needed after initializing
+        drop(split_times_ms);
+        drop(split_times_raw);
+        drop(split_names);
         // set up variables used in the mainloop
         // framerate cap timer
         let mut frame_time: Instant;
