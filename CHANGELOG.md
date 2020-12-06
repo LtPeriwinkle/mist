@@ -1,4 +1,9 @@
 # Changelog
+### 1.1.0
+- massive internal changes to split system
+	* now uses a wrapper struct for splits to reduce clutter
+	* no longer requires large numbers of lifetime-dodging kludges
+	* properly implemented `Split` struct field accessing
 
 ### 1.0.0
 - Basic speedrun timing functionality
