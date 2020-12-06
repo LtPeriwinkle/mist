@@ -46,10 +46,10 @@ impl Run {
         file.write(&string.as_bytes()).unwrap();
     }
     pub fn set_times(&mut self, splits: &Vec<u128>) {
-	self.best_times = splits.to_vec();
+        self.best_times = splits.to_vec();
     }
     pub fn get_times(&self) -> &Vec<u128> {
-	&self.best_times
+        &self.best_times
     }
 }
 
