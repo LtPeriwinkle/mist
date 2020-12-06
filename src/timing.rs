@@ -41,12 +41,8 @@ pub fn ms_to_readable(mut ms: u128, round: bool) -> String {
 // quick and dirty solution for outputting valid 30fps times on pause/stop
 fn round_ms_30(ms: u128) -> u128 {
     let mut rounded = ms;
-    let mut hundreds = 0;
-    // ugliest possible way to get only the tens and ones digits
-    while rounded >= 100 {
-        rounded -= 100;
-        hundreds += 100;
-    }
+    let hundreds = rounded / 100;
+    rounded -= hundreds * 100;
     rounded = match rounded {
         0..=32 => 0,
         33..=66 => 33,
