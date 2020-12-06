@@ -135,7 +135,7 @@ impl App {
             let pb_texture = creator
                 .create_texture_from_surface(&pb)
                 .expect("split time texture failed");
-            let split = splits::Split::new(split_times_ms[index], texture, pb_texture, None);
+            let split = Split::new(split_times_ms[index], 0, None, texture, pb_texture, None);
             splits.push(split);
             index += 1;
         }
@@ -152,7 +152,7 @@ impl App {
         let mut current_split = 0;
         // these two to avoid having to drop and reallocate every loop
         let mut window_width: u32;
-        let mut color: Color;
+        let mut color = Color::WHITE;
         // sum of split times for display on rows
         let mut recreate_on_screen: Option<u8> = Some(0);
         // diff between max on screen and current, used when resizing window
@@ -160,7 +160,7 @@ impl App {
         let len: usize = splits.len();
         // current split in the slice of splits sent to render_time()
         let mut cur: usize;
-        // sdl timer ticks when last split occurred
+        // elapsed time when last split happened
         let mut split_time_ticks = 0;
         // split times of current run
         let mut active_run_times: Vec<u128> = vec![];
@@ -326,6 +326,11 @@ impl App {
                             text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
                             splits[current_split].set_cur(Some(texture));
+                            let diff = active_run_times[current_split] as i128 - splits[current_split].time() as i128;
+                            time_str = timing::diff_text(diff);
+                            text_surface = font.render(&time_str).blended(color).unwrap();
+                            texture = creator.create_texture_from_surface(&text_surface).unwrap();
+                            splits[current_split].set_diff(diff, Some(texture));
                             if current_split < splits.len() - 1 {
                                 current_split += 1;
                             } else {
@@ -354,20 +359,24 @@ impl App {
             if let TimerState::Running { timestamp } = self.state {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
                 elapsed = self.timer.elapsed().as_millis();
-                if u128::from(elapsed - timestamp) + before_pause.unwrap_or(0)
-                    < summed_times[current_split]
-                {
-                    if u128::from(elapsed - split_time_ticks) < splits[current_split].time() {
-                        color = Color::GREEN;
-                    } else {
-                        color = LOSING_TIME;
-                    }
+                if current_split == 0 {
+			if elapsed - split_time_ticks < splits[current_split].time() {
+				color = Color::GREEN;
+			} else {
+				color = Color::RED;
+			}
+                } else if splits[current_split - 1].diff() < 0 {
+			if elapsed - split_time_ticks < splits[current_split].time() {
+				color = Color::GREEN;
+			} else {
+				color = LOSING_TIME;
+			}
                 } else {
-                    if u128::from(elapsed - split_time_ticks) < splits[current_split].time() {
-                        color = MAKING_UP_TIME;
-                    } else {
-                        color = Color::RED;
-                    }
+			if elapsed - split_time_ticks < splits[current_split].time() {
+				color = MAKING_UP_TIME;
+			} else {
+				color = Color::RED;
+			}
                 }
                 if current_split >= bottom_split_index - 1 {
                     cur = max_splits - 1;
