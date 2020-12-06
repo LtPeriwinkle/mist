@@ -1,4 +1,9 @@
 # Changelog
+### 1.1.3
+- add split time diff rendering
+	* currently no way to handle horizontal resize
+	* dynamic color might still be wrong unfortunately
+
 ### 1.1.2
 - fix dynamic timer color calculation
 	* now properly uses making up time color and losing time color
