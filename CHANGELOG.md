@@ -1,4 +1,9 @@
 # Changelog
+### 1.1.1
+- use instant everywhere instead of SDL timer
+	* this reduces the number of u32 -> u128 casts
+	* also just feels nicer
+
 ### 1.1.0
 - massive internal changes to split system
 	* now uses a wrapper struct for splits to reduce clutter
