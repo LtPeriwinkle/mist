@@ -14,7 +14,7 @@ pub struct Run {
     pub offset: Option<u128>,
     pub pb: u128,
     pub splits: Vec<String>,
-    pub best_times: Vec<u128>,
+    best_times: Vec<u128>,
 }
 
 impl Run {
@@ -44,6 +44,12 @@ impl Run {
             .unwrap();
         let string = to_string_pretty(self, PrettyConfig::new()).unwrap();
         file.write(&string.as_bytes()).unwrap();
+    }
+    pub fn set_times(&mut self, splits: &Vec<u128>) {
+	self.best_times = splits.to_vec();
+    }
+    pub fn get_times(&self) -> &Vec<u128> {
+	&self.best_times
     }
 }
 

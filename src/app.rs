@@ -97,7 +97,7 @@ impl App {
             _ => {}
         }
         // get ms split times then convert them to pretty, summed times
-        let split_times_ms: Vec<u128> = self.run.best_times.iter().cloned().collect();
+        let split_times_ms: Vec<u128> = self.run.get_times().iter().cloned().collect();
         let summed_times = timing::split_time_sum(&split_times_ms);
         let split_times_raw: Vec<String> = summed_times
             .iter()
@@ -338,7 +338,7 @@ impl App {
                                     // save run on end timer if it was a PB
                                     self.run.pb =
                                         (event_time - t) as u128 + before_pause.unwrap_or(0);
-                                    self.run.best_times = active_run_times;
+                                    self.run.set_times(&active_run_times);
                                     active_run_times = vec![];
                                     self.run.save("run.msf");
                                 }
@@ -358,13 +358,13 @@ impl App {
                 if u128::from(ticks - timestamp) + before_pause.unwrap_or(0)
                     < summed_times[current_split]
                 {
-                    if u128::from(ticks - split_time_ticks) < split_times_ms[current_split] {
+                    if u128::from(ticks - split_time_ticks) < splits[current_split].time() {
                         color = Color::GREEN;
                     } else {
                         color = LOSING_TIME;
                     }
                 } else {
-                    if u128::from(ticks - split_time_ticks) < split_times_ms[current_split] {
+                    if u128::from(ticks - split_time_ticks) < splits[current_split].time() {
                         color = MAKING_UP_TIME;
                     } else {
                         color = Color::RED;
