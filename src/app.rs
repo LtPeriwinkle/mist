@@ -18,7 +18,7 @@ use crate::timing;
 pub struct App {
     context: sdl2::Sdl,
     ev_pump: sdl2::EventPump,
-    timer: sdl2::TimerSubsystem,
+    timer: Instant,
     canvas: WindowCanvas,
     ttf: sdl2::ttf::Sdl2TtfContext,
     state: TimerState,
@@ -45,7 +45,7 @@ impl App {
         let ev_pump = context
             .event_pump()
             .expect("could not initialize SDL event handler");
-        let timer = context.timer().unwrap();
+        let timer = Instant::now();
         App {
             context,
             ev_pump,
@@ -164,6 +164,8 @@ impl App {
         let mut split_time_ticks = 0;
         // split times of current run
         let mut active_run_times: Vec<u128> = vec![];
+
+        let mut elapsed: u128;
         self.canvas.present();
 
         // main loop
@@ -178,10 +180,9 @@ impl App {
             // if it shouldnt, convert to running state
             if let TimerState::OffsetCountdown { amt } = self.state {
                 if amt <= total_time.elapsed().as_millis() {
-                    self.state = TimerState::Running {
-                        timestamp: self.timer.ticks(),
-                    };
-                    split_time_ticks = self.timer.ticks();
+                    elapsed = self.timer.elapsed().as_millis();
+                    self.state = TimerState::Running { timestamp: elapsed };
+                    split_time_ticks = elapsed;
                     total_time = Instant::now();
                 }
             }
@@ -220,35 +221,38 @@ impl App {
                     // enter as placeholder for pause/continue
                     Event::KeyDown {
                         keycode: Some(Keycode::Return),
-                        timestamp: event_time,
                         repeat: false,
                         ..
-                    } => match self.state {
-                        // if timer is paused, unpause it, put the amount of time before the pause in a variable
-                        // and set the state to running
-                        TimerState::Paused { time: t, .. } => {
-                            total_time = Instant::now();
-                            before_pause = Some(t);
-                            self.state = TimerState::Running {
-                                timestamp: event_time,
-                            };
+                    } => {
+                        elapsed = self.timer.elapsed().as_millis();
+                        match self.state {
+                            // if timer is paused, unpause it, put the amount of time before the pause in a variable
+                            // and set the state to running
+                            TimerState::Paused { time: t, .. } => {
+                                total_time = Instant::now();
+                                before_pause = Some(t);
+                                self.state = TimerState::Running { timestamp: elapsed };
+                            }
+                            // if the timer is already running, set it to paused.
+                            TimerState::Running { .. } => {
+                                self.state = TimerState::Paused {
+                                    time: total_time.elapsed().as_millis()
+                                        + before_pause.unwrap_or(0),
+                                    time_str: timing::ms_to_readable(
+                                        total_time.elapsed().as_millis()
+                                            + before_pause.unwrap_or(0),
+                                        true,
+                                    ),
+                                };
+                            }
+                            _ => {}
                         }
-                        // if the timer is already running, set it to paused.
-                        TimerState::Running { timestamp: t } => {
-                            self.state = TimerState::Paused {
-                                time: (event_time - t) as u128 + before_pause.unwrap_or(0),
-                                time_str: timing::ms_to_readable(
-                                    (event_time - t) as u128 + before_pause.unwrap_or(0),
-                                    true,
-                                ),
-                            };
-                        }
-                        _ => {}
-                    },
+                    }
 
                     // R key to reset timer
                     Event::KeyDown {
                         keycode: Some(Keycode::R),
+                        repeat: false,
                         ..
                     } => {
                         active_run_times = vec![];
@@ -293,11 +297,11 @@ impl App {
                     // space being used to start, stop, and split for now
                     Event::KeyDown {
                         keycode: Some(Keycode::Space),
-                        timestamp: event_time,
                         ..
                     } => match self.state {
                         // if timer isnt started, start it.
                         TimerState::NotStarted { .. } => {
+                            elapsed = self.timer.elapsed().as_millis();
                             total_time = Instant::now();
                             match offset {
                                 // if we are in the start offset, tell it to offset
@@ -305,20 +309,18 @@ impl App {
                                     self.state = TimerState::OffsetCountdown { amt: x };
                                 }
                                 None => {
-                                    self.state = TimerState::Running {
-                                        timestamp: event_time,
-                                    };
+                                    self.state = TimerState::Running { timestamp: elapsed };
                                 }
                             }
                             current_split = 0;
                         }
                         // if it is running, either split or end
                         TimerState::Running { timestamp: t, .. } => {
-                            active_run_times
-                                .push(u128::from(self.timer.ticks() - split_time_ticks));
-                            split_time_ticks = self.timer.ticks();
+                            elapsed = self.timer.elapsed().as_millis();
+                            active_run_times.push(elapsed - split_time_ticks);
+                            split_time_ticks = elapsed;
                             time_str = timing::ms_to_readable(
-                                (event_time - t) as u128 + before_pause.unwrap_or(0),
+                                (elapsed - t) + before_pause.unwrap_or(0),
                                 true,
                             );
                             text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
@@ -332,12 +334,9 @@ impl App {
                             if current_split + 1 > bottom_split_index {
                                 bottom_split_index += 1;
                                 recreate_on_screen = Some(2);
-                                if (event_time - t) as u128 + before_pause.unwrap_or(0)
-                                    < self.run.pb
-                                {
+                                if (elapsed - t) + before_pause.unwrap_or(0) < self.run.pb {
                                     // save run on end timer if it was a PB
-                                    self.run.pb =
-                                        (event_time - t) as u128 + before_pause.unwrap_or(0);
+                                    self.run.pb = (elapsed - t) + before_pause.unwrap_or(0);
                                     self.run.set_times(&active_run_times);
                                     active_run_times = vec![];
                                     self.run.save("run.msf");
@@ -354,17 +353,17 @@ impl App {
             // make some changes to stuff before updating screen based on what happened in past loop
             if let TimerState::Running { timestamp } = self.state {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
-                let ticks = self.timer.ticks();
-                if u128::from(ticks - timestamp) + before_pause.unwrap_or(0)
+                elapsed = self.timer.elapsed().as_millis();
+                if u128::from(elapsed - timestamp) + before_pause.unwrap_or(0)
                     < summed_times[current_split]
                 {
-                    if u128::from(ticks - split_time_ticks) < splits[current_split].time() {
+                    if u128::from(elapsed - split_time_ticks) < splits[current_split].time() {
                         color = Color::GREEN;
                     } else {
                         color = LOSING_TIME;
                     }
                 } else {
-                    if u128::from(ticks - split_time_ticks) < splits[current_split].time() {
+                    if u128::from(elapsed - split_time_ticks) < splits[current_split].time() {
                         color = MAKING_UP_TIME;
                     } else {
                         color = Color::RED;
@@ -403,10 +402,6 @@ impl App {
                 }
                 // set on mouse scroll, creates new slices based on the current top and bottom split
                 Some(2) => {
-                    top_split_index = bottom_split_index - max_splits;
-                }
-                // default if there are >0 total splits, recreates times every loop to dodge lifetime problems
-                Some(3) => {
                     top_split_index = bottom_split_index - max_splits;
                 }
                 _ => {}
