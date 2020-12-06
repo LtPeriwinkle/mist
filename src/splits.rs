@@ -102,4 +102,7 @@ impl<'a> Split<'a> {
     pub fn diff(&self) -> i128 {
 	self.diff
     }
+    pub fn diff_texture(&self) -> &Option<Texture<'a>> {
+	&self.diff_texture
+    }
 }
