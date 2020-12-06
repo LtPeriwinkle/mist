@@ -59,10 +59,10 @@ Clone this repo (`git clone https://github.com/LtPeriwinkle/mist`), enter the di
 
 ### Windows
 Follow [this guide](https://github.com/Rust-SDL2/rust-sdl2#windows-msvc) to set up your SDL dependencies. You will have to follow this process for SDL2, SDL\_Image and SDL2\_TTF,
-whose development stuff is available [here](http://libsdl.org/projects/SDL_ttf/).
+whose development stuff is available [here](http://libsdl.org/projects/SDL_ttf/) and [here](http://libsdl.org/projects/SDL_image).
 
 Clone the repository as shown in the linux section, and enter the folder. Then run `cargo build --release --locked`. The .exe will be in `.\target\release\`. Move it into
-the same folder as `assets\`, as well as all of the SDL2 and SDL2\_TTF related dll files in order to run it.
+the same folder as `assets\`, as well as all of the SDL2, SDL2\_Image and SDL2\_TTF related dll files in order to run it.
 
 ## Licensing
 Like Rust itself, mist is licensed under MIT or Apache 2.0, at your option.
