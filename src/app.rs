@@ -152,6 +152,7 @@ impl App {
         let mut time_str: String;
         // keeps track of whether timer has been paused and paused value
         let mut before_pause = 0;
+        let mut before_pause_split = 0;
         // this one should be a static but duration isnt allowed to be static apparently
         let one_sixtieth = Duration::new(0, 1_000_000_000 / 60);
         let mut current_split = 0;
@@ -188,6 +189,7 @@ impl App {
                     elapsed = self.timer.elapsed().as_millis();
                     self.state = TimerState::Running { timestamp: elapsed };
                     split_time_ticks = elapsed;
+                    before_pause_split = 0;
                     total_time = Instant::now();
                 }
             }
@@ -233,9 +235,11 @@ impl App {
                         match self.state {
                             // if timer is paused, unpause it, put the amount of time before the pause in a variable
                             // and set the state to running
-                            TimerState::Paused { time: t, .. } => {
+                            TimerState::Paused { time: t, split: s, .. } => {
                                 total_time = Instant::now();
+                                split_time_ticks = self.timer.elapsed().as_millis();
                                 before_pause = t;
+                                before_pause_split = s;
                                 self.state = TimerState::Running { timestamp: elapsed };
                             }
                             // if the timer is already running, set it to paused.
@@ -243,6 +247,7 @@ impl App {
                                 self.state = TimerState::Paused {
                                     time: total_time.elapsed().as_millis()
                                         + before_pause,
+                                    split: (elapsed - split_time_ticks) + before_pause_split,
                                     time_str: timing::ms_to_readable(
                                         total_time.elapsed().as_millis()
                                             + before_pause,
@@ -328,7 +333,7 @@ impl App {
                         // if it is running, either split or end
                         TimerState::Running { timestamp: t, .. } => {
                             elapsed = self.timer.elapsed().as_millis();
-                            active_run_times.push(elapsed - split_time_ticks);
+                            active_run_times.push((elapsed - split_time_ticks) + before_pause_split);
                             split_time_ticks = elapsed;
                             time_str = timing::ms_to_readable(
                                 (elapsed - t) + before_pause,
@@ -367,26 +372,35 @@ impl App {
             window_width = self.canvas.viewport().width();
 
             // make some changes to stuff before updating screen based on what happened in past loop
-            if let TimerState::Running { timestamp } = self.state {
+            if let TimerState::Running { .. } = self.state {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
                 elapsed = self.timer.elapsed().as_millis();
                 if current_split == 0 {
-			if elapsed - split_time_ticks < splits[current_split].time() {
+			if (elapsed - split_time_ticks) + before_pause_split < splits[current_split].time() {
 				color = Color::GREEN;
 			} else {
 				color = Color::RED;
-			}
-                } else if splits[current_split - 1].diff() < 0 {
-			if elapsed - split_time_ticks < splits[current_split].time() {
-				color = Color::GREEN;
-			} else {
-				color = LOSING_TIME;
 			}
                 } else {
-			if elapsed - split_time_ticks < splits[current_split].time() {
-				color = MAKING_UP_TIME;
+			let allowed = splits[current_split].time() as i128 - splits[current_split - 1].diff();
+			let buffer = splits[current_split - 1].diff();
+			let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
+			if buffer < 0 {
+				if time > allowed {
+					color = Color::RED;
+				} else if time < allowed && time > allowed + buffer {
+					color = LOSING_TIME;
+				} else {
+					color = Color::GREEN;
+				}
 			} else {
-				color = Color::RED;
+				if time > allowed && time < allowed + buffer {
+					color = MAKING_UP_TIME;
+				} else if time > allowed && time > allowed + buffer {
+					color = Color::RED;
+				} else {
+					color = Color::GREEN;
+				}
 			}
                 }
                 if current_split >= bottom_split_index - 1 {
