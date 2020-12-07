@@ -1,4 +1,10 @@
 # Changelog
+### 1.2.0
+- patch color calculation hopefully for the last time
+- render diff textures with '+' when behind
+- account for pausing in color calculation
+- 
+
 ### 1.1.3
 - add split time diff rendering
 	* currently no way to handle horizontal resize
