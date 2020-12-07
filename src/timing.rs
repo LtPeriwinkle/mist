@@ -58,27 +58,27 @@ pub fn diff_text(mut ms: i128) -> String {
 				if negative {
 					return format!("-{}:{}:{}.{}", hr, min, full_s, tenths);
 				} else {
-					return format!("{}:{}:{}.{}", hr, min, full_s, tenths);
+					return format!("+{}:{}:{}.{}", hr, min, full_s, tenths);
 				}
 			} else {
     				if negative {
 					return format!("-{}:{}.{}", min, full_s, tenths);
     				} else {
-					return format!("{}:{}.{}", min, full_s, tenths);
+					return format!("+{}:{}.{}", min, full_s, tenths);
     				}
 			}
 		} else {
     			if negative {
 				return format!("-{}.{}", full_s, tenths);
     			} else {
-				return format!("{}.{}", full_s, tenths);
+				return format!("+{}.{}", full_s, tenths);
     			}
 		}
 	} else {
     		if negative {
 			return format!("-0.{}", tenths);
     		} else {
-			return format!("0.{}", tenths);
+			return format!("+0.{}", tenths);
     		}
 	}
 }
