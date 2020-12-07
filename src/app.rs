@@ -275,6 +275,12 @@ impl App {
                                 };
                             }
                         }
+                        index = 0;
+                        while index < len {
+				splits[index].set_cur(None);
+				splits[index].set_diff(0, None);
+				index += 1;
+                        }
                     }
 
                     // handle vertical window resize by changing number of splits
