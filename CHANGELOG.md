@@ -1,4 +1,9 @@
 # Changelog
+### 1.2.2
+- fix highlighting the current split when scrolling
+- display the proper time when the run ends
+- condense some match patterns
+
 ### 1.2.1
 - properly calculate diffs
 - tweak color values
