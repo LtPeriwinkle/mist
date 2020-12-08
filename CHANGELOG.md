@@ -1,9 +1,13 @@
 # Changelog
+### 1.2.1
+- properly calculate diffs
+- tweak color values
+
 ### 1.2.0
 - patch color calculation hopefully for the last time
 - render diff textures with '+' when behind
 - account for pausing in color calculation
-- 
+- properly clear old textures on timer reset
 
 ### 1.1.3
 - add split time diff rendering
