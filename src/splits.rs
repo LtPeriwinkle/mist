@@ -12,7 +12,7 @@ pub struct Run {
     pub game_title: String,
     pub category: String,
     pub offset: Option<u128>,
-    pub pb: u128,
+    pb: u128,
     pub splits: Vec<String>,
     best_times: Vec<u128>,
 }
@@ -50,6 +50,12 @@ impl Run {
     }
     pub fn get_times(&self) -> &Vec<u128> {
         &self.best_times
+    }
+    pub fn pb(&self) -> u128 {
+	self.pb
+    }
+    pub fn set_pb(&mut self, pb: u128) {
+	self.pb = pb;
     }
 }
 

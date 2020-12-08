@@ -356,9 +356,9 @@ impl App {
                             if current_split + 1 > bottom_split_index {
                                 bottom_split_index += 1;
                                 recreate_on_screen = Some(2);
-                                if (elapsed - t) + before_pause < self.run.pb {
+                                if (elapsed - t) + before_pause < self.run.pb() {
                                     // save run on end timer if it was a PB
-                                    self.run.pb = (elapsed - t) + before_pause;
+                                    self.run.set_pb((elapsed - t) + before_pause);
                                     self.run.set_times(&active_run_times);
                                     active_run_times = vec![];
                                     self.run.save("run.msf");
