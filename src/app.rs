@@ -342,7 +342,8 @@ impl App {
                             text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
                             splits[current_split].set_cur(Some(texture));
-                            let diff = active_run_times[current_split] as i128 - splits[current_split].time() as i128;
+                            let sum = timing::split_time_sum(&active_run_times)[current_split];
+                            let diff = sum as i128 - summed_times[current_split] as i128;
                             time_str = timing::diff_text(diff);
                             text_surface = font.render(&time_str).blended(color).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
