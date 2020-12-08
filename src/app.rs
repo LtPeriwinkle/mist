@@ -335,6 +335,12 @@ impl App {
                             elapsed = self.timer.elapsed().as_millis();
                             active_run_times.push((elapsed - split_time_ticks) + before_pause_split);
                             split_time_ticks = elapsed;
+                            let sum = timing::split_time_sum(&active_run_times)[current_split];
+                            let diff = sum as i128 - summed_times[current_split] as i128;
+                            time_str = timing::diff_text(diff);
+                            text_surface = font.render(&time_str).blended(color).unwrap();
+                            texture = creator.create_texture_from_surface(&text_surface).unwrap();
+                            splits[current_split].set_diff(diff, Some(texture));
                             time_str = timing::ms_to_readable(
                                 (elapsed - t) + before_pause,
                                 true,
@@ -342,12 +348,6 @@ impl App {
                             text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
                             splits[current_split].set_cur(Some(texture));
-                            let sum = timing::split_time_sum(&active_run_times)[current_split];
-                            let diff = sum as i128 - summed_times[current_split] as i128;
-                            time_str = timing::diff_text(diff);
-                            text_surface = font.render(&time_str).blended(color).unwrap();
-                            texture = creator.create_texture_from_surface(&text_surface).unwrap();
-                            splits[current_split].set_diff(diff, Some(texture));
                             if current_split < splits.len() - 1 {
                                 current_split += 1;
                             } else {
@@ -475,13 +475,9 @@ impl App {
                     false,
                 );
             }
-            TimerState::Paused {
-                time_str: display, ..
-            } => {
-                time = display.to_string();
-            }
             TimerState::Finished { time_str: string }
-            | TimerState::NotStarted { time_str: string } => {
+            | TimerState::NotStarted { time_str: string }
+            | TimerState::Paused { time_str: string }=> {
                 time = string.to_owned();
             }
             TimerState::OffsetCountdown { amt: amount } => {
