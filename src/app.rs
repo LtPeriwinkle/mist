@@ -404,10 +404,10 @@ impl App {
 				}
 			}
                 }
-                if current_split >= bottom_split_index - 1 {
-                    cur = max_splits - 1;
+                if current_split >= top_split_index && current_split <= bottom_split_index {
+			cur = current_split - top_split_index;
                 } else {
-                    cur = current_split;
+			cur = usize::MAX;
                 }
             } else {
                 cur = usize::MAX;
@@ -477,7 +477,7 @@ impl App {
             }
             TimerState::Finished { time_str: string }
             | TimerState::NotStarted { time_str: string }
-            | TimerState::Paused { time_str: string }=> {
+            | TimerState::Paused { time_str: string, .. }=> {
                 time = string.to_owned();
             }
             TimerState::OffsetCountdown { amt: amount } => {
