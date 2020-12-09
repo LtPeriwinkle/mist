@@ -99,10 +99,10 @@ impl App {
         }
         // get ms split times then convert them to pretty, summed times
         let split_times_ms: Vec<u128> = self.run.get_times().iter().cloned().collect();
-        let summed_times = timing::split_time_sum(&split_times_ms);
+        let mut summed_times = timing::split_time_sum(&split_times_ms);
         let split_times_raw: Vec<String> = summed_times
             .iter()
-            .map(|val| timing::ms_to_readable(*val, true))
+            .map(|val| timing::split_time_text(*val))
             .collect();
         // initialize variables that are used in the loop for replacing timer texture
         let mut text_surface: Surface;
@@ -174,6 +174,7 @@ impl App {
         let mut active_run_times: Vec<u128> = vec![];
 
         let mut elapsed: u128;
+        let mut save = false;
         self.canvas.present();
 
         // main loop
@@ -194,6 +195,12 @@ impl App {
                     before_pause_split = 0;
                     total_time = Instant::now();
                 }
+            }
+            if save {
+		save = false;
+            	if save_check() {
+			self.run.save(&path);
+            	}
             }
 
             // repeat stuff in here for every event that occured between frames
@@ -344,9 +351,8 @@ impl App {
                             text_surface = font.render(&time_str).blended(color).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
                             splits[current_split].set_diff(diff, Some(texture));
-                            time_str = timing::ms_to_readable(
+                            time_str = timing::split_time_text(
                                 (elapsed - t) + before_pause,
-                                true,
                             );
                             text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
@@ -354,13 +360,22 @@ impl App {
                             if current_split < splits.len() - 1 {
                                 current_split += 1;
                             } else {
-                                self.state = TimerState::Finished { time_str };
+                                self.state = TimerState::Finished { time_str: timing::ms_to_readable((elapsed - t) + before_pause, true) };
                                 if (elapsed - t) + before_pause < self.run.pb() {
-                                    if save_check() {
-					self.run.set_pb((elapsed - t) + before_pause);
-					self.run.set_times(&active_run_times);
-					self.run.save(&path);
+                                    let mut index = 0;
+                                    summed_times = timing::split_time_sum(&active_run_times);
+                                    let split_times_raw: Vec<String> = summed_times.iter().map(|val| timing::split_time_text(*val)).collect();
+                                    while index < len {
+                                    	text_surface = font.render(&split_times_raw[index]).blended(Color::WHITE).unwrap();
+                                    	texture = creator.create_texture_from_surface(text_surface).unwrap();
+                                    	splits[index].set_pb(texture);
+					splits[index].set_cur(None);
+					splits[index].set_time(active_run_times[index]);
+					index += 1;
                                     }
+                                    save = true;
+				    self.run.set_pb((elapsed - t) + before_pause);
+				    self.run.set_times(&active_run_times);
                                     active_run_times = vec![];
                                 }
                             }
