@@ -28,7 +28,8 @@ pub fn save_check() -> bool {
 // i set up a persistent file to remember what was last opened
 pub fn open_splits() -> String {
     	let cwd = env::current_dir().unwrap();
-    	let dir = cwd.to_str().unwrap();
+    	let mut dir = cwd.to_string_lossy();
+    	dir.to_mut().push_str("/");
     	println!("{:?}", cwd);
     	let mut path: Option<String> = None;
     	while path == None {
