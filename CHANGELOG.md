@@ -1,4 +1,10 @@
 # Changelog
+### 1.2.5
+- ask to save after rendering last frame (looks much nicer this way)
+- on pb, properly update current and pb times and textures of Splits in memory
+- only actually save times to chosen file if user agrees to
+- fix zero padding, remove extraneous decimals on split times
+
 ### 1.2.4
 - require split file input path
 - patch issue where all splits would happen instantly if you hold down split key
