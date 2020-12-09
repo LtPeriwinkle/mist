@@ -315,6 +315,7 @@ impl App {
                     // space being used to start, stop, and split for now
                     Event::KeyDown {
                         keycode: Some(Keycode::Space),
+                        repeat: false,
                         ..
                     } => match self.state {
                         // if timer isnt started, start it.
