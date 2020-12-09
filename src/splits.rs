@@ -90,11 +90,17 @@ impl<'a> Split<'a> {
     pub fn time(&self) -> u128 {
         self.pb_time
     }
+    pub fn set_time(&mut self, time: u128) {
+	self.pb_time = time;
+    }
     pub fn name(&self) -> &Texture {
         &self.name_texture
     }
     pub fn pb(&self) -> &Texture {
         &self.pb_texture
+    }
+    pub fn set_pb(&mut self, tex: Texture<'a>) {
+	self.pb_texture = tex;
     }
     pub fn cur(&self) -> &Option<Texture> {
         &self.current_texture
