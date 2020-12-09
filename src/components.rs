@@ -1,5 +1,7 @@
+// miscellaneous stuff that doesnt really fit anywhere else
 use sdl2::pixels::Color;
 use tinyfiledialogs as tfd;
+
 pub const SPLITS_ON_SCREEN: usize = 8; // max splits allowed on screen
 pub static MAKING_UP_TIME: Color = Color::RGB(255, 90, 90); // color used when behind but gaining
 pub static LOSING_TIME: Color = Color::RGB(135, 255, 135); // color used when ahead but losing

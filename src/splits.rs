@@ -1,3 +1,4 @@
+// stuff related to reding runs from files and manipulating them
 use ron::de::from_reader;
 use ron::ser::{to_string_pretty, PrettyConfig};
 use sdl2::render::Texture;

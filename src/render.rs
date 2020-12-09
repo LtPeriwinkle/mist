@@ -1,4 +1,4 @@
-//Functions related to rendering information to the SDL window
+// Functions for putting stuff into the correct places on the sdl buffer
 
 use crate::splits::Split;
 use sdl2::pixels::Color;

@@ -1,3 +1,4 @@
+// app struct and its functions, one of which is the application mainloop
 use sdl2::event::{Event, WindowEvent};
 use sdl2::image::LoadSurface;
 use sdl2::keyboard::Keycode;
