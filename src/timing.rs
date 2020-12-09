@@ -56,22 +56,22 @@ pub fn diff_text(mut ms: i128) -> String {
 				let hr = min / 60;
 				min -= hr * 60;
 				if negative {
-					return format!("-{}:{}:{:02}.{:02}", hr, min, full_s, tenths);
+					return format!("-{}:{:02}:{:02}.{}", hr, min, full_s, tenths);
 				} else {
-					return format!("+{}:{}:{:02}.{:02}", hr, min, full_s, tenths);
+					return format!("+{}:{:02}:{:02}.{}", hr, min, full_s, tenths);
 				}
 			} else {
     				if negative {
-					return format!("-{}:{:02}.{:02}", min, full_s, tenths);
+					return format!("-{}:{:02}.{}", min, full_s, tenths);
     				} else {
-					return format!("+{}:{:02}.{:02}", min, full_s, tenths);
+					return format!("+{}:{:02}.{}", min, full_s, tenths);
     				}
 			}
 		} else {
     			if negative {
-				return format!("-{}.{:02}", full_s, tenths);
+				return format!("-{}.{}", full_s, tenths);
     			} else {
-				return format!("+{}.{:02}", full_s, tenths);
+				return format!("+{}.{}", full_s, tenths);
     			}
 		}
 	} else {
@@ -80,6 +80,30 @@ pub fn diff_text(mut ms: i128) -> String {
     		} else {
 			return format!("+0.{}", tenths);
     		}
+	}
+}
+
+pub fn split_time_text(ms: u128) -> String {	
+	let mut tenths = ms / 100;
+	let mut full_s: u128;
+	if tenths > 10 {
+		full_s = tenths / 10;
+		tenths -= full_s * 10;
+		if full_s >= 60 {
+			let mut min = full_s / 60;
+			full_s -= min * 60;
+			if min >= 60 {
+				let hr = min / 60;
+				min -= hr * 60;
+				return format!("{}:{:02}:{:02}.{}", hr, min, full_s, tenths);
+			} else {
+				return format!("{}:{:02}.{}", min, full_s, tenths);
+			}
+		} else {
+			return format!("{}.{}", full_s, tenths);
+		}
+	} else {
+		return format!("0.{}", tenths);
 	}
 }
 
