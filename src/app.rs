@@ -353,12 +353,12 @@ impl App {
                             } else {
                                 self.state = TimerState::Finished { time_str };
                                 if (elapsed - t) + before_pause < self.run.pb() {
-                                    save_run_check();
-                                    // save run on end timer if it was a PB
-                                    self.run.set_pb((elapsed - t) + before_pause);
-                                    self.run.set_times(&active_run_times);
+                                    if save_check() {
+					self.run.set_pb((elapsed - t) + before_pause);
+					self.run.set_times(&active_run_times);
+					self.run.save("run.msf");
+                                    }
                                     active_run_times = vec![];
-                                    //self.run.save("run.msf");
                                 }
                             }
                             if current_split + 1 > bottom_split_index {
