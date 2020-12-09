@@ -61,6 +61,7 @@ impl App {
     }
 
     pub fn run(&mut self) {
+        let path = open_splits();
         // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
         let timer_font = self
@@ -84,7 +85,7 @@ impl App {
             .unwrap();
 
         // get first vec of split name textures from file
-        self.run = Run::from_file("run.msf");
+        self.run = Run::from_file(&path);
         let split_names = &self.run.splits;
         let offset = self.run.offset;
         // if there is an offset, display it properly
@@ -357,7 +358,7 @@ impl App {
                                     if save_check() {
 					self.run.set_pb((elapsed - t) + before_pause);
 					self.run.set_times(&active_run_times);
-					self.run.save("run.msf");
+					self.run.save(&path);
                                     }
                                     active_run_times = vec![];
                                 }

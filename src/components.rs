@@ -1,5 +1,6 @@
 // miscellaneous stuff that doesnt really fit anywhere else
 use sdl2::pixels::Color;
+use std::env;
 use tinyfiledialogs as tfd;
 
 pub const SPLITS_ON_SCREEN: usize = 8; // max splits allowed on screen
@@ -21,4 +22,17 @@ pub fn save_check() -> bool {
 		tfd::YesNo::No => {return false;}
 		tfd::YesNo::Yes => {return true;}
 	}
+}
+
+// gross way to make sure a split file is chosein for now until
+// i set up a persistent file to remember what was last opened
+pub fn open_splits() -> String {
+    	let cwd = env::current_dir().unwrap();
+    	let dir = cwd.to_str().unwrap();
+    	println!("{:?}", cwd);
+    	let mut path: Option<String> = None;
+    	while path == None {
+		path = tfd::open_file_dialog("Open split file", &dir, Some((&[".msf"], "")));
+    	}
+    	return path.unwrap();
 }
