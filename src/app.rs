@@ -352,17 +352,18 @@ impl App {
                                 current_split += 1;
                             } else {
                                 self.state = TimerState::Finished { time_str };
-                            }
-                            if current_split + 1 > bottom_split_index {
-                                bottom_split_index += 1;
-                                recreate_on_screen = Some(2);
                                 if (elapsed - t) + before_pause < self.run.pb() {
+                                    save_run_check();
                                     // save run on end timer if it was a PB
                                     self.run.set_pb((elapsed - t) + before_pause);
                                     self.run.set_times(&active_run_times);
                                     active_run_times = vec![];
-                                    self.run.save("run.msf");
+                                    //self.run.save("run.msf");
                                 }
+                            }
+                            if current_split + 1 > bottom_split_index {
+                                bottom_split_index += 1;
+                                recreate_on_screen = Some(2);
                             }
                         }
                         _ => {}
