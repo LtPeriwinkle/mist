@@ -1,4 +1,8 @@
 # Changelog
+### 1.2.4
+- require split file input path
+- patch issue where all splits would happen instantly if you hold down split key
+
 ### 1.2.3
 - add tinyfiledialog dependency
 - add yes/no save splits dialog for writing to msf file
