@@ -1,4 +1,9 @@
 # Changelog
+### 1.2.3
+- add tinyfiledialog dependency
+- add yes/no save splits dialog for writing to msf file
+- save run on run end not on splits scroll like a *fool*
+
 ### 1.2.2
 - fix highlighting the current split when scrolling
 - display the proper time when the run ends
