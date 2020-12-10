@@ -275,6 +275,8 @@ impl App {
                         ..
                     } => {
                         active_run_times = vec![];
+                        bottom_split_index = max_splits;
+                        recreate_on_screen = Some(2);
                         match offset {
                             // if there is an offset, reset the timer to that, if not, reset timer to 0
                             Some(x) => {
