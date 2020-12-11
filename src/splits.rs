@@ -15,7 +15,8 @@ pub struct Run {
     pub offset: Option<u128>,
     pb: u128,
     pub splits: Vec<String>,
-    best_times: Vec<u128>,
+    pb_times: Vec<u128>,
+    gold_times: Vec<u128>,
 }
 
 impl Run {
@@ -33,7 +34,8 @@ impl Run {
             offset: None,
             pb: 0,
             splits: Vec::new(),
-            best_times: Vec::new(),
+            pb_times: Vec::new(),
+            gold_times: Vec::new(),
         }
     }
     // save a run struct to a file (also will get error handling eventually)
@@ -47,10 +49,10 @@ impl Run {
         file.write(&string.as_bytes()).unwrap();
     }
     pub fn set_times(&mut self, splits: &Vec<u128>) {
-        self.best_times = splits.to_vec();
+        self.pb_times = splits.to_vec();
     }
     pub fn get_times(&self) -> &Vec<u128> {
-        &self.best_times
+        &self.pb_times
     }
     pub fn pb(&self) -> u128 {
 	self.pb
@@ -62,6 +64,7 @@ impl Run {
 
 pub struct Split<'a> {
     pb_time: u128,
+    gold_time: u128,
     diff: i128,
     diff_texture: Option<Texture<'a>>,
     name_texture: Texture<'a>,
@@ -72,6 +75,7 @@ pub struct Split<'a> {
 impl<'a> Split<'a> {
     pub fn new(
         pb_time: u128,
+        gold_time: u128,
         diff: i128,
         diff_texture: Option<Texture<'a>>,
         name_texture: Texture<'a>,
@@ -117,5 +121,11 @@ impl<'a> Split<'a> {
     }
     pub fn diff_texture(&self) -> &Option<Texture<'a>> {
 	&self.diff_texture
+    }
+    pub fn gold(&self) -> u128 {
+	self.gold_time
+    }
+    pub fn set_gold(&mut self, gold: u128) {
+	self.gold_time = gold;
     }
 }
