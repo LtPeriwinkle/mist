@@ -246,7 +246,7 @@ impl App {
                             // and set the state to running
                             TimerState::Paused { time: t, split: s, .. } => {
                                 total_time = Instant::now();
-                                split_time_ticks = self.timer.elapsed().as_millis();
+                                split_time_ticks = elapsed;
                                 before_pause = t;
                                 before_pause_split = s;
                                 self.state = TimerState::Running { timestamp: elapsed };
