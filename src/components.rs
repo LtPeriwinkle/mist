@@ -30,7 +30,6 @@ pub fn open_splits() -> String {
     	let cwd = env::current_dir().unwrap();
     	let mut dir = cwd.to_string_lossy();
     	dir.to_mut().push_str("/");
-    	println!("{:?}", cwd);
     	let mut path: Option<String> = None;
     	while path == None {
 		path = tfd::open_file_dialog("Open split file", &dir, Some((&[".msf"], "")));
