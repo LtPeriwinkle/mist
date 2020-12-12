@@ -10,10 +10,10 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use crate::components::*;
+use crate::config::{self, Config};
 use crate::render;
 use crate::splits::{self, Run, Split};
 use crate::timing;
-use crate::config::{self, Config};
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
@@ -24,7 +24,7 @@ pub struct App {
     ttf: sdl2::ttf::Sdl2TtfContext,
     state: TimerState,
     run: splits::Run,
-    config: config::Config
+    config: config::Config,
 }
 
 impl App {
@@ -49,9 +49,7 @@ impl App {
             .expect("could not initialize SDL event handler");
         let timer = Instant::now();
         let cfg = Config::from_file(None);
-        unsafe {
-
-        }
+        unsafe {}
         App {
             context,
             ev_pump,
@@ -62,7 +60,7 @@ impl App {
                 time_str: "".to_string(),
             },
             run: Run::new(),
-            config: Config::from_file(None)
+            config: Config::from_file(None),
         }
     }
 
@@ -399,12 +397,12 @@ impl App {
                             if current_split < splits.len() - 1 {
                                 current_split += 1;
                             } else {
-	                            let mut index = 0;
-        	                    while index < len {
-					if splits[index].gold() < self.run.gold_time(index) {
-						self.run.set_gold_time(index, splits[index].gold());
-					}
-                           	 }
+                                let mut index = 0;
+                                while index < len {
+                                    if splits[index].gold() < self.run.gold_time(index) {
+                                        self.run.set_gold_time(index, splits[index].gold());
+                                    }
+                                }
                                 self.state = TimerState::Finished {
                                     time_str: timing::ms_to_readable(
                                         (elapsed - t) + before_pause,

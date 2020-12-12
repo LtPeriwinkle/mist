@@ -49,8 +49,6 @@ pub fn save_check() -> bool {
     }
 }
 
-// gross way to make sure a split file is chosein for now until
-// i set up a persistent file to remember what was last opened
 pub fn open_splits() -> Option<String> {
     let cwd = env::current_dir().unwrap();
     let mut dir = cwd.to_string_lossy();

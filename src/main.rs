@@ -6,10 +6,10 @@ extern crate sdl2;
 
 mod app;
 mod components;
+mod config;
 mod render;
 mod splits;
 mod timing;
-mod config;
 use app::App;
 
 fn main() {
