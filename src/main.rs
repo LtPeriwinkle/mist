@@ -9,6 +9,7 @@ mod components;
 mod render;
 mod splits;
 mod timing;
+mod config;
 use app::App;
 
 fn main() {
