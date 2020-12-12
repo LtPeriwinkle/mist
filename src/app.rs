@@ -48,8 +48,7 @@ impl App {
             .event_pump()
             .expect("could not initialize SDL event handler");
         let timer = Instant::now();
-        let cfg = Config::from_file(None);
-        unsafe {}
+        let config = Config::from_file(None);
         App {
             context,
             ev_pump,
@@ -60,33 +59,37 @@ impl App {
                 time_str: "".to_string(),
             },
             run: Run::new(),
-            config: Config::from_file(None),
+            config,
         }
     }
 
     pub fn run(&mut self) {
         let mut path: Option<String>;
-        // i feel like this code is ass but it does work so
-        loop {
-            path = open_splits();
-            match path {
-                None => {
-                    return;
-                }
-                Some(ref p) => match Run::from_file(&p) {
-                    Some(x) => {
-                        self.run = x;
-                        break;
-                    }
+        if let Some(x) = self.config.file() {
+            path = Some(x.to_owned());
+        } else {
+            loop {
+                path = open_splits();
+                match path {
                     None => {
-                        if !bad_file_dialog("Split file parse failed. Try another file?") {
-                            return;
-                        }
+                        return;
                     }
-                },
+                    Some(ref p) => match Run::from_file(&p) {
+                        Some(x) => {
+                            self.run = x;
+                            break;
+                        }
+                        None => {
+                            if !bad_file_dialog("Split file parse failed. Try another file?") {
+                                return;
+                            }
+                        }
+                    },
+                }
             }
         }
         let path = path.unwrap();
+        self.config.set_file(&path);
         // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
         let timer_font = self
