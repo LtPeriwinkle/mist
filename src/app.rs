@@ -373,6 +373,9 @@ impl App {
                             let sum = timing::split_time_sum(&active_run_times)[current_split];
                             let diff = sum as i128 - summed_times[current_split] as i128;
                             time_str = timing::diff_text(diff);
+                            if active_run_times[current_split] < splits[current_split].gold() {
+				color = GOLD;
+                            }
                             text_surface = font.render(&time_str).blended(color).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
                             splits[current_split].set_diff(diff, Some(texture));
