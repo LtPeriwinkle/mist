@@ -396,6 +396,12 @@ impl App {
                             text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
                             splits[current_split].set_cur(Some(texture));
+                            let mut index = 0;
+                            while index < len {
+				if splits[index].gold() < self.run.gold_time(index) {
+					self.run.set_gold_time(index, splits[index].gold());
+				}
+                            }
                             if current_split < splits.len() - 1 {
                                 current_split += 1;
                             } else {
@@ -406,7 +412,7 @@ impl App {
                                     ),
                                 };
                                 if (elapsed - t) + before_pause < self.run.pb() {
-                                    let mut index = 0;
+                                    index = 0;
                                     summed_times = timing::split_time_sum(&active_run_times);
                                     let split_times_raw: Vec<String> = summed_times
                                         .iter()
@@ -423,7 +429,6 @@ impl App {
                                         splits[index].set_pb(texture);
                                         splits[index].set_cur(None);
                                         splits[index].set_time(active_run_times[index]);
-                                        index += 1;
                                     }
                                     save = true;
                                     self.run.set_pb((elapsed - t) + before_pause);

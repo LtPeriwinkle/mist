@@ -66,6 +66,9 @@ impl Run {
     pub fn gold_time(&self, index: usize) -> u128 {
         self.gold_times[index]
     }
+    pub fn set_gold_time(&mut self, index: usize, time: u128) {
+        self.gold_times[index] = time;
+    }
 }
 
 pub struct Split<'a> {
