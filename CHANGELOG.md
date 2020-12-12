@@ -1,5 +1,9 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep forgetting
+### 1.2.8
+- first crates.io published working version
+- had to increment version cause i'm stupid
+
 ### 1.2.7
 - hopefully patch windows file filtering
 - add golds for real
