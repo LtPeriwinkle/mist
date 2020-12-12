@@ -6,8 +6,6 @@ use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Write;
 
-use components::bad_file_dialog;
-
 // The struct that contains data about a speedrun.
 // More fields will be added for other split time comparisons, like average and worst times.
 #[derive(Debug, Deserialize, Serialize)]
@@ -22,11 +20,18 @@ pub struct Run {
 }
 
 impl Run {
-    // parse a RON file into a run. Real error handling will come... eventually
-    pub fn from_file(filename: &str) -> Self {
-        let file = OpenOptions::new().read(true).open(filename).unwrap_or_else(|err| {bad_file_dialog(format!("{}", err));});
-        let run: Self = from_reader(&file).unwrap();
-        return run;
+    // parse a RON file into a run. better error handling will come... eventually
+    pub fn from_file(filename: &str) -> Option<Self> {
+        let file = OpenOptions::new().read(true).open(filename).expect("file reading failed");
+        let run = from_reader(&file);
+        match run {
+		Ok(x) => {
+			return Some(x);
+		}
+		Err(_) => {
+			return None;
+		}
+        }
     }
     // create an empty run with default values. could implement `Default` but meh
     pub fn new() -> Self {
@@ -61,6 +66,9 @@ impl Run {
     }
     pub fn set_pb(&mut self, pb: u128) {
 	self.pb = pb;
+    }
+    pub fn gold_time(&self, index: usize) -> u128 {
+	self.gold_times[index]
     }
 }
 
