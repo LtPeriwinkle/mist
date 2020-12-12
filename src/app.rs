@@ -61,7 +61,7 @@ impl App {
     }
 
     pub fn run(&mut self) {
-        let mut path: String;
+        let mut path: Option<String>;
         // i feel like this code is ass but it does work so
         loop {
             path = open_splits();
@@ -69,7 +69,7 @@ impl App {
                 None => {
                     return;
                 }
-                Some(p) => match Run::from_file(&path) {
+                Some(ref p) => match Run::from_file(&p) {
                     Some(x) => {
                         self.run = x;
                         break;
@@ -82,6 +82,7 @@ impl App {
                 },
             }
         }
+        let path = path.unwrap();
         // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
         let timer_font = self
