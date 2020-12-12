@@ -61,7 +61,22 @@ impl App {
     }
 
     pub fn run(&mut self) {
-        let path = open_splits();
+        let mut path: String;
+        // i feel like this code is ass but it does work so
+        loop {
+		path = open_splits();
+		match Run::from_file(&path) {
+			Some(x) => {
+    				self.run = x;
+    				break;
+			}
+			None => {
+    				if !bad_file_dialog("Split file parse failed. Try another file?") {
+					return
+    				}
+			}
+		}
+        }
         // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
         let timer_font = self
@@ -85,7 +100,6 @@ impl App {
             .unwrap();
 
         // get first vec of split name textures from file
-        self.run = Run::from_file(&path);
         let split_names = &self.run.splits;
         let offset = self.run.offset;
         // if there is an offset, display it properly
@@ -127,7 +141,7 @@ impl App {
             let pb_texture = creator
                 .create_texture_from_surface(&pb)
                 .expect("split time texture failed");
-            let split = Split::new(split_times_ms[index], 0, None, texture, pb_texture, None);
+            let split = Split::new(split_times_ms[index], self.run.gold_time(index), 0, None, texture, pb_texture, None);
             splits.push(split);
             index += 1;
         }
