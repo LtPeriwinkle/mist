@@ -396,15 +396,15 @@ impl App {
                             text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
                             splits[current_split].set_cur(Some(texture));
-                            let mut index = 0;
-                            while index < len {
-				if splits[index].gold() < self.run.gold_time(index) {
-					self.run.set_gold_time(index, splits[index].gold());
-				}
-                            }
                             if current_split < splits.len() - 1 {
                                 current_split += 1;
                             } else {
+	                            let mut index = 0;
+        	                    while index < len {
+					if splits[index].gold() < self.run.gold_time(index) {
+						self.run.set_gold_time(index, splits[index].gold());
+					}
+                           	 }
                                 self.state = TimerState::Finished {
                                     time_str: timing::ms_to_readable(
                                         (elapsed - t) + before_pause,
