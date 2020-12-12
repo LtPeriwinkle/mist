@@ -67,6 +67,16 @@ impl App {
         let mut path: Option<String>;
         if let Some(x) = self.config.file() {
             path = Some(x.to_owned());
+            match Run::from_file(&x) {
+		Some(r) => {
+			self.run = r;
+		}
+		None => {
+			if !bad_file_dialog("Split file parse failed. Try another file?") {
+				return;
+			}
+		}
+            }
         } else {
             loop {
                 path = open_splits();
@@ -544,6 +554,7 @@ impl App {
                 );
             }
         }
+        self.config.save(None);
     }
     // updates time string based on timer state, basically leaves it the same if timer is paused
     fn update_time(&self, before_pause: u128, total_time: Instant) -> String {
