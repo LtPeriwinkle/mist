@@ -38,8 +38,16 @@ These features are *highly unlikely* be implemented, in the spirit of minimalism
 * Internet time sync
 * SRC/SRL/splits.io integration
 
+# Installation
+
+## crates.io
+mist is available on crates.io as `mist`. You should be able to just run `mist` in the command line if you do this.
+```
+cargo install mist
+```
+
 ## Compiling from source
-Currently the only way to try this out is to compile it from source. To do this you need rust installed, and an installation guide
+Probably the best way to try this out is to compile it from source. To do this you need rust installed, and an installation guide
 for that can be found [here](https://www.rust-lang.org/tools/install).
 ### Linux
 Requirements are SDL2, SDL2\_Image and SDL2\_TTF shared libraries, as well as development libraries. On ubuntu:
@@ -54,14 +62,14 @@ On arch:
 sudo pacman -S sdl2 sdl2_ttf sdl2_image
 ```
 
-Clone this repo (`git clone https://github.com/LtPeriwinkle/mist`), enter the directory, and run `cargo build --release --locked`. The resulting binary will be in
+Clone this repo (`git clone https://github.com/LtPeriwinkle/mist`), enter the directory, and run `cargo build --release`. The resulting binary will be in
 `./target/release/`. When you run it, make sure it is in the same directory as `assets/` or else it won't work.
 
 ### Windows
 Follow [this guide](https://github.com/Rust-SDL2/rust-sdl2#windows-msvc) to set up your SDL dependencies. You will have to follow this process for SDL2, SDL\_Image and SDL2\_TTF,
 whose development stuff is available [here](http://libsdl.org/projects/SDL_ttf/) and [here](http://libsdl.org/projects/SDL_image).
 
-Clone the repository as shown in the linux section, and enter the folder. Then run `cargo build --release --locked`. The .exe will be in `.\target\release\`. Move it into
+Clone the repository as shown in the linux section, and enter the folder. Then run `cargo build --release`. The .exe will be in `.\target\release\`. Move it into
 the same folder as `assets\`, as well as all of the SDL2, SDL2\_Image and SDL2\_TTF related dll files in order to run it.
 
 ## Licensing
