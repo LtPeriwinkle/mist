@@ -1,4 +1,10 @@
 # Changelog
+sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep forgetting
+### 1.2.6
+- reset to top of splits on timer reset
+- add preliminary golds suppord
+- add proper error handling to msf file parsing
+
 ### 1.2.5
 - ask to save after rendering last frame (looks much nicer this way)
 - on pb, properly update current and pb times and textures of Splits in memory
