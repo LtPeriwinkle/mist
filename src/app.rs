@@ -13,7 +13,7 @@ use crate::components::*;
 use crate::render;
 use crate::splits::{self, Run, Split};
 use crate::timing;
-
+use crate::config::{self, Config};
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
@@ -24,6 +24,7 @@ pub struct App {
     ttf: sdl2::ttf::Sdl2TtfContext,
     state: TimerState,
     run: splits::Run,
+    config: config::Config
 }
 
 impl App {
@@ -47,6 +48,10 @@ impl App {
             .event_pump()
             .expect("could not initialize SDL event handler");
         let timer = Instant::now();
+        let cfg = Config::from_file(None);
+        unsafe {
+
+        }
         App {
             context,
             ev_pump,
@@ -57,6 +62,7 @@ impl App {
                 time_str: "".to_string(),
             },
             run: Run::new(),
+            config: Config::from_file(None)
         }
     }
 
@@ -381,6 +387,7 @@ impl App {
                             time_str = timing::diff_text(diff);
                             if active_run_times[current_split] < splits[current_split].gold() {
                                 color = GOLD;
+                                splits[current_split].set_gold(active_run_times[current_split]);
                             }
                             text_surface = font.render(&time_str).blended(color).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
@@ -444,9 +451,9 @@ impl App {
                     if (elapsed - split_time_ticks) + before_pause_split
                         < splits[current_split].time()
                     {
-                        color = Color::GREEN;
+                        color = AHEAD;
                     } else {
-                        color = Color::RED;
+                        color = BEHIND;
                     }
                 } else {
                     let allowed =
@@ -455,19 +462,19 @@ impl App {
                     let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
                     if buffer < 0 {
                         if time > allowed {
-                            color = Color::RED;
+                            color = BEHIND;
                         } else if time < allowed && time > allowed + buffer {
                             color = LOSING_TIME;
                         } else {
-                            color = Color::GREEN;
+                            color = AHEAD;
                         }
                     } else {
                         if time > allowed && time < allowed + buffer {
                             color = MAKING_UP_TIME;
                         } else if time > allowed && time > allowed + buffer {
-                            color = Color::RED;
+                            color = BEHIND;
                         } else {
-                            color = Color::GREEN;
+                            color = AHEAD;
                         }
                     }
                 }
