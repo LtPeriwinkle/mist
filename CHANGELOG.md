@@ -1,5 +1,9 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep forgetting
+### 1.2.7
+- hopefully patch windows file filtering
+- add golds for real
+
 ### 1.2.6
 - reset to top of splits on timer reset
 - add preliminary golds suppord
