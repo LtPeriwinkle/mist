@@ -31,6 +31,12 @@ impl Config {
         let cfg: Self = from_reader(&file).unwrap_or(Config::default());
         return cfg;
     }
+    pub fn file(&self) -> Option<&String> {
+	self.def_file.as_ref()
+    }
+    pub fn set_file(&mut self, file: &String) {
+	self.def_file = Some(file.to_owned());
+    }
 }
 
 impl Default for Config {
