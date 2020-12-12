@@ -1,7 +1,9 @@
 // handle configuration of color and font path
 use ron::de::from_reader;
+use ron::ser::{to_string_pretty, PrettyConfig};
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
+use std::io::Write;
 
 // more will be added to this in the future
 #[derive(Serialize, Deserialize)]
@@ -36,6 +38,25 @@ impl Config {
     }
     pub fn set_file(&mut self, file: &String) {
 	self.def_file = Some(file.to_owned());
+    }
+    pub fn save(&self, path: Option<&str>) {
+        let mut file: std::fs::File;
+        match path {
+            Some(x) => {
+                file = OpenOptions::new()
+                    .write(true)
+                    .open(x)
+                    .expect("file open failed");
+            }
+            None => {
+                file = OpenOptions::new()
+                    .write(true)
+                    .open("assets/default.mts")
+                    .expect("file open failed");
+            }
+        }
+        let string = to_string_pretty(self, PrettyConfig::new()).unwrap();
+        file.write(&string.as_bytes()).unwrap();
     }
 }
 
