@@ -1,5 +1,13 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep forgetting
+### 1.3.0
+- add configuration file and cfg file parsing
+	* config file holds last opened run, colors for timer, path to font
+	* colors dont work yet but they will soon
+	* custom config not yet selectable
+	* will be selectable along with new run when context menu is implemented
+- properly save golds on run end
+
 ### 1.2.8
 - first crates.io published working version
 - had to increment version cause i'm stupid
