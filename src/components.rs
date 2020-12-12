@@ -36,3 +36,10 @@ pub fn open_splits() -> String {
     	}
     	return path.unwrap();
 }
+
+pub fn bad_file_dialog(err: &str) -> bool {
+	match tfd::message_box_ok_cancel("file read error", err, tfd::MessageBoxIcon::Error, tfd::OkCancel::Ok) {
+		tfd::OkCancel::Ok => {true},
+		tfd::OkCancel::Cancel => {false}
+	}
+}
