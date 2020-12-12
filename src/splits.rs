@@ -27,14 +27,7 @@ impl Run {
             .open(filename)
             .expect("file reading failed");
         let run = from_reader(&file);
-        match run {
-            Ok(x) => {
-                return Some(x);
-            }
-            Err(_) => {
-                return None;
-            }
-        }
+        return run.ok();
     }
     // create an empty run with default values. could implement `Default` but meh
     pub fn new() -> Self {
