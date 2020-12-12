@@ -65,16 +65,21 @@ impl App {
         // i feel like this code is ass but it does work so
         loop {
             path = open_splits();
-            match Run::from_file(&path) {
-                Some(x) => {
-                    self.run = x;
-                    break;
-                }
+            match path {
                 None => {
-                    if !bad_file_dialog("Split file parse failed. Try another file?") {
-                        return;
-                    }
+                    return;
                 }
+                Some(p) => match Run::from_file(&path) {
+                    Some(x) => {
+                        self.run = x;
+                        break;
+                    }
+                    None => {
+                        if !bad_file_dialog("Split file parse failed. Try another file?") {
+                            return;
+                        }
+                    }
+                },
             }
         }
         // set up some stuff that's a pain to do elsewhere
@@ -374,7 +379,7 @@ impl App {
                             let diff = sum as i128 - summed_times[current_split] as i128;
                             time_str = timing::diff_text(diff);
                             if active_run_times[current_split] < splits[current_split].gold() {
-				color = GOLD;
+                                color = GOLD;
                             }
                             text_surface = font.render(&time_str).blended(color).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();

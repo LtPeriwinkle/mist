@@ -7,7 +7,7 @@ pub const SPLITS_ON_SCREEN: usize = 8; // max splits allowed on screen
 pub static MAKING_UP_TIME: Color = Color::RGB(255, 90, 90); // color used when behind but gaining
 pub static LOSING_TIME: Color = Color::RGB(135, 255, 135); // color used when ahead but losing
 pub static GOLD: Color = Color::RGB(255, 255, 0); // default for when beating best split time
-// state of timer, might implement real state switching eventually
+                                                  // state of timer, might implement real state switching eventually
 #[derive(Debug)]
 pub enum TimerState {
     OffsetCountdown {
@@ -47,15 +47,12 @@ pub fn save_check() -> bool {
 
 // gross way to make sure a split file is chosein for now until
 // i set up a persistent file to remember what was last opened
-pub fn open_splits() -> String {
+pub fn open_splits() -> Option<String> {
     let cwd = env::current_dir().unwrap();
     let mut dir = cwd.to_string_lossy();
     dir.to_mut().push_str("/");
-    let mut path: Option<String> = None;
-    while path == None {
-        path = tfd::open_file_dialog("Open split file", &dir, Some((&["*.msf"], "")));
-    }
-    return path.unwrap();
+    let path = tfd::open_file_dialog("Open split file", &dir, Some((&["*.msf"], "")));
+    return path;
 }
 
 pub fn bad_file_dialog(err: &str) -> bool {
