@@ -38,13 +38,19 @@ pub fn render_rows(
                     .copy(&x, None, Some(row))
                     .expect("split time texture copy failed");
                 match item.diff_texture() {
-		None => {}
-		Some(x) => {
-			let TextureQuery {width: dw, height: dh, ..} = x.query();
-			row = Rect::new(((window_width - width - 25) - dw) as i32, y, dw, dh);
-			canvas.copy(&x, None, Some(row)).expect("split time texture copy failed");
-		}
-        }
+                    None => {}
+                    Some(x) => {
+                        let TextureQuery {
+                            width: dw,
+                            height: dh,
+                            ..
+                        } = x.query();
+                        row = Rect::new(((window_width - width - 25) - dw) as i32, y, dw, dh);
+                        canvas
+                            .copy(&x, None, Some(row))
+                            .expect("split time texture copy failed");
+                    }
+                }
             }
             None => {
                 let TextureQuery { width, height, .. } = item.pb().query();
@@ -52,14 +58,20 @@ pub fn render_rows(
                 canvas
                     .copy(&item.pb(), None, Some(row))
                     .expect("split time texture copy failed");
-        match item.diff_texture() {
-		None => {}
-		Some(x) => {
-			let TextureQuery {width: dw, height: dh, ..} = x.query();
-			row = Rect::new(((window_width - width - 25) - dw) as i32, y, dw, dh);
-			canvas.copy(&x, None, Some(row)).expect("split time texture copy failed");
-		}
-        }
+                match item.diff_texture() {
+                    None => {}
+                    Some(x) => {
+                        let TextureQuery {
+                            width: dw,
+                            height: dh,
+                            ..
+                        } = x.query();
+                        row = Rect::new(((window_width - width - 25) - dw) as i32, y, dw, dh);
+                        canvas
+                            .copy(&x, None, Some(row))
+                            .expect("split time texture copy failed");
+                    }
+                }
             }
         }
         canvas.set_draw_color(Color::GRAY);

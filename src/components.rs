@@ -10,36 +10,62 @@ pub static LOSING_TIME: Color = Color::RGB(135, 255, 135); // color used when ah
 // state of timer, might implement real state switching eventually
 #[derive(Debug)]
 pub enum TimerState {
-    OffsetCountdown { amt: u128 },
-    Running { timestamp: u128 },
-    Paused { time: u128, split: u128, time_str: String },
-    NotStarted { time_str: String },
-    Finished { time_str: String },
+    OffsetCountdown {
+        amt: u128,
+    },
+    Running {
+        timestamp: u128,
+    },
+    Paused {
+        time: u128,
+        split: u128,
+        time_str: String,
+    },
+    NotStarted {
+        time_str: String,
+    },
+    Finished {
+        time_str: String,
+    },
 }
 
 pub fn save_check() -> bool {
-	match tfd::message_box_yes_no("Save run?", "Your run was a PB; do you want to save it?", tfd::MessageBoxIcon::Question, tfd::YesNo::Yes) {
-		tfd::YesNo::No => {return false;}
-		tfd::YesNo::Yes => {return true;}
-	}
+    match tfd::message_box_yes_no(
+        "Save run?",
+        "Your run was a PB; do you want to save it?",
+        tfd::MessageBoxIcon::Question,
+        tfd::YesNo::Yes,
+    ) {
+        tfd::YesNo::No => {
+            return false;
+        }
+        tfd::YesNo::Yes => {
+            return true;
+        }
+    }
 }
 
 // gross way to make sure a split file is chosein for now until
 // i set up a persistent file to remember what was last opened
 pub fn open_splits() -> String {
-    	let cwd = env::current_dir().unwrap();
-    	let mut dir = cwd.to_string_lossy();
-    	dir.to_mut().push_str("/");
-    	let mut path: Option<String> = None;
-    	while path == None {
-		path = tfd::open_file_dialog("Open split file", &dir, Some((&["*.msf"], "")));
-    	}
-    	return path.unwrap();
+    let cwd = env::current_dir().unwrap();
+    let mut dir = cwd.to_string_lossy();
+    dir.to_mut().push_str("/");
+    let mut path: Option<String> = None;
+    while path == None {
+        path = tfd::open_file_dialog("Open split file", &dir, Some((&["*.msf"], "")));
+    }
+    return path.unwrap();
 }
 
 pub fn bad_file_dialog(err: &str) -> bool {
-	match tfd::message_box_ok_cancel("file read error", err, tfd::MessageBoxIcon::Error, tfd::OkCancel::Ok) {
-		tfd::OkCancel::Ok => {true},
-		tfd::OkCancel::Cancel => {false}
-	}
+    match tfd::message_box_ok_cancel(
+        "file read error",
+        err,
+        tfd::MessageBoxIcon::Error,
+        tfd::OkCancel::Ok,
+    ) {
+        tfd::OkCancel::Ok => true,
+        tfd::OkCancel::Cancel => false,
+    }
 }

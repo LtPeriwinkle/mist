@@ -64,18 +64,18 @@ impl App {
         let mut path: String;
         // i feel like this code is ass but it does work so
         loop {
-		path = open_splits();
-		match Run::from_file(&path) {
-			Some(x) => {
-    				self.run = x;
-    				break;
-			}
-			None => {
-    				if !bad_file_dialog("Split file parse failed. Try another file?") {
-					return
-    				}
-			}
-		}
+            path = open_splits();
+            match Run::from_file(&path) {
+                Some(x) => {
+                    self.run = x;
+                    break;
+                }
+                None => {
+                    if !bad_file_dialog("Split file parse failed. Try another file?") {
+                        return;
+                    }
+                }
+            }
         }
         // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
@@ -141,7 +141,15 @@ impl App {
             let pb_texture = creator
                 .create_texture_from_surface(&pb)
                 .expect("split time texture failed");
-            let split = Split::new(split_times_ms[index], self.run.gold_time(index), 0, None, texture, pb_texture, None);
+            let split = Split::new(
+                split_times_ms[index],
+                self.run.gold_time(index),
+                0,
+                None,
+                texture,
+                pb_texture,
+                None,
+            );
             splits.push(split);
             index += 1;
         }
@@ -211,10 +219,10 @@ impl App {
                 }
             }
             if save {
-		save = false;
-            	if save_check() {
-			self.run.save(&path);
-            	}
+                save = false;
+                if save_check() {
+                    self.run.save(&path);
+                }
             }
 
             // repeat stuff in here for every event that occured between frames
@@ -258,7 +266,9 @@ impl App {
                         match self.state {
                             // if timer is paused, unpause it, put the amount of time before the pause in a variable
                             // and set the state to running
-                            TimerState::Paused { time: t, split: s, .. } => {
+                            TimerState::Paused {
+                                time: t, split: s, ..
+                            } => {
                                 total_time = Instant::now();
                                 split_time_ticks = elapsed;
                                 before_pause = t;
@@ -268,12 +278,10 @@ impl App {
                             // if the timer is already running, set it to paused.
                             TimerState::Running { .. } => {
                                 self.state = TimerState::Paused {
-                                    time: total_time.elapsed().as_millis()
-                                        + before_pause,
+                                    time: total_time.elapsed().as_millis() + before_pause,
                                     split: (elapsed - split_time_ticks) + before_pause_split,
                                     time_str: timing::ms_to_readable(
-                                        total_time.elapsed().as_millis()
-                                            + before_pause,
+                                        total_time.elapsed().as_millis() + before_pause,
                                         true,
                                     ),
                                 };
@@ -307,9 +315,9 @@ impl App {
                         }
                         index = 0;
                         while index < len {
-				splits[index].set_cur(None);
-				splits[index].set_diff(0, None);
-				index += 1;
+                            splits[index].set_cur(None);
+                            splits[index].set_diff(0, None);
+                            index += 1;
                         }
                     }
 
@@ -359,7 +367,8 @@ impl App {
                         // if it is running, either split or end
                         TimerState::Running { timestamp: t, .. } => {
                             elapsed = self.timer.elapsed().as_millis();
-                            active_run_times.push((elapsed - split_time_ticks) + before_pause_split);
+                            active_run_times
+                                .push((elapsed - split_time_ticks) + before_pause_split);
                             split_time_ticks = elapsed;
                             let sum = timing::split_time_sum(&active_run_times)[current_split];
                             let diff = sum as i128 - summed_times[current_split] as i128;
@@ -367,31 +376,42 @@ impl App {
                             text_surface = font.render(&time_str).blended(color).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
                             splits[current_split].set_diff(diff, Some(texture));
-                            time_str = timing::split_time_text(
-                                (elapsed - t) + before_pause,
-                            );
+                            time_str = timing::split_time_text((elapsed - t) + before_pause);
                             text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
                             splits[current_split].set_cur(Some(texture));
                             if current_split < splits.len() - 1 {
                                 current_split += 1;
                             } else {
-                                self.state = TimerState::Finished { time_str: timing::ms_to_readable((elapsed - t) + before_pause, true) };
+                                self.state = TimerState::Finished {
+                                    time_str: timing::ms_to_readable(
+                                        (elapsed - t) + before_pause,
+                                        true,
+                                    ),
+                                };
                                 if (elapsed - t) + before_pause < self.run.pb() {
                                     let mut index = 0;
                                     summed_times = timing::split_time_sum(&active_run_times);
-                                    let split_times_raw: Vec<String> = summed_times.iter().map(|val| timing::split_time_text(*val)).collect();
+                                    let split_times_raw: Vec<String> = summed_times
+                                        .iter()
+                                        .map(|val| timing::split_time_text(*val))
+                                        .collect();
                                     while index < len {
-                                    	text_surface = font.render(&split_times_raw[index]).blended(Color::WHITE).unwrap();
-                                    	texture = creator.create_texture_from_surface(text_surface).unwrap();
-                                    	splits[index].set_pb(texture);
-					splits[index].set_cur(None);
-					splits[index].set_time(active_run_times[index]);
-					index += 1;
+                                        text_surface = font
+                                            .render(&split_times_raw[index])
+                                            .blended(Color::WHITE)
+                                            .unwrap();
+                                        texture = creator
+                                            .create_texture_from_surface(text_surface)
+                                            .unwrap();
+                                        splits[index].set_pb(texture);
+                                        splits[index].set_cur(None);
+                                        splits[index].set_time(active_run_times[index]);
+                                        index += 1;
                                     }
                                     save = true;
-				    self.run.set_pb((elapsed - t) + before_pause);
-				    self.run.set_times(&active_run_times);
+                                    self.run.set_pb((elapsed - t) + before_pause);
+                                    self.run.set_times(&active_run_times);
                                     active_run_times = vec![];
                                 }
                             }
@@ -412,37 +432,40 @@ impl App {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
                 elapsed = self.timer.elapsed().as_millis();
                 if current_split == 0 {
-			if (elapsed - split_time_ticks) + before_pause_split < splits[current_split].time() {
-				color = Color::GREEN;
-			} else {
-				color = Color::RED;
-			}
+                    if (elapsed - split_time_ticks) + before_pause_split
+                        < splits[current_split].time()
+                    {
+                        color = Color::GREEN;
+                    } else {
+                        color = Color::RED;
+                    }
                 } else {
-			let allowed = splits[current_split].time() as i128 - splits[current_split - 1].diff();
-			let buffer = splits[current_split - 1].diff();
-			let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
-			if buffer < 0 {
-				if time > allowed {
-					color = Color::RED;
-				} else if time < allowed && time > allowed + buffer {
-					color = LOSING_TIME;
-				} else {
-					color = Color::GREEN;
-				}
-			} else {
-				if time > allowed && time < allowed + buffer {
-					color = MAKING_UP_TIME;
-				} else if time > allowed && time > allowed + buffer {
-					color = Color::RED;
-				} else {
-					color = Color::GREEN;
-				}
-			}
+                    let allowed =
+                        splits[current_split].time() as i128 - splits[current_split - 1].diff();
+                    let buffer = splits[current_split - 1].diff();
+                    let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
+                    if buffer < 0 {
+                        if time > allowed {
+                            color = Color::RED;
+                        } else if time < allowed && time > allowed + buffer {
+                            color = LOSING_TIME;
+                        } else {
+                            color = Color::GREEN;
+                        }
+                    } else {
+                        if time > allowed && time < allowed + buffer {
+                            color = MAKING_UP_TIME;
+                        } else if time > allowed && time > allowed + buffer {
+                            color = Color::RED;
+                        } else {
+                            color = Color::GREEN;
+                        }
+                    }
                 }
                 if current_split >= top_split_index && current_split <= bottom_split_index {
-			cur = current_split - top_split_index;
+                    cur = current_split - top_split_index;
                 } else {
-			cur = usize::MAX;
+                    cur = usize::MAX;
                 }
             } else {
                 cur = usize::MAX;
@@ -505,14 +528,14 @@ impl App {
         let time: String;
         match &self.state {
             TimerState::Running { .. } => {
-                time = timing::ms_to_readable(
-                    total_time.elapsed().as_millis() + before_pause,
-                    false,
-                );
+                time =
+                    timing::ms_to_readable(total_time.elapsed().as_millis() + before_pause, false);
             }
             TimerState::Finished { time_str: string }
             | TimerState::NotStarted { time_str: string }
-            | TimerState::Paused { time_str: string, .. }=> {
+            | TimerState::Paused {
+                time_str: string, ..
+            } => {
                 time = string.to_owned();
             }
             TimerState::OffsetCountdown { amt: amount } => {

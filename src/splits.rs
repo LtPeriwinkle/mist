@@ -22,15 +22,18 @@ pub struct Run {
 impl Run {
     // parse a RON file into a run. better error handling will come... eventually
     pub fn from_file(filename: &str) -> Option<Self> {
-        let file = OpenOptions::new().read(true).open(filename).expect("file reading failed");
+        let file = OpenOptions::new()
+            .read(true)
+            .open(filename)
+            .expect("file reading failed");
         let run = from_reader(&file);
         match run {
-		Ok(x) => {
-			return Some(x);
-		}
-		Err(_) => {
-			return None;
-		}
+            Ok(x) => {
+                return Some(x);
+            }
+            Err(_) => {
+                return None;
+            }
         }
     }
     // create an empty run with default values. could implement `Default` but meh
@@ -62,13 +65,13 @@ impl Run {
         &self.pb_times
     }
     pub fn pb(&self) -> u128 {
-	self.pb
+        self.pb
     }
     pub fn set_pb(&mut self, pb: u128) {
-	self.pb = pb;
+        self.pb = pb;
     }
     pub fn gold_time(&self, index: usize) -> u128 {
-	self.gold_times[index]
+        self.gold_times[index]
     }
 }
 
@@ -106,7 +109,7 @@ impl<'a> Split<'a> {
         self.pb_time
     }
     pub fn set_time(&mut self, time: u128) {
-	self.pb_time = time;
+        self.pb_time = time;
     }
     pub fn name(&self) -> &Texture {
         &self.name_texture
@@ -115,7 +118,7 @@ impl<'a> Split<'a> {
         &self.pb_texture
     }
     pub fn set_pb(&mut self, tex: Texture<'a>) {
-	self.pb_texture = tex;
+        self.pb_texture = tex;
     }
     pub fn cur(&self) -> &Option<Texture> {
         &self.current_texture
@@ -124,19 +127,19 @@ impl<'a> Split<'a> {
         self.current_texture = cur;
     }
     pub fn set_diff(&mut self, diff: i128, texture: Option<Texture<'a>>) {
-	self.diff = diff;
-	self.diff_texture = texture;
+        self.diff = diff;
+        self.diff_texture = texture;
     }
     pub fn diff(&self) -> i128 {
-	self.diff
+        self.diff
     }
     pub fn diff_texture(&self) -> &Option<Texture<'a>> {
-	&self.diff_texture
+        &self.diff_texture
     }
     pub fn gold(&self) -> u128 {
-	self.gold_time
+        self.gold_time
     }
     pub fn set_gold(&mut self, gold: u128) {
-	self.gold_time = gold;
+        self.gold_time = gold;
     }
 }
