@@ -35,6 +35,7 @@ impl App {
             .window("mist", 300, 500)
             .position_centered()
             .resizable()
+            .borderless()
             .build()
             .expect("could not initialize SDL window");
         let icon = Surface::from_file("assets/MIST.png").expect("could not load icon");
@@ -104,11 +105,11 @@ impl App {
         self.canvas.clear();
         let timer_font = self
             .ttf
-            .load_font("assets/segoe-ui-bold.ttf", 60)
+            .load_font(self.config.tfont(), 60)
             .expect("could not open font file");
         let font = self
             .ttf
-            .load_font("assets/segoe-ui-bold.ttf", 25)
+            .load_font(self.config.sfont(), 25)
             .expect("could not open font file");
         let creator = self.canvas.texture_creator();
         let timer_height = timer_font.size_of("0123456789").unwrap().1;
