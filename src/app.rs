@@ -112,13 +112,14 @@ impl App {
         self.config.set_file(&path);
         // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
+        let sizes = self.config.fsize();
         let timer_font = self
             .ttf
-            .load_font(self.config.tfont(), 60)
+            .load_font(self.config.tfont(), sizes.0)
             .expect("could not open font file");
         let font = self
             .ttf
-            .load_font(self.config.sfont(), 25)
+            .load_font(self.config.sfont(), sizes.1)
             .expect("could not open font file");
         let creator = self.canvas.texture_creator();
         let timer_height = timer_font.size_of("0123456789").unwrap().1;
