@@ -22,12 +22,16 @@ impl Config {
             Some(x) => {
                 file = OpenOptions::new()
                     .read(true)
+                    .write(true)
+                    .create(true)
                     .open(x)
                     .expect("file open failed");
             }
             None => {
                 file = OpenOptions::new()
                     .read(true)
+                    .write(true)
+                    .create(true)
                     .open("assets/default.mts")
                     .expect("file open failed");
             }
