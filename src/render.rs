@@ -1,5 +1,6 @@
-//Functions related to rendering information to the SDL window
+// Functions for putting stuff into the correct places on the sdl buffer
 
+use crate::splits::Split;
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::{Canvas, Texture, TextureQuery};
@@ -7,8 +8,7 @@ use sdl2::video::Window;
 
 // Puts split name textures and their associated times into the SDL backbuffer
 pub fn render_rows(
-    on_screen: &[Texture],
-    times: &[Texture],
+    on_screen: &[Split],
     canvas: &mut Canvas<Window>,
     window_width: u32,
     current: usize,
@@ -18,7 +18,7 @@ pub fn render_rows(
     let mut index = 0;
     // draw each split name on the left of the screen
     for item in on_screen {
-        let TextureQuery { width, height, .. } = item.query();
+        let TextureQuery { width, height, .. } = item.name().query();
         if index == current {
             canvas.set_draw_color(Color::BLUE);
             canvas
@@ -27,8 +27,53 @@ pub fn render_rows(
         }
         row = Rect::new(0, y, width, height);
         canvas
-            .copy(&item, None, Some(row))
+            .copy(&item.name(), None, Some(row))
             .expect("split texture copy failed");
+
+        match item.cur() {
+            Some(x) => {
+                let TextureQuery { width, height, .. } = x.query();
+                row = Rect::new((window_width - width) as i32, y, width, height);
+                canvas
+                    .copy(&x, None, Some(row))
+                    .expect("split time texture copy failed");
+                match item.diff_texture() {
+                    None => {}
+                    Some(x) => {
+                        let TextureQuery {
+                            width: dw,
+                            height: dh,
+                            ..
+                        } = x.query();
+                        row = Rect::new(((window_width - width - 25) - dw) as i32, y, dw, dh);
+                        canvas
+                            .copy(&x, None, Some(row))
+                            .expect("split time texture copy failed");
+                    }
+                }
+            }
+            None => {
+                let TextureQuery { width, height, .. } = item.pb().query();
+                row = Rect::new((window_width - width) as i32, y, width, height);
+                canvas
+                    .copy(&item.pb(), None, Some(row))
+                    .expect("split time texture copy failed");
+                match item.diff_texture() {
+                    None => {}
+                    Some(x) => {
+                        let TextureQuery {
+                            width: dw,
+                            height: dh,
+                            ..
+                        } = x.query();
+                        row = Rect::new(((window_width - width - 25) - dw) as i32, y, dw, dh);
+                        canvas
+                            .copy(&x, None, Some(row))
+                            .expect("split time texture copy failed");
+                    }
+                }
+            }
+        }
         canvas.set_draw_color(Color::GRAY);
         canvas
             .draw_line(
@@ -38,16 +83,6 @@ pub fn render_rows(
             .expect("line draw failed");
         y += height as i32 + 5;
         index += 1;
-    }
-    y = 0;
-    // draw each time on the right of the screen at the same y level as corresponding name
-    for item in times {
-        let TextureQuery { width, height, .. } = item.query();
-        row = Rect::new((window_width - width) as i32, y, width, height);
-        canvas
-            .copy(&item, None, Some(row))
-            .expect("split time texture copy failed");
-        y += height as i32 + 5;
     }
 }
 

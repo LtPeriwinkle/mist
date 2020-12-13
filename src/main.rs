@@ -1,9 +1,12 @@
+// starts application by instantiating App and running it
+
 // comment the below line to get printing on windows
 #![windows_subsystem = "windows"]
 extern crate sdl2;
 
 mod app;
 mod components;
+mod config;
 mod render;
 mod splits;
 mod timing;

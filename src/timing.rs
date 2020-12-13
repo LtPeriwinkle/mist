@@ -38,22 +38,87 @@ pub fn ms_to_readable(mut ms: u128, round: bool) -> String {
     }
 }
 
+pub fn diff_text(mut ms: i128) -> String {
+    let mut negative = false;
+    if ms < 0 {
+        negative = true;
+        ms *= -1;
+    }
+    let mut tenths = ms / 100;
+    let mut full_s: i128;
+    if tenths > 10 {
+        full_s = tenths / 10;
+        tenths -= full_s * 10;
+        if full_s >= 60 {
+            let mut min = full_s / 60;
+            full_s -= min * 60;
+            if min >= 60 {
+                let hr = min / 60;
+                min -= hr * 60;
+                if negative {
+                    return format!("-{}:{:02}:{:02}.{}", hr, min, full_s, tenths);
+                } else {
+                    return format!("+{}:{:02}:{:02}.{}", hr, min, full_s, tenths);
+                }
+            } else {
+                if negative {
+                    return format!("-{}:{:02}.{}", min, full_s, tenths);
+                } else {
+                    return format!("+{}:{:02}.{}", min, full_s, tenths);
+                }
+            }
+        } else {
+            if negative {
+                return format!("-{}.{}", full_s, tenths);
+            } else {
+                return format!("+{}.{}", full_s, tenths);
+            }
+        }
+    } else {
+        if negative {
+            return format!("-0.{}", tenths);
+        } else {
+            return format!("+0.{}", tenths);
+        }
+    }
+}
+
+pub fn split_time_text(ms: u128) -> String {
+    let mut tenths = ms / 100;
+    let mut full_s: u128;
+    if tenths > 10 {
+        full_s = tenths / 10;
+        tenths -= full_s * 10;
+        if full_s >= 60 {
+            let mut min = full_s / 60;
+            full_s -= min * 60;
+            if min >= 60 {
+                let hr = min / 60;
+                min -= hr * 60;
+                return format!("{}:{:02}:{:02}.{}", hr, min, full_s, tenths);
+            } else {
+                return format!("{}:{:02}.{}", min, full_s, tenths);
+            }
+        } else {
+            return format!("{}.{}", full_s, tenths);
+        }
+    } else {
+        return format!("0.{}", tenths);
+    }
+}
+
 // quick and dirty solution for outputting valid 30fps times on pause/stop
 fn round_ms_30(ms: u128) -> u128 {
     let mut rounded = ms;
-    let mut hundreds = 0;
-    // ugliest possible way to get only the tens and ones digits
-    while rounded >= 100 {
-        rounded -= 100;
-        hundreds += 100;
-    }
+    let hundreds = rounded / 100;
+    rounded -= hundreds * 100;
     rounded = match rounded {
         0..=32 => 0,
         33..=66 => 33,
         67..=99 => 67,
         _ => 0,
     };
-    rounded + hundreds
+    rounded + (hundreds * 100)
 }
 
 // add up the times from split files to get the total real time

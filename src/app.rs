@@ -1,3 +1,4 @@
+// app struct and its functions, one of which is the application mainloop
 use sdl2::event::{Event, WindowEvent};
 use sdl2::image::LoadSurface;
 use sdl2::keyboard::Keycode;
@@ -9,22 +10,21 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use crate::components::*;
+use crate::config::{self, Config};
 use crate::render;
-use crate::splits::{self, Run};
+use crate::splits::{self, Run, Split};
 use crate::timing;
-
-static mut RECREATE_DEFAULT: Option<u8> = Some(3); // used to determine whether to recreate slice every loop
-
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
     context: sdl2::Sdl,
     ev_pump: sdl2::EventPump,
-    timer: sdl2::TimerSubsystem,
+    timer: Instant,
     canvas: WindowCanvas,
     ttf: sdl2::ttf::Sdl2TtfContext,
     state: TimerState,
     run: splits::Run,
+    config: config::Config,
 }
 
 impl App {
@@ -35,6 +35,7 @@ impl App {
             .window("mist", 300, 500)
             .position_centered()
             .resizable()
+            .borderless()
             .build()
             .expect("could not initialize SDL window");
         let icon = Surface::from_file("assets/MIST.png").expect("could not load icon");
@@ -47,7 +48,20 @@ impl App {
         let ev_pump = context
             .event_pump()
             .expect("could not initialize SDL event handler");
-        let timer = context.timer().unwrap();
+        let timer = Instant::now();
+        let config: Config;
+        match open_file("(OPTIONAL) Open config file", "*.mts") {
+            Some(x) => {
+                config = Config::from_file(Some(&x));
+            }
+            None => {
+                config = Config::from_file(None);
+                info_dialog(
+                    "",
+                    "Since you did not select a config file, the default will be used",
+                );
+            }
+        }
         App {
             context,
             ev_pump,
@@ -58,21 +72,57 @@ impl App {
                 time_str: "".to_string(),
             },
             run: Run::new(),
+            config,
         }
     }
 
     pub fn run(&mut self) {
+        let mut path: Option<String>;
+        if let Some(x) = self.config.file() {
+            path = Some(x.to_owned());
+            match Run::from_file(&x) {
+                Some(r) => {
+                    self.run = r;
+                }
+                None => {
+                    if !bad_file_dialog("Split file parse failed. Try another file?") {
+                        return;
+                    }
+                }
+            }
+        } else {
+            loop {
+                path = open_file("Open split file", "*.msf");
+                match path {
+                    None => {
+                        return;
+                    }
+                    Some(ref p) => match Run::from_file(&p) {
+                        Some(x) => {
+                            self.run = x;
+                            break;
+                        }
+                        None => {
+                            if !bad_file_dialog("Split file parse failed. Try another file?") {
+                                return;
+                            }
+                        }
+                    },
+                }
+            }
+        }
+        let path = path.unwrap();
+        self.config.set_file(&path);
         // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
-        let mut bottom_split_index = SPLITS_ON_SCREEN;
-        let mut max_splits: usize;
+        let sizes = self.config.fsize();
         let timer_font = self
             .ttf
-            .load_font("assets/segoe-ui-bold.ttf", 60)
+            .load_font(self.config.tfont(), sizes.0)
             .expect("could not open font file");
         let font = self
             .ttf
-            .load_font("assets/segoe-ui-bold.ttf", 25)
+            .load_font(self.config.sfont(), sizes.1)
             .expect("could not open font file");
         let creator = self.canvas.texture_creator();
         let timer_height = timer_font.size_of("0123456789").unwrap().1;
@@ -87,7 +137,6 @@ impl App {
             .unwrap();
 
         // get first vec of split name textures from file
-        self.run = Run::from_file("run.msf");
         let split_names = &self.run.splits;
         let offset = self.run.offset;
         // if there is an offset, display it properly
@@ -100,53 +149,62 @@ impl App {
             _ => {}
         }
         // get ms split times then convert them to pretty, summed times
-        let split_times_ms: Vec<u128> = self.run.best_times.iter().cloned().collect();
-        let summed_times = timing::split_time_sum(&split_times_ms);
+        let split_times_ms: Vec<u128> = self.run.get_times().iter().cloned().collect();
+        let mut summed_times = timing::split_time_sum(&split_times_ms);
         let split_times_raw: Vec<String> = summed_times
             .iter()
-            .map(|val| timing::ms_to_readable(*val, true))
+            .map(|val| timing::split_time_text(*val))
             .collect();
         // initialize variables that are used in the loop for replacing timer texture
         let mut text_surface: Surface;
         let mut texture: Texture;
-        let mut on_screen: &[Texture] = &[];
         // vectors that hold the textures for split names and their associated times
-        let mut splits: Vec<Texture> = vec![];
-        let mut split_times: Vec<Texture> = vec![];
+        let mut splits: Vec<Split> = vec![];
+
+        let mut index = 0;
+        // convert the split names into textures and add them to the split name vec
+        while index < split_names.len() {
+            let text_surface = font
+                .render(&split_names[index])
+                .blended(Color::WHITE)
+                .expect("split name render failed");
+            let texture = creator
+                .create_texture_from_surface(&text_surface)
+                .expect("split name texture failed");
+            let pb = font
+                .render(&split_times_raw[index])
+                .blended(Color::WHITE)
+                .expect("split time render failed");
+            let pb_texture = creator
+                .create_texture_from_surface(&pb)
+                .expect("split time texture failed");
+            let split = Split::new(
+                split_times_ms[index],
+                self.run.gold_time(index),
+                0,
+                None,
+                texture,
+                pb_texture,
+                None,
+            );
+            splits.push(split);
+            index += 1;
+        }
 
         // set up max splits dynamically in case there are too few splits
+        let mut max_splits: usize;
+        let mut bottom_split_index = SPLITS_ON_SCREEN;
+        let mut top_split_index = 0;
         if SPLITS_ON_SCREEN > split_names.len() {
             bottom_split_index = split_names.len();
             max_splits = split_names.len();
         } else {
             max_splits = SPLITS_ON_SCREEN;
         }
-
-        // convert the split names into textures and add them to the split name vec
-        for item in split_names {
-            text_surface = font
-                .render(item)
-                .blended(Color::WHITE)
-                .expect("split name font render failed");
-            texture = creator
-                .create_texture_from_surface(text_surface)
-                .expect("split name texture creation failed");
-            splits.push(texture);
-        }
-
-        // same as above but for times
-        for item in split_times_raw {
-            // blended text render does antialias and removes background box, is slower though
-            text_surface = font
-                .render(&item)
-                .blended(Color::WHITE)
-                .expect("split time font render failed");
-            texture = creator
-                .create_texture_from_surface(text_surface)
-                .expect("split time texture creation failed");
-            split_times.push(texture);
-        }
-
+        // drop stuff that isnt needed after initializing
+        drop(split_times_ms);
+        drop(split_times_raw);
+        drop(split_names);
         // set up variables used in the mainloop
         // framerate cap timer
         let mut frame_time: Instant;
@@ -154,32 +212,28 @@ impl App {
         // display time
         let mut time_str: String;
         // keeps track of whether timer has been paused and paused value
-        let mut before_pause: Option<u128> = None;
+        let mut before_pause = 0;
+        let mut before_pause_split = 0;
         // this one should be a static but duration isnt allowed to be static apparently
         let one_sixtieth = Duration::new(0, 1_000_000_000 / 60);
         let mut current_split = 0;
         // these two to avoid having to drop and reallocate every loop
         let mut window_width: u32;
-        let mut color: Color;
+        let mut color = Color::WHITE;
         // sum of split times for display on rows
         let mut recreate_on_screen: Option<u8> = Some(0);
-        // if there are no splits, dont waste time remaking the on screen ones every loop
-        if self.run.splits.len() == 0 {
-            unsafe {
-                RECREATE_DEFAULT = None; // RECREATE_DEFAULT is mutable static, requires unsafe
-            }
-        }
         // diff between max on screen and current, used when resizing window
         let mut diff: u32 = 0;
-        let mut len: usize = splits.len();
-        // index of top split on screen
-        let mut index: usize;
+        let len: usize = splits.len();
         // current split in the slice of splits sent to render_time()
         let mut cur: usize;
-        // sdl timer ticks when last split occurred
+        // elapsed time when last split happened
         let mut split_time_ticks = 0;
         // split times of current run
         let mut active_run_times: Vec<u128> = vec![];
+
+        let mut elapsed: u128;
+        let mut save = false;
         self.canvas.present();
 
         // main loop
@@ -194,11 +248,17 @@ impl App {
             // if it shouldnt, convert to running state
             if let TimerState::OffsetCountdown { amt } = self.state {
                 if amt <= total_time.elapsed().as_millis() {
-                    self.state = TimerState::Running {
-                        timestamp: self.timer.ticks(),
-                    };
-                    split_time_ticks = self.timer.ticks();
+                    elapsed = self.timer.elapsed().as_millis();
+                    self.state = TimerState::Running { timestamp: elapsed };
+                    split_time_ticks = elapsed;
+                    before_pause_split = 0;
                     total_time = Instant::now();
+                }
+            }
+            if save {
+                save = false;
+                if save_check() {
+                    self.run.save(&path);
                 }
             }
 
@@ -236,42 +296,50 @@ impl App {
                     // enter as placeholder for pause/continue
                     Event::KeyDown {
                         keycode: Some(Keycode::Return),
-                        timestamp: event_time,
                         repeat: false,
                         ..
-                    } => match self.state {
-                        // if timer is paused, unpause it, put the amount of time before the pause in a variable
-                        // and set the state to running
-                        TimerState::Paused { time: t, .. } => {
-                            total_time = Instant::now();
-                            before_pause = Some(t);
-                            self.state = TimerState::Running {
-                                timestamp: event_time,
-                            };
+                    } => {
+                        elapsed = self.timer.elapsed().as_millis();
+                        match self.state {
+                            // if timer is paused, unpause it, put the amount of time before the pause in a variable
+                            // and set the state to running
+                            TimerState::Paused {
+                                time: t, split: s, ..
+                            } => {
+                                total_time = Instant::now();
+                                split_time_ticks = elapsed;
+                                before_pause = t;
+                                before_pause_split = s;
+                                self.state = TimerState::Running { timestamp: elapsed };
+                            }
+                            // if the timer is already running, set it to paused.
+                            TimerState::Running { .. } => {
+                                self.state = TimerState::Paused {
+                                    time: total_time.elapsed().as_millis() + before_pause,
+                                    split: (elapsed - split_time_ticks) + before_pause_split,
+                                    time_str: timing::ms_to_readable(
+                                        total_time.elapsed().as_millis() + before_pause,
+                                        true,
+                                    ),
+                                };
+                            }
+                            _ => {}
                         }
-                        // if the timer is already running, set it to paused.
-                        TimerState::Running { timestamp: t } => {
-                            self.state = TimerState::Paused {
-                                time: (event_time - t) as u128 + before_pause.unwrap_or(0),
-                                time_str: timing::ms_to_readable(
-                                    (event_time - t) as u128 + before_pause.unwrap_or(0),
-                                    true,
-                                ),
-                            };
-                        }
-                        _ => {}
-                    },
+                    }
 
                     // R key to reset timer
                     Event::KeyDown {
                         keycode: Some(Keycode::R),
+                        repeat: false,
                         ..
                     } => {
                         active_run_times = vec![];
+                        bottom_split_index = max_splits;
+                        recreate_on_screen = Some(2);
                         match offset {
                             // if there is an offset, reset the timer to that, if not, reset timer to 0
                             Some(x) => {
-                                before_pause = None;
+                                before_pause = 0;
                                 self.state = TimerState::NotStarted {
                                     time_str: format!("-{}", timing::ms_to_readable(x, false)),
                                 };
@@ -282,6 +350,12 @@ impl App {
                                 };
                             }
                         }
+                        index = 0;
+                        while index < len {
+                            splits[index].set_cur(None);
+                            splits[index].set_diff(0, None);
+                            index += 1;
+                        }
                     }
 
                     // handle vertical window resize by changing number of splits
@@ -291,7 +365,6 @@ impl App {
                     } => {
                         let height = self.canvas.viewport().height();
                         let rows_height = max_splits as u32 * (splits_height + 5);
-                        len = splits.len();
                         // if there are too many splits, calculate how many and set flag to make a new list to display
                         // otherwise if there are too few and there are enough to display more, set recreate flag
                         if height - timer_height < rows_height {
@@ -300,7 +373,7 @@ impl App {
                         } else if rows_height < height - timer_height {
                             diff = ((height - timer_height) - rows_height) / splits_height;
                             if !(max_splits + diff as usize > SPLITS_ON_SCREEN
-                                || max_splits + diff as usize > splits.len())
+                                || max_splits + diff as usize > len)
                             {
                                 recreate_on_screen = Some(1);
                             }
@@ -310,11 +383,12 @@ impl App {
                     // space being used to start, stop, and split for now
                     Event::KeyDown {
                         keycode: Some(Keycode::Space),
-                        timestamp: event_time,
+                        repeat: false,
                         ..
                     } => match self.state {
                         // if timer isnt started, start it.
                         TimerState::NotStarted { .. } => {
+                            elapsed = self.timer.elapsed().as_millis();
                             total_time = Instant::now();
                             match offset {
                                 // if we are in the start offset, tell it to offset
@@ -322,43 +396,74 @@ impl App {
                                     self.state = TimerState::OffsetCountdown { amt: x };
                                 }
                                 None => {
-                                    self.state = TimerState::Running {
-                                        timestamp: event_time,
-                                    };
+                                    self.state = TimerState::Running { timestamp: elapsed };
                                 }
                             }
                             current_split = 0;
                         }
                         // if it is running, either split or end
                         TimerState::Running { timestamp: t, .. } => {
+                            elapsed = self.timer.elapsed().as_millis();
                             active_run_times
-                                .push(u128::from(self.timer.ticks() - split_time_ticks));
-                            split_time_ticks = self.timer.ticks();
-                            time_str = timing::ms_to_readable(
-                                (event_time - t) as u128 + before_pause.unwrap_or(0),
-                                true,
-                            );
+                                .push((elapsed - split_time_ticks) + before_pause_split);
+                            split_time_ticks = elapsed;
+                            let sum = timing::split_time_sum(&active_run_times)[current_split];
+                            let diff = sum as i128 - summed_times[current_split] as i128;
+                            time_str = timing::diff_text(diff);
+                            if active_run_times[current_split] < splits[current_split].gold() {
+                                color = GOLD;
+                                splits[current_split].set_gold(active_run_times[current_split]);
+                            }
+                            text_surface = font.render(&time_str).blended(color).unwrap();
+                            texture = creator.create_texture_from_surface(&text_surface).unwrap();
+                            splits[current_split].set_diff(diff, Some(texture));
+                            time_str = timing::split_time_text((elapsed - t) + before_pause);
                             text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
                             texture = creator.create_texture_from_surface(&text_surface).unwrap();
-                            split_times[current_split] = texture;
+                            splits[current_split].set_cur(Some(texture));
                             if current_split < splits.len() - 1 {
                                 current_split += 1;
                             } else {
-                                self.state = TimerState::Finished { time_str };
+                                let mut index = 0;
+                                while index < len {
+                                    if splits[index].gold() < self.run.gold_time(index) {
+                                        self.run.set_gold_time(index, splits[index].gold());
+                                    }
+                                }
+                                self.state = TimerState::Finished {
+                                    time_str: timing::ms_to_readable(
+                                        (elapsed - t) + before_pause,
+                                        true,
+                                    ),
+                                };
+                                if (elapsed - t) + before_pause < self.run.pb() {
+                                    index = 0;
+                                    summed_times = timing::split_time_sum(&active_run_times);
+                                    let split_times_raw: Vec<String> = summed_times
+                                        .iter()
+                                        .map(|val| timing::split_time_text(*val))
+                                        .collect();
+                                    while index < len {
+                                        text_surface = font
+                                            .render(&split_times_raw[index])
+                                            .blended(Color::WHITE)
+                                            .unwrap();
+                                        texture = creator
+                                            .create_texture_from_surface(text_surface)
+                                            .unwrap();
+                                        splits[index].set_pb(texture);
+                                        splits[index].set_cur(None);
+                                        splits[index].set_time(active_run_times[index]);
+                                    }
+                                    save = true;
+                                    self.run.set_pb((elapsed - t) + before_pause);
+                                    self.run.set_times(&active_run_times);
+                                    active_run_times = vec![];
+                                }
                             }
                             if current_split + 1 > bottom_split_index {
                                 bottom_split_index += 1;
                                 recreate_on_screen = Some(2);
-                                if (event_time - t) as u128 + before_pause.unwrap_or(0)
-                                    < self.run.pb
-                                {
-                                    // save run on end timer if it was a PB
-                                    self.run.pb =
-                                        (event_time - t) as u128 + before_pause.unwrap_or(0);
-                                    self.run.best_times = active_run_times;
-                                    active_run_times = vec![];
-                                    self.run.save("run.msf");
-                                }
                             }
                         }
                         _ => {}
@@ -367,14 +472,56 @@ impl App {
                 }
             }
             window_width = self.canvas.viewport().width();
-            let mut on_screen_times: &[Texture] = &[];
-            // recreate texture slice to display based on flags set earlier
-            match recreate_on_screen {
+
+            // make some changes to stuff before updating screen based on what happened in past loop
+            if let TimerState::Running { .. } = self.state {
+                // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
+                elapsed = self.timer.elapsed().as_millis();
+                if current_split == 0 {
+                    if (elapsed - split_time_ticks) + before_pause_split
+                        < splits[current_split].time()
+                    {
+                        color = AHEAD;
+                    } else {
+                        color = BEHIND;
+                    }
+                } else {
+                    let allowed =
+                        splits[current_split].time() as i128 - splits[current_split - 1].diff();
+                    let buffer = splits[current_split - 1].diff();
+                    let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
+                    if buffer < 0 {
+                        if time > allowed {
+                            color = BEHIND;
+                        } else if time < allowed && time > allowed + buffer {
+                            color = LOSING_TIME;
+                        } else {
+                            color = AHEAD;
+                        }
+                    } else {
+                        if time > allowed && time < allowed + buffer {
+                            color = MAKING_UP_TIME;
+                        } else if time > allowed && time > allowed + buffer {
+                            color = BEHIND;
+                        } else {
+                            color = AHEAD;
+                        }
+                    }
+                }
+                if current_split >= top_split_index && current_split <= bottom_split_index {
+                    cur = current_split - top_split_index;
+                } else {
+                    cur = usize::MAX;
+                }
+            } else {
+                cur = usize::MAX;
+                color = Color::WHITE;
+            }
+            // change top and bottom split indices based on flags set earlier in loop
+            match recreate_on_screen.take() {
                 // set at the start, creates the initial set of splits
                 Some(0) => {
-                    on_screen = &splits[0..bottom_split_index];
-                    on_screen_times = &split_times[0..bottom_split_index];
-                    unsafe { recreate_on_screen = RECREATE_DEFAULT };
+                    top_split_index = 0;
                 }
                 // set on window resize, creates new slices based on diff and number of splits
                 Some(1) => {
@@ -382,65 +529,24 @@ impl App {
                         max_splits -= diff as usize;
                         if current_split + max_splits > len {
                             bottom_split_index = len;
-                            on_screen = &splits[len - max_splits..bottom_split_index];
-                            on_screen_times = &split_times[len - max_splits..bottom_split_index];
+                            top_split_index = len - max_splits;
                         } else if current_split < max_splits {
                             bottom_split_index = max_splits;
-                            on_screen = &splits[0..max_splits];
-                            on_screen_times = &split_times[0..max_splits];
+                            top_split_index = 0;
                         } else if current_split >= max_splits {
                             bottom_split_index = current_split + max_splits;
-                            on_screen = &splits[current_split..current_split + max_splits];
-                            on_screen_times =
-                                &split_times[current_split..current_split + max_splits];
+                            top_split_index = current_split;
                         }
                     }
-                    unsafe { recreate_on_screen = RECREATE_DEFAULT }
                 }
                 // set on mouse scroll, creates new slices based on the current top and bottom split
                 Some(2) => {
-                    index = bottom_split_index - max_splits;
-                    on_screen = &splits[index..bottom_split_index];
-                    on_screen_times = &split_times[index..bottom_split_index];
-                    unsafe { recreate_on_screen = RECREATE_DEFAULT }
-                }
-                // default if there are >0 total splits, recreates times every loop to dodge lifetime problems
-                Some(3) => {
-                    index = bottom_split_index - max_splits;
-                    on_screen_times = &split_times[index..bottom_split_index];
+                    top_split_index = bottom_split_index - max_splits;
                 }
                 _ => {}
             }
-            if let TimerState::Running { timestamp } = self.state {
-                // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
-                let ticks = self.timer.ticks();
-                if u128::from(ticks - timestamp) + before_pause.unwrap_or(0)
-                    < summed_times[current_split]
-                {
-                    if u128::from(ticks - split_time_ticks) < split_times_ms[current_split] {
-                        color = Color::GREEN;
-                    } else {
-                        color = LOSING_TIME;
-                    }
-                } else {
-                    if u128::from(ticks - split_time_ticks) < split_times_ms[current_split] {
-                        color = MAKING_UP_TIME;
-                    } else {
-                        color = Color::RED;
-                    }
-                }
-                if current_split >= bottom_split_index - 1 {
-                    cur = max_splits - 1;
-                } else {
-                    cur = current_split;
-                }
-            } else {
-                cur = usize::MAX;
-                color = Color::WHITE;
-            }
             render::render_rows(
-                &on_screen,
-                &on_screen_times,
+                &splits[top_split_index..bottom_split_index],
                 &mut self.canvas,
                 window_width,
                 cur,
@@ -462,24 +568,21 @@ impl App {
                 );
             }
         }
+        self.config.save(None);
     }
     // updates time string based on timer state, basically leaves it the same if timer is paused
-    fn update_time(&self, before_pause: Option<u128>, total_time: Instant) -> String {
+    fn update_time(&self, before_pause: u128, total_time: Instant) -> String {
         let time: String;
         match &self.state {
             TimerState::Running { .. } => {
-                time = timing::ms_to_readable(
-                    total_time.elapsed().as_millis() + before_pause.unwrap_or(0),
-                    false,
-                );
-            }
-            TimerState::Paused {
-                time_str: display, ..
-            } => {
-                time = display.to_string();
+                time =
+                    timing::ms_to_readable(total_time.elapsed().as_millis() + before_pause, false);
             }
             TimerState::Finished { time_str: string }
-            | TimerState::NotStarted { time_str: string } => {
+            | TimerState::NotStarted { time_str: string }
+            | TimerState::Paused {
+                time_str: string, ..
+            } => {
                 time = string.to_owned();
             }
             TimerState::OffsetCountdown { amt: amount } => {

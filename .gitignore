@@ -7,3 +7,6 @@
 
 # windows dlls
 *.dll
+
+# split files
+*.msf
