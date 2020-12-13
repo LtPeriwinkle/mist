@@ -49,11 +49,11 @@ pub fn save_check() -> bool {
     }
 }
 
-pub fn open_splits() -> Option<String> {
+pub fn open_file(title: &str, ext: &str) -> Option<String> {
     let cwd = env::current_dir().unwrap();
     let mut dir = cwd.to_string_lossy();
     dir.to_mut().push_str("/");
-    let path = tfd::open_file_dialog("Open split file", &dir, Some((&["*.msf"], "")));
+    let path = tfd::open_file_dialog(title, &dir, Some((&[ext], "")));
     return path;
 }
 
@@ -67,4 +67,8 @@ pub fn bad_file_dialog(err: &str) -> bool {
         tfd::OkCancel::Ok => true,
         tfd::OkCancel::Cancel => false,
     }
+}
+
+pub fn info_dialog(title: &str, text: &str) {
+	tfd::message_box_ok(title, text, tfd::MessageBoxIcon::Info);
 }

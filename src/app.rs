@@ -49,7 +49,16 @@ impl App {
             .event_pump()
             .expect("could not initialize SDL event handler");
         let timer = Instant::now();
-        let config = Config::from_file(None);
+        let config: Config;
+        match open_file("(OPTIONAL) Open config file", "*.mts") {
+		Some(x) => {
+			config = Config::from_file(Some(&x));
+		}
+		None => {
+			config = Config::from_file(None);
+			info_dialog("", "Since you did not select a config file, the default will be used");
+		}
+        }
         App {
             context,
             ev_pump,
@@ -80,7 +89,7 @@ impl App {
             }
         } else {
             loop {
-                path = open_splits();
+                path = open_file("Open split file", "*.msf");
                 match path {
                     None => {
                         return;
