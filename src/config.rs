@@ -10,7 +10,8 @@ use std::io::Write;
 pub struct Config {
     def_file: Option<String>,
     colors: [(u8, u8, u8); 5],
-    font_path: String,
+    t_font: String,
+    s_font: String
 }
 
 impl Config {
@@ -38,6 +39,12 @@ impl Config {
     }
     pub fn set_file(&mut self, file: &String) {
 	self.def_file = Some(file.to_owned());
+    }
+    pub fn tfont(&self) -> &str {
+	&self.t_font
+    }
+    pub fn sfont(&self) -> &str {
+	&self.s_font
     }
     pub fn save(&self, path: Option<&str>) {
         let mut file: std::fs::File;
@@ -71,7 +78,8 @@ impl Default for Config {
                 (135, 255, 125),
                 (255, 255, 0),
             ],
-            font_path: "assets/segoe-ui-bold.ttf".to_owned(),
+            t_font: "assets/segoe-ui-bold.ttf".to_owned(),
+            s_font: "assets/segoe-ui-bold.ttf".to_owned()
         }
     }
 }
