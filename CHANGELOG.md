@@ -1,5 +1,10 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.3.2
+- add font size field in config
+- allow user selected config, default to assets/default.mts if none
+- create config file if missing
+
 ### 1.3.1
 - add separate fields for timer and split font in config struct
 - use font paths from config in app.rs
