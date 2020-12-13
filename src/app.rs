@@ -51,13 +51,16 @@ impl App {
         let timer = Instant::now();
         let config: Config;
         match open_file("(OPTIONAL) Open config file", "*.mts") {
-		Some(x) => {
-			config = Config::from_file(Some(&x));
-		}
-		None => {
-			config = Config::from_file(None);
-			info_dialog("", "Since you did not select a config file, the default will be used");
-		}
+            Some(x) => {
+                config = Config::from_file(Some(&x));
+            }
+            None => {
+                config = Config::from_file(None);
+                info_dialog(
+                    "",
+                    "Since you did not select a config file, the default will be used",
+                );
+            }
         }
         App {
             context,
@@ -78,14 +81,14 @@ impl App {
         if let Some(x) = self.config.file() {
             path = Some(x.to_owned());
             match Run::from_file(&x) {
-		Some(r) => {
-			self.run = r;
-		}
-		None => {
-			if !bad_file_dialog("Split file parse failed. Try another file?") {
-				return;
-			}
-		}
+                Some(r) => {
+                    self.run = r;
+                }
+                None => {
+                    if !bad_file_dialog("Split file parse failed. Try another file?") {
+                        return;
+                    }
+                }
             }
         } else {
             loop {

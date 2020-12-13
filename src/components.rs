@@ -70,5 +70,5 @@ pub fn bad_file_dialog(err: &str) -> bool {
 }
 
 pub fn info_dialog(title: &str, text: &str) {
-	tfd::message_box_ok(title, text, tfd::MessageBoxIcon::Info);
+    tfd::message_box_ok(title, text, tfd::MessageBoxIcon::Info);
 }

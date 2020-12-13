@@ -12,7 +12,7 @@ pub struct Config {
     colors: [(u8, u8, u8); 5],
     t_font: String,
     s_font: String,
-    font_size: (u16, u16)
+    font_size: (u16, u16),
 }
 
 impl Config {
@@ -40,19 +40,19 @@ impl Config {
         return cfg;
     }
     pub fn file(&self) -> Option<&String> {
-	self.def_file.as_ref()
+        self.def_file.as_ref()
     }
     pub fn set_file(&mut self, file: &String) {
-	self.def_file = Some(file.to_owned());
+        self.def_file = Some(file.to_owned());
     }
     pub fn tfont(&self) -> &str {
-	&self.t_font
+        &self.t_font
     }
     pub fn sfont(&self) -> &str {
-	&self.s_font
+        &self.s_font
     }
     pub fn fsize(&self) -> (u16, u16) {
-	self.font_size
+        self.font_size
     }
     pub fn save(&self, path: Option<&str>) {
         let mut file: std::fs::File;
@@ -88,7 +88,7 @@ impl Default for Config {
             ],
             t_font: "assets/segoe-ui-bold.ttf".to_owned(),
             s_font: "assets/segoe-ui-bold.ttf".to_owned(),
-            font_size: (60, 25)
+            font_size: (60, 25),
         }
     }
 }
