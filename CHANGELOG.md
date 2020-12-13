@@ -1,5 +1,9 @@
 # Changelog
-sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep forgetting
+sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.3.1
+- add separate fields for timer and split font in config struct
+- use font paths from config in app.rs
+
 ### 1.3.0
 - add configuration file and cfg file parsing
 	* config file holds last opened run, colors for timer, path to font
