@@ -1,8 +1,8 @@
-# <img src="assets/MIST.png" width="30" height="30"/> mist
+# <img src="assets/MIST.png" width="50" height="50"/> mist
 a minimal, improved speedrun timer
 
 [Changelog](CHANGELOG.md) \
-[Latest Release](https://github.com/LtPeriwinkle/mist/releases/tag/v1.0.0)
+[Latest Release](https://github.com/LtPeriwinkle/mist/releases/latest)
 
 ---
 
@@ -17,11 +17,14 @@ More will probably be added to this list in the future
 	* [X] MacOS (compiled & tested in macOS catalina VM)
 - [X] Human-readable split file (using [ron](https://github.com/ron-rs/ron))
 - [ ] LiveSplit split file transposing (for now, check out [this site](https://lsstomist.komali09.repl.co))
-- [ ] (limited) customizability (i.e custom colors, perhaps fonts and layouts)
+- [ ] (limited) customizability 
+	* [X] custom fonts
+	* [ ] custom colors
+	* [ ] timer backgrounds (maybe)
 - [ ] split file creation tool
 - [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
-- [X] dynamic run comparisons and colors
-- [ ] last 5 run avg comparison
+- [X] dynamic colors
+- [ ] different run comparisons (i.e. SOB, average, last 5 runs avg, pb)
 - [ ] integrated notes (like SpeedGuidesLive)
 
 ## Requested features
@@ -40,37 +43,42 @@ These features are *highly unlikely* be implemented, in the spirit of minimalism
 
 # Installation
 
-## crates.io
-mist is available on crates.io as `mist`. You should be able to just run `mist` in the command line if you do this.
-```
-cargo install mist
-```
-
 ## Compiling from source
 Probably the best way to try this out is to compile it from source. To do this you need rust installed, and an installation guide
 for that can be found [here](https://www.rust-lang.org/tools/install).
+
+When you run mist, make sure it is in the same directory as the `assets` directory or else it won't work.
 ### Linux
 Requirements are SDL2, SDL2\_Image and SDL2\_TTF shared libraries, as well as development libraries. On ubuntu:
-```bash
+```
 sudo apt-get install libsdl2 libsdl2-ttf libsdl2-image libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev
 ```
 
 (i think)
 
 On arch:
-```bash
+```
 sudo pacman -S sdl2 sdl2_ttf sdl2_image
 ```
 
 Clone this repo (`git clone https://github.com/LtPeriwinkle/mist`), enter the directory, and run `cargo build --release`. The resulting binary will be in
-`./target/release/`. When you run it, make sure it is in the same directory as `assets/` or else it won't work.
+`./target/release/`. 
 
 ### Windows
 Follow [this guide](https://github.com/Rust-SDL2/rust-sdl2#windows-msvc) to set up your SDL dependencies. You will have to follow this process for SDL2, SDL\_Image and SDL2\_TTF,
 whose development stuff is available [here](http://libsdl.org/projects/SDL_ttf/) and [here](http://libsdl.org/projects/SDL_image).
 
-Clone the repository as shown in the linux section, and enter the folder. Then run `cargo build --release`. The .exe will be in `.\target\release\`. Move it into
-the same folder as `assets\`, as well as all of the SDL2, SDL2\_Image and SDL2\_TTF related dll files in order to run it.
+Compile with `cargo build --release` then move the exe as well as the sdl related dlls into the same folder as the assets folder to run it.
+
+### MacOS
+Install sdl2, sdl image and sdl ttf. Using homebrew:
+```
+brew install sdl2 sdl2_image sdl2_ttf
+```
+
+Then you should be able to run `cargo build --release`.
+
+## Credits
 
 ## Licensing
 Like Rust itself, mist is licensed under MIT or Apache 2.0, at your option.
