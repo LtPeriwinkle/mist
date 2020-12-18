@@ -1,5 +1,9 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+
+### 1.3.3
+- patch issues with 0-split files
+
 ### 1.3.2
 - add font size field in config
 - allow user selected config, default to assets/default.mts if none
