@@ -35,7 +35,6 @@ impl App {
             .window("mist", 300, 500)
             .position_centered()
             .resizable()
-            .borderless()
             .build()
             .expect("could not initialize SDL window");
         let icon = Surface::from_file("assets/MIST.png").expect("could not load icon");
@@ -403,6 +402,7 @@ impl App {
                         }
                         // if it is running, either split or end
                         TimerState::Running { timestamp: t, .. } => {
+                            if len != 0 {
                             elapsed = self.timer.elapsed().as_millis();
                             active_run_times
                                 .push((elapsed - split_time_ticks) + before_pause_split);
@@ -465,6 +465,10 @@ impl App {
                                 bottom_split_index += 1;
                                 recreate_on_screen = Some(2);
                             }
+                            } else {
+                            	elapsed = self.timer.elapsed().as_millis();
+				self.state = TimerState::Finished {time_str: timing::ms_to_readable((elapsed - t) + before_pause, true)};
+                            }
                         }
                         _ => {}
                     },
@@ -477,7 +481,7 @@ impl App {
             if let TimerState::Running { .. } = self.state {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
                 elapsed = self.timer.elapsed().as_millis();
-                if current_split == 0 {
+                if current_split == 0 && len != 0{
                     if (elapsed - split_time_ticks) + before_pause_split
                         < splits[current_split].time()
                     {
@@ -485,7 +489,7 @@ impl App {
                     } else {
                         color = BEHIND;
                     }
-                } else {
+                } else if len != 0 {
                     let allowed =
                         splits[current_split].time() as i128 - splits[current_split - 1].diff();
                     let buffer = splits[current_split - 1].diff();
