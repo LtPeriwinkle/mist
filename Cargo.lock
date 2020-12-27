@@ -40,10 +40,21 @@ checksum = "4d58d1b70b004888f764dfbf6a26a3b0342a1632d33968e4a179d8011c760614"
 name = "mist"
 version = "1.3.3"
 dependencies = [
+ "mist-run-utils",
  "ron",
  "sdl2",
  "serde",
  "tinyfiledialogs",
+]
+
+[[package]]
+name = "mist-run-utils"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3eea2e9dfe63daa7eaa0453d8d9776ddea862296553d0a964cd4ef15dd035a9"
+dependencies = [
+ "ron",
+ "serde",
 ]
 
 [[package]]

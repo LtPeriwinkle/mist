@@ -26,3 +26,7 @@ features = ["serde_derive"]
 
 [dependencies.tinyfiledialogs]
 version = "3.3"
+
+#  use * dependency version here because i update it myself
+[dependencies.mist-run-utils]
+version = "*"
