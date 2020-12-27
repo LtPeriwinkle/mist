@@ -76,20 +76,23 @@ impl App {
     }
 
     pub fn run(&mut self) {
-        let mut path: Option<String>;
+        let mut path: Option<String> = None;
+        let retry: bool;
         if let Some(x) = self.config.file() {
             path = Some(x.to_owned());
             match Run::from_file(&x) {
                 Some(r) => {
                     self.run = r;
+                    retry = false;
                 }
                 None => {
-                    if !bad_file_dialog("Split file parse failed. Try another file?") {
-                        return;
-                    }
+                    retry = true
                 }
             }
         } else {
+            retry = true;
+        }
+        if retry {
             loop {
                 path = open_file("Open split file", "*.msf");
                 match path {
@@ -109,6 +112,9 @@ impl App {
                     },
                 }
             }
+        }
+        if let Some(x) = self.config.file() {
+		path = Some(x.to_owned());
         }
         let path = path.unwrap();
         self.config.set_file(&path);
