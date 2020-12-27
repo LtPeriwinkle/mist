@@ -113,9 +113,6 @@ impl App {
                 }
             }
         }
-        if let Some(x) = self.config.file() {
-		path = Some(x.to_owned());
-        }
         let path = path.unwrap();
         self.config.set_file(&path);
         // set up some stuff that's a pain to do elsewhere
