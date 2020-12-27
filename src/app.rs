@@ -49,7 +49,7 @@ impl App {
             .expect("could not initialize SDL event handler");
         let timer = Instant::now();
         let config: Config;
-        match open_file("(OPTIONAL) Open config file", "*.mts") {
+        match open_file("(OPTIONAL) Open config file", "*.cfg") {
             Some(x) => {
                 config = Config::from_file(Some(&x));
             }

@@ -66,7 +66,7 @@ impl Config {
             None => {
                 file = OpenOptions::new()
                     .write(true)
-                    .open("assets/default.mts")
+                    .open("assets/default.cfg")
                     .expect("file open failed");
             }
         }
