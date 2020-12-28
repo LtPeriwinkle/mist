@@ -6,13 +6,16 @@ use sdl2::pixels::Color;
 use sdl2::render::{Texture, WindowCanvas};
 use sdl2::surface::Surface;
 use sdl2::ttf;
+
 use std::thread;
 use std::time::{Duration, Instant};
+
+use mist_run_utils::{run::Run};
 
 use crate::components::*;
 use crate::config::{self, Config};
 use crate::render;
-use crate::splits::{self, Run, Split};
+use crate::splits::Split;
 use crate::timing;
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
@@ -23,7 +26,7 @@ pub struct App {
     canvas: WindowCanvas,
     ttf: sdl2::ttf::Sdl2TtfContext,
     state: TimerState,
-    run: splits::Run,
+    run: Run,
     config: config::Config,
 }
 
@@ -70,7 +73,7 @@ impl App {
             state: TimerState::NotStarted {
                 time_str: "".to_string(),
             },
-            run: Run::new(),
+            run: Run::default(),
             config,
         }
     }
@@ -80,14 +83,12 @@ impl App {
         let retry: bool;
         if let Some(x) = self.config.file() {
             path = Some(x.to_owned());
-            match Run::from_file(&x) {
+            match Run::from_msf_file(&x) {
                 Some(r) => {
                     self.run = r;
                     retry = false;
                 }
-                None => {
-                    retry = true
-                }
+                None => retry = true,
             }
         } else {
             retry = true;
@@ -99,7 +100,7 @@ impl App {
                     None => {
                         return;
                     }
-                    Some(ref p) => match Run::from_file(&p) {
+                    Some(ref p) => match Run::from_msf_file(&p) {
                         Some(x) => {
                             self.run = x;
                             break;
@@ -139,8 +140,8 @@ impl App {
             .unwrap();
 
         // get first vec of split name textures from file
-        let split_names = &self.run.splits;
-        let offset = self.run.offset;
+        let split_names = self.run.split_names();
+        let offset = self.run.offset();
         // if there is an offset, display it properly
         match offset {
             Some(x) => {
@@ -260,7 +261,7 @@ impl App {
             if save {
                 save = false;
                 if save_check() {
-                    self.run.save(&path);
+                    self.run.save_msf(&path);
                 }
             }
 
@@ -406,71 +407,79 @@ impl App {
                         // if it is running, either split or end
                         TimerState::Running { timestamp: t, .. } => {
                             if len != 0 {
-                            elapsed = self.timer.elapsed().as_millis();
-                            active_run_times
-                                .push((elapsed - split_time_ticks) + before_pause_split);
-                            split_time_ticks = elapsed;
-                            let sum = timing::split_time_sum(&active_run_times)[current_split];
-                            let diff = sum as i128 - summed_times[current_split] as i128;
-                            time_str = timing::diff_text(diff);
-                            if active_run_times[current_split] < splits[current_split].gold() {
-                                color = GOLD;
-                                splits[current_split].set_gold(active_run_times[current_split]);
-                            }
-                            text_surface = font.render(&time_str).blended(color).unwrap();
-                            texture = creator.create_texture_from_surface(&text_surface).unwrap();
-                            splits[current_split].set_diff(diff, Some(texture));
-                            time_str = timing::split_time_text((elapsed - t) + before_pause);
-                            text_surface = font.render(&time_str).blended(Color::WHITE).unwrap();
-                            texture = creator.create_texture_from_surface(&text_surface).unwrap();
-                            splits[current_split].set_cur(Some(texture));
-                            if current_split < splits.len() - 1 {
-                                current_split += 1;
-                            } else {
-                                let mut index = 0;
-                                while index < len {
-                                    if splits[index].gold() < self.run.gold_time(index) {
-                                        self.run.set_gold_time(index, splits[index].gold());
+                                elapsed = self.timer.elapsed().as_millis();
+                                active_run_times
+                                    .push((elapsed - split_time_ticks) + before_pause_split);
+                                split_time_ticks = elapsed;
+                                let sum = timing::split_time_sum(&active_run_times)[current_split];
+                                let diff = sum as i128 - summed_times[current_split] as i128;
+                                time_str = timing::diff_text(diff);
+                                if active_run_times[current_split] < splits[current_split].gold() {
+                                    color = GOLD;
+                                    splits[current_split].set_gold(active_run_times[current_split]);
+                                }
+                                text_surface = font.render(&time_str).blended(color).unwrap();
+                                texture =
+                                    creator.create_texture_from_surface(&text_surface).unwrap();
+                                splits[current_split].set_diff(diff, Some(texture));
+                                time_str = timing::split_time_text((elapsed - t) + before_pause);
+                                text_surface =
+                                    font.render(&time_str).blended(Color::WHITE).unwrap();
+                                texture =
+                                    creator.create_texture_from_surface(&text_surface).unwrap();
+                                splits[current_split].set_cur(Some(texture));
+                                if current_split < splits.len() - 1 {
+                                    current_split += 1;
+                                } else {
+                                    let mut index = 0;
+                                    while index < len {
+                                        if splits[index].gold() < self.run.gold_time(index) {
+                                            self.run.set_gold_time(index, splits[index].gold());
+                                        }
+                                    }
+                                    self.state = TimerState::Finished {
+                                        time_str: timing::ms_to_readable(
+                                            (elapsed - t) + before_pause,
+                                            true,
+                                        ),
+                                    };
+                                    if (elapsed - t) + before_pause < self.run.pb() {
+                                        index = 0;
+                                        summed_times = timing::split_time_sum(&active_run_times);
+                                        let split_times_raw: Vec<String> = summed_times
+                                            .iter()
+                                            .map(|val| timing::split_time_text(*val))
+                                            .collect();
+                                        while index < len {
+                                            text_surface = font
+                                                .render(&split_times_raw[index])
+                                                .blended(Color::WHITE)
+                                                .unwrap();
+                                            texture = creator
+                                                .create_texture_from_surface(text_surface)
+                                                .unwrap();
+                                            splits[index].set_pb(texture);
+                                            splits[index].set_cur(None);
+                                            splits[index].set_time(active_run_times[index]);
+                                        }
+                                        save = true;
+                                        self.run.set_pb((elapsed - t) + before_pause);
+                                        self.run.set_times(&active_run_times);
+                                        active_run_times = vec![];
                                     }
                                 }
+                                if current_split + 1 > bottom_split_index {
+                                    bottom_split_index += 1;
+                                    recreate_on_screen = Some(2);
+                                }
+                            } else {
+                                elapsed = self.timer.elapsed().as_millis();
                                 self.state = TimerState::Finished {
                                     time_str: timing::ms_to_readable(
                                         (elapsed - t) + before_pause,
                                         true,
                                     ),
                                 };
-                                if (elapsed - t) + before_pause < self.run.pb() {
-                                    index = 0;
-                                    summed_times = timing::split_time_sum(&active_run_times);
-                                    let split_times_raw: Vec<String> = summed_times
-                                        .iter()
-                                        .map(|val| timing::split_time_text(*val))
-                                        .collect();
-                                    while index < len {
-                                        text_surface = font
-                                            .render(&split_times_raw[index])
-                                            .blended(Color::WHITE)
-                                            .unwrap();
-                                        texture = creator
-                                            .create_texture_from_surface(text_surface)
-                                            .unwrap();
-                                        splits[index].set_pb(texture);
-                                        splits[index].set_cur(None);
-                                        splits[index].set_time(active_run_times[index]);
-                                    }
-                                    save = true;
-                                    self.run.set_pb((elapsed - t) + before_pause);
-                                    self.run.set_times(&active_run_times);
-                                    active_run_times = vec![];
-                                }
-                            }
-                            if current_split + 1 > bottom_split_index {
-                                bottom_split_index += 1;
-                                recreate_on_screen = Some(2);
-                            }
-                            } else {
-                            	elapsed = self.timer.elapsed().as_millis();
-				self.state = TimerState::Finished {time_str: timing::ms_to_readable((elapsed - t) + before_pause, true)};
                             }
                         }
                         _ => {}
@@ -484,7 +493,7 @@ impl App {
             if let TimerState::Running { .. } = self.state {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
                 elapsed = self.timer.elapsed().as_millis();
-                if current_split == 0 && len != 0{
+                if current_split == 0 && len != 0 {
                     if (elapsed - split_time_ticks) + before_pause_split
                         < splits[current_split].time()
                     {
