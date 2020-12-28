@@ -1,6 +1,7 @@
 // split struct and methods
 use sdl2::render::Texture;
 
+// this holds a lot of information about both what to render and how to compare to it
 pub struct Split<'a> {
     pb_time: u128,
     gold_time: u128,
@@ -11,6 +12,7 @@ pub struct Split<'a> {
     current_texture: Option<Texture<'a>>,
 }
 
+// requires lifetime specifier because textures aren't allowed to outlive texture_creators
 impl<'a> Split<'a> {
     pub fn new(
         pb_time: u128,

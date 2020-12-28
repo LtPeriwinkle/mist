@@ -33,6 +33,7 @@ pub enum TimerState {
     },
 }
 
+// open a dialog box to ask the user if they want to save the run they just completed to its original split file
 pub fn save_check() -> bool {
     match tfd::message_box_yes_no(
         "Save run?",
@@ -49,6 +50,7 @@ pub fn save_check() -> bool {
     }
 }
 
+// open a generic file dialog box with the passed filter and title in order to get a file path
 pub fn open_file(title: &str, ext: &str) -> Option<String> {
     let cwd = env::current_dir().unwrap();
     let mut dir = cwd.to_string_lossy();
@@ -57,6 +59,7 @@ pub fn open_file(title: &str, ext: &str) -> Option<String> {
     return path;
 }
 
+// open a dialog box to alert the user that their file was invalid and ask them what they would like to do
 pub fn bad_file_dialog(err: &str) -> bool {
     match tfd::message_box_ok_cancel(
         "file read error",
@@ -69,6 +72,7 @@ pub fn bad_file_dialog(err: &str) -> bool {
     }
 }
 
+// wrapper function so the tfd stuff can all stay in this file
 pub fn info_dialog(title: &str, text: &str) {
     tfd::message_box_ok(title, text, tfd::MessageBoxIcon::Info);
 }

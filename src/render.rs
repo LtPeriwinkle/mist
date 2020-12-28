@@ -7,6 +7,8 @@ use sdl2::render::{Canvas, Texture, TextureQuery};
 use sdl2::video::Window;
 
 // Puts split name textures and their associated times into the SDL backbuffer
+// handles placing all the textures around the other ones and highlighting the active split based on the
+// index passed to it
 pub fn render_rows(
     on_screen: &[Split],
     canvas: &mut Canvas<Window>,
@@ -19,6 +21,7 @@ pub fn render_rows(
     // draw each split name on the left of the screen
     for item in on_screen {
         let TextureQuery { width, height, .. } = item.name().query();
+        // draw the blue highlight box before drawing the text for the split with index current
         if index == current {
             canvas.set_draw_color(Color::BLUE);
             canvas
@@ -29,7 +32,8 @@ pub fn render_rows(
         canvas
             .copy(&item.name(), None, Some(row))
             .expect("split texture copy failed");
-
+        // if the split has a texture from an active run, draw it to reflect the current time
+        // otherwise draw the pb split time
         match item.cur() {
             Some(x) => {
                 let TextureQuery { width, height, .. } = x.query();
@@ -75,6 +79,7 @@ pub fn render_rows(
             }
         }
         canvas.set_draw_color(Color::GRAY);
+        // draw a line to separate between the rows
         canvas
             .draw_line(
                 Point::new(0, y + height as i32 + 3),
@@ -87,13 +92,14 @@ pub fn render_rows(
 }
 
 // Puts the big display timer at the bottom into the SDL backbuffer
+// aligns the texture with the right side of the window. if the window is not wide enough to show the entire thing
+// it currently just won't render it
 pub fn render_time(texture: &Texture, canvas: &mut Canvas<Window>) {
     let vp = canvas.viewport();
     let h = vp.height();
     let w = vp.width();
     let TextureQuery { width, height, .. } = texture.query();
     if w > width {
-        // aligns texture with right side of window
         let rect = Rect::new((w - width) as i32, h as i32 - height as i32, width, height);
         canvas
             .copy(&texture, None, Some(rect))

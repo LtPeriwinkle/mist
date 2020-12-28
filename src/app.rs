@@ -10,7 +10,7 @@ use sdl2::ttf;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use mist_run_utils::{run::Run};
+use mist_run_utils::run::Run;
 
 use crate::components::*;
 use crate::config::{self, Config};
@@ -33,6 +33,7 @@ pub struct App {
 impl App {
     pub fn init(context: sdl2::Sdl) -> Self {
         // sdl setup boilerplate
+        // there are a lot of errors that are improperly handled here; i'll get around to it eventually but its not my top priority
         let video = context.video().expect("could not initialize SDL video");
         let mut window = video
             .window("mist", 300, 500)
@@ -50,8 +51,10 @@ impl App {
         let ev_pump = context
             .event_pump()
             .expect("could not initialize SDL event handler");
+        // start the overarching application timer (kinda)
         let timer = Instant::now();
         let config: Config;
+        // let user open a config file; if they don't then attempt to open assets/default.cfg
         match open_file("(OPTIONAL) Open config file", "*.cfg") {
             Some(x) => {
                 config = Config::from_file(Some(&x));
@@ -64,6 +67,7 @@ impl App {
                 );
             }
         }
+        // return an App that hasn't started and has an empty run
         App {
             context,
             ev_pump,
@@ -81,6 +85,9 @@ impl App {
     pub fn run(&mut self) {
         let mut path: Option<String> = None;
         let retry: bool;
+        // try to use the filepath specified in the config file
+        // if it doesnt exist then set retry to true
+        // if the specified file is invalid also set retry
         if let Some(x) = self.config.file() {
             path = Some(x.to_owned());
             match Run::from_msf_file(&x) {
@@ -93,19 +100,26 @@ impl App {
         } else {
             retry = true;
         }
+        // if retry was set earlier then enter the loop of picking a file
         if retry {
             loop {
+                // open a a file choosing dialog box
                 path = open_file("Open split file", "*.msf");
+                // if the user didn't pick a file and hit cancel, then exit this function (which currently will exit the program)
                 match path {
                     None => {
                         return;
                     }
+                    // if the user did choose a file, try to parse a Run from it.
+                    // if the run is valid, break the file loop and continue on
                     Some(ref p) => match Run::from_msf_file(&p) {
                         Some(x) => {
                             self.run = x;
                             break;
                         }
                         None => {
+                            // if it is invalid, ask the user whether they want to try another file
+                            // if they don't then exit the program
                             if !bad_file_dialog("Split file parse failed. Try another file?") {
                                 return;
                             }
@@ -114,10 +128,13 @@ impl App {
                 }
             }
         }
+        // remove Option wrapper from filepath for later use since it now is guaranteed not to be None
         let path = path.unwrap();
+        // set the config file's run path to the given path in case a new one was chosen
         self.config.set_file(&path);
-        // set up some stuff that's a pain to do elsewhere
         self.canvas.clear();
+
+        // grab font sizes from config file and load the fonts
         let sizes = self.config.fsize();
         let timer_font = self
             .ttf
@@ -127,7 +144,10 @@ impl App {
             .ttf
             .load_font(self.config.sfont(), sizes.1)
             .expect("could not open font file");
+        // make the texture creator used a lot later on
         let creator = self.canvas.texture_creator();
+
+        // get the heights of different font textures
         let timer_height = timer_font.size_of("0123456789").unwrap().1;
         let splits_height = font
             .size_of("qwertyuiopasdfghjklzxcvbnm01234567890")
@@ -181,6 +201,7 @@ impl App {
             let pb_texture = creator
                 .create_texture_from_surface(&pb)
                 .expect("split time texture failed");
+            // create split struct with its corresponding times and textures
             let split = Split::new(
                 split_times_ms[index],
                 self.run.gold_time(index),
@@ -194,10 +215,12 @@ impl App {
             index += 1;
         }
 
-        // set up max splits dynamically in case there are too few splits
         let mut max_splits: usize;
         let mut bottom_split_index = SPLITS_ON_SCREEN;
         let mut top_split_index = 0;
+
+        // if there are too few splits then set the max splits to the number of splits rather than
+        // the max allowed amount
         if SPLITS_ON_SCREEN > split_names.len() {
             bottom_split_index = split_names.len();
             max_splits = split_names.len();
@@ -235,7 +258,9 @@ impl App {
         // split times of current run
         let mut active_run_times: Vec<u128> = vec![];
 
+        // variable used to hold elapsed milliseconds of the application timer
         let mut elapsed: u128;
+        // set when a run ends and is a pb to signal for a pop-up window to ask if the user wants to save
         let mut save = false;
         self.canvas.present();
 
@@ -258,6 +283,8 @@ impl App {
                     total_time = Instant::now();
                 }
             }
+            // check at the start of the loop (after rendering final frame of an ended run)
+            // if the user wants to save the run or not with a yes/no popup window
             if save {
                 save = false;
                 if save_check() {
@@ -336,6 +363,7 @@ impl App {
                         repeat: false,
                         ..
                     } => {
+                        // reset active run times and return the list of splits to the top
                         active_run_times = vec![];
                         bottom_split_index = max_splits;
                         recreate_on_screen = Some(2);
@@ -354,6 +382,7 @@ impl App {
                             }
                         }
                         index = 0;
+                        // get rid of run-specific active times and differences
                         while index < len {
                             splits[index].set_cur(None);
                             splits[index].set_diff(0, None);
@@ -406,6 +435,7 @@ impl App {
                         }
                         // if it is running, either split or end
                         TimerState::Running { timestamp: t, .. } => {
+                            // only try to do this stuff if there is at least one split
                             if len != 0 {
                                 elapsed = self.timer.elapsed().as_millis();
                                 active_run_times
@@ -414,6 +444,7 @@ impl App {
                                 let sum = timing::split_time_sum(&active_run_times)[current_split];
                                 let diff = sum as i128 - summed_times[current_split] as i128;
                                 time_str = timing::diff_text(diff);
+                                // set diff color to gold and replace split gold
                                 if active_run_times[current_split] < splits[current_split].gold() {
                                     color = GOLD;
                                     splits[current_split].set_gold(active_run_times[current_split]);
@@ -428,11 +459,14 @@ impl App {
                                 texture =
                                     creator.create_texture_from_surface(&text_surface).unwrap();
                                 splits[current_split].set_cur(Some(texture));
+                                // if there are still splits left, continue the run and advance the current split
                                 if current_split < splits.len() - 1 {
                                     current_split += 1;
+                                // otherwise end the run
                                 } else {
                                     let mut index = 0;
                                     while index < len {
+                                        // if the split has a new gold then set the run's gold to that time
                                         if splits[index].gold() < self.run.gold_time(index) {
                                             self.run.set_gold_time(index, splits[index].gold());
                                         }
@@ -443,6 +477,7 @@ impl App {
                                             true,
                                         ),
                                     };
+                                    // if this run was a pb then set the Run struct's pb and splits
                                     if (elapsed - t) + before_pause < self.run.pb() {
                                         index = 0;
                                         summed_times = timing::split_time_sum(&active_run_times);
@@ -468,10 +503,12 @@ impl App {
                                         active_run_times = vec![];
                                     }
                                 }
+                                // if the next split is offscreen set recreate_on_screen flag to change the current split slice
                                 if current_split + 1 > bottom_split_index {
                                     bottom_split_index += 1;
                                     recreate_on_screen = Some(2);
                                 }
+                            // finish the run if there are no splits
                             } else {
                                 elapsed = self.timer.elapsed().as_millis();
                                 self.state = TimerState::Finished {
@@ -490,9 +527,11 @@ impl App {
             window_width = self.canvas.viewport().width();
 
             // make some changes to stuff before updating screen based on what happened in past loop
+            // but only if the timer is running
             if let TimerState::Running { .. } = self.state {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
                 elapsed = self.timer.elapsed().as_millis();
+                // if we are in split 0 there's no need for fancy losing/gaining time, only ahead and behind
                 if current_split == 0 && len != 0 {
                     if (elapsed - split_time_ticks) + before_pause_split
                         < splits[current_split].time()
@@ -502,33 +541,51 @@ impl App {
                         color = BEHIND;
                     }
                 } else if len != 0 {
+                    // get the amount of time that the runner could spend on the split without being behind pb
                     let allowed =
                         splits[current_split].time() as i128 - splits[current_split - 1].diff();
                     let buffer = splits[current_split - 1].diff();
+                    // get amount of time that has passed in the current split
                     let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
+                    // if the last split was ahead of pb split
                     if buffer < 0 {
+                        // if the runner has spent more time than allowed they have to be behind
                         if time > allowed {
                             color = BEHIND;
+                        // if they have spent less than the time it would take to become behind but more time than they took in the pb,
+// 			// then they are losing time but still ahead. default color for this is lightish green like LiveSplit
                         } else if time < allowed && time > allowed + buffer {
                             color = LOSING_TIME;
+                        // if neither of those are true the runner must be ahead
                         } else {
                             color = AHEAD;
                         }
+                    // if last split was behind pb split
                     } else {
+                        // if the runner has gone over the amount of time they should take but are still on better pace than
+                        // last split then they are making up time. a sort of light red color like livesplit
                         if time > allowed && time < allowed + buffer {
                             color = MAKING_UP_TIME;
+                        // if they are behind both the allowed time and their current pace they must be behind
                         } else if time > allowed && time > allowed + buffer {
                             color = BEHIND;
+                        // even if the last split was behind, often during part of the split the runner could finish it and come out ahead
                         } else {
                             color = AHEAD;
                         }
                     }
                 }
+                // set the split to highlight in blue when rendering
+                // this value has to be adjusted to be relative to the number of splits on screen rather than
+                // the total number of splits
                 if current_split >= top_split_index && current_split <= bottom_split_index {
                     cur = current_split - top_split_index;
                 } else {
+                    // if the current split isnt on screen, pass this horrendously massive value to the render function
+                    // so that it doesnt put a blue rectangle on anything (hopefully)
                     cur = usize::MAX;
                 }
+            // if timer isnt running then dont highlight a split or use a color
             } else {
                 cur = usize::MAX;
                 color = Color::WHITE;
@@ -555,18 +612,23 @@ impl App {
                         }
                     }
                 }
-                // set on mouse scroll, creates new slices based on the current top and bottom split
+                // set on mouse scroll or on split if the next split is offscreen
+                // creates new slices based on the current top and bottom split
                 Some(2) => {
                     top_split_index = bottom_split_index - max_splits;
                 }
                 _ => {}
             }
+            // copy the name, diff, and time textures to the canvas
+            // and highlight the split relative to the top of the list marked by cur
+            // function places the rows and ensures that they don't go offscreen
             render::render_rows(
                 &splits[top_split_index..bottom_split_index],
                 &mut self.canvas,
                 window_width,
                 cur,
             );
+            // update the time based on the current timer state
             time_str = self.update_time(before_pause, total_time);
             text_surface = timer_font
                 .render(&time_str)
@@ -575,6 +637,7 @@ impl App {
             texture = creator
                 .create_texture_from_surface(&text_surface)
                 .expect("time texture creation failed");
+            // copy the time texture to the canvas. function takes care of placing and making sure it doesnt try to place the texture offscreen
             render::render_time(&texture, &mut self.canvas);
             self.canvas.present();
             if Instant::now().duration_since(frame_time) <= one_sixtieth {
@@ -584,9 +647,11 @@ impl App {
                 );
             }
         }
+        // after the loop is exited then save the config file
+        // eventually will be smart enough to save to a path other than the default but not yet
         self.config.save(None);
     }
-    // updates time string based on timer state, basically leaves it the same if timer is paused
+    // updates time string based on timer state, basically leaves it the same if timer is not running
     fn update_time(&self, before_pause: u128, total_time: Instant) -> String {
         let time: String;
         match &self.state {

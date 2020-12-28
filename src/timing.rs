@@ -38,6 +38,9 @@ pub fn ms_to_readable(mut ms: u128, round: bool) -> String {
     }
 }
 
+// generates the text for the diff times in rows on the timer
+// only goes to tenths to save space
+// if the passed diff value is negative return a formatted string with a negative sign at the front
 pub fn diff_text(mut ms: i128) -> String {
     let mut negative = false;
     if ms < 0 {
@@ -83,6 +86,8 @@ pub fn diff_text(mut ms: i128) -> String {
     }
 }
 
+// formats the split times that go in rows
+// only goes to tenths to save space also
 pub fn split_time_text(ms: u128) -> String {
     let mut tenths = ms / 100;
     let mut full_s: u128;

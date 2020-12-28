@@ -16,6 +16,8 @@ pub struct Config {
 }
 
 impl Config {
+    // open a Config from the provided filepath. If the filepath is None, open the default configuration file.
+    // if the file does not exist, then creates it and if any error occurs then returns the default configuration
     pub fn from_file(path: Option<&str>) -> Self {
         let file: std::fs::File;
         match path {
