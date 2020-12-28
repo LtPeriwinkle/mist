@@ -148,9 +148,9 @@ impl App {
         let creator = self.canvas.texture_creator();
 
         // get the heights of different font textures
-        let timer_height = timer_font.size_of("0123456789").unwrap().1;
+        let timer_height = timer_font.size_of("-0123456789:.").unwrap().1;
         let splits_height = font
-            .size_of("qwertyuiopasdfghjklzxcvbnm01234567890")
+            .size_of("qwertyuiopasdfghjklzxcvbnm01234567890!@#$%^&*(){}[]|\\:;'\",.<>?/`~-_=+")
             .unwrap()
             .1;
         // set the minimum height of the window to the size of the time texture
