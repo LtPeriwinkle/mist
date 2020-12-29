@@ -53,20 +53,6 @@ impl App {
             .expect("could not initialize SDL event handler");
         // start the overarching application timer (kinda)
         let timer = Instant::now();
-        let config: Config;
-        // let user open a config file; if they don't then attempt to open assets/default.cfg
-        match open_file("(OPTIONAL) Open config file", "*.cfg") {
-            Some(x) => {
-                config = Config::from_file(Some(&x));
-            }
-            None => {
-                config = Config::from_file(None);
-                info_dialog(
-                    "",
-                    "Since you did not select a config file, the default will be used",
-                );
-            }
-        }
         // return an App that hasn't started and has an empty run
         App {
             context,
@@ -78,11 +64,25 @@ impl App {
                 time_str: "".to_string(),
             },
             run: Run::default(),
-            config,
+            config: Config::default(),
         }
     }
 
     pub fn run(&mut self) {
+        let cfg_path = open_file("(OPTIONAL) Open config file", "*.cfg");
+        // let user open a config file; if they don't then attempt to open assets/default.cfg
+        match cfg_path {
+            Some(ref x) => {
+                self.config = Config::from_file(Some(&x));
+            }
+            None => {
+                self.config = Config::from_file(None);
+                info_dialog(
+                    "",
+                    "Since you did not select a config file, the default will be used",
+                );
+            }
+        }
         let mut path: Option<String> = None;
         let retry: bool;
         // try to use the filepath specified in the config file
@@ -648,8 +648,7 @@ impl App {
             }
         }
         // after the loop is exited then save the config file
-        // eventually will be smart enough to save to a path other than the default but not yet
-        self.config.save(None);
+        self.config.save(cfg_path.as_ref());
     }
     // updates time string based on timer state, basically leaves it the same if timer is not running
     fn update_time(&self, before_pause: u128, total_time: Instant) -> String {
