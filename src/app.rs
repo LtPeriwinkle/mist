@@ -17,6 +17,7 @@ use crate::config::{self, Config};
 use crate::render;
 use crate::splits::Split;
 use crate::timing;
+
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
@@ -26,6 +27,7 @@ pub struct App {
     canvas: WindowCanvas,
     ttf: sdl2::ttf::Sdl2TtfContext,
     state: TimerState,
+    comparison: Comparison,
     run: Run,
     config: config::Config,
 }
@@ -63,6 +65,7 @@ impl App {
             state: TimerState::NotStarted {
                 time_str: "".to_string(),
             },
+            comparison: Comparison::PersonalBest,
             run: Run::default(),
             config: Config::default(),
         }
@@ -194,12 +197,12 @@ impl App {
             let texture = creator
                 .create_texture_from_surface(&text_surface)
                 .expect("split name texture failed");
-            let pb = font
+            let comp = font
                 .render(&split_times_raw[index])
                 .blended(Color::WHITE)
                 .expect("split time render failed");
-            let pb_texture = creator
-                .create_texture_from_surface(&pb)
+            let comp_texture = creator
+                .create_texture_from_surface(&comp)
                 .expect("split time texture failed");
             // create split struct with its corresponding times and textures
             let split = Split::new(
@@ -208,7 +211,7 @@ impl App {
                 0,
                 None,
                 texture,
-                pb_texture,
+                comp_texture,
                 None,
             );
             splits.push(split);
@@ -493,7 +496,7 @@ impl App {
                                             texture = creator
                                                 .create_texture_from_surface(text_surface)
                                                 .unwrap();
-                                            splits[index].set_pb(texture);
+                                            splits[index].set_comp_tex(texture);
                                             splits[index].set_cur(None);
                                             splits[index].set_time(active_run_times[index]);
                                         }
@@ -553,7 +556,7 @@ impl App {
                         if time > allowed {
                             color = BEHIND;
                         // if they have spent less than the time it would take to become behind but more time than they took in the pb,
-// 			// then they are losing time but still ahead. default color for this is lightish green like LiveSplit
+ 			// then they are losing time but still ahead. default color for this is lightish green like LiveSplit
                         } else if time < allowed && time > allowed + buffer {
                             color = LOSING_TIME;
                         // if neither of those are true the runner must be ahead
