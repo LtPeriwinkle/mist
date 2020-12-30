@@ -524,6 +524,13 @@ impl App {
                         }
                         _ => {}
                     },
+                    // right and left arrows to swap comparisons
+                    Event::KeyDown {keycode: Some(Keycode::Right), ..} => {
+			self.comparison.next();
+                    }
+                    Event::KeyDown {keycode: Some(Keycode::Left), ..} => {
+			self.comparison.prev();
+                    }
                     _ => {}
                 }
             }
@@ -544,9 +551,22 @@ impl App {
                         color = BEHIND;
                     }
                 } else if len != 0 {
+                    if let Comparison::None = self.comparison {
+			color = Color::WHITE;
+                    } else {
                     // get the amount of time that the runner could spend on the split without being behind pb
-                    let allowed =
-                        splits[current_split].time() as i128 - splits[current_split - 1].diff();
+		    let allowed: i128;
+		    match self.comparison {
+			Comparison::PersonalBest => {
+	                    allowed =
+        	                splits[current_split].time() as i128 - splits[current_split - 1].diff();
+    			}
+			Comparison::Golds => {
+	                    allowed =
+        	                splits[current_split].gold() as i128 - splits[current_split - 1].diff();
+    			}
+			_ => { allowed = 0;}
+    		    }
                     let buffer = splits[current_split - 1].diff();
                     // get amount of time that has passed in the current split
                     let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
@@ -576,6 +596,7 @@ impl App {
                         } else {
                             color = AHEAD;
                         }
+                    }
                     }
                 }
                 // set the split to highlight in blue when rendering
