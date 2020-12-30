@@ -8,7 +8,7 @@ pub struct Split<'a> {
     diff: i128,
     diff_texture: Option<Texture<'a>>,
     name_texture: Texture<'a>,
-    pb_texture: Texture<'a>,
+    comp_texture: Texture<'a>,
     current_texture: Option<Texture<'a>>,
 }
 
@@ -20,7 +20,7 @@ impl<'a> Split<'a> {
         diff: i128,
         diff_texture: Option<Texture<'a>>,
         name_texture: Texture<'a>,
-        pb_texture: Texture<'a>,
+        comp_texture: Texture<'a>,
         current_texture: Option<Texture<'a>>,
     ) -> Self {
         Self {
@@ -29,7 +29,7 @@ impl<'a> Split<'a> {
             diff,
             diff_texture,
             name_texture,
-            pb_texture,
+            comp_texture,
             current_texture,
         }
     }
@@ -42,10 +42,10 @@ impl<'a> Split<'a> {
     pub fn name(&self) -> &Texture {
         &self.name_texture
     }
-    pub fn pb(&self) -> &Texture {
+    pub fn comp_texture(&self) -> &Texture {
         &self.pb_texture
     }
-    pub fn set_pb(&mut self, tex: Texture<'a>) {
+    pub fn set_comp_tex(&mut self, tex: Texture<'a>) {
         self.pb_texture = tex;
     }
     pub fn cur(&self) -> &Option<Texture> {
