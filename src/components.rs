@@ -10,7 +10,6 @@ pub static BEHIND: Color = Color::RGB(255, 0, 0);
 pub static MAKING_UP_TIME: Color = Color::RGB(255, 90, 90); // color used when behind but gaining
 pub static LOSING_TIME: Color = Color::RGB(135, 255, 135); // color used when ahead but losing
 pub static GOLD: Color = Color::RGB(255, 255, 0); // default for when beating best split time
-
 // state of timer, might implement real state switching eventually
 #[derive(Debug)]
 pub enum TimerState {
@@ -38,6 +37,35 @@ pub enum Comparison {
 	PersonalBest,
 	Golds,
 	None
+}
+
+impl Comparison {
+	pub fn next(&mut self) {
+		match self {
+			Comparison::PersonalBest => {
+				*self = Comparison::Golds;
+    			},
+    			Comparison::Golds => {
+				*self = Comparison::None;
+        		},
+        		Comparison::None => {
+				*self = Comparison::PersonalBest;
+            		}
+    		} 
+    	}
+    	pub fn prev(&mut self) {
+		match self {
+			Comparison::PersonalBest => {
+				*self = Comparison::None;
+    			},
+    			Comparison::Golds => {
+				*self = Comparison::PersonalBest;
+        		}
+        		Comparison::None => {
+				*self = Comparison::Golds;
+            		}
+    		}
+        }
 }
 
 // open a dialog box to ask the user if they want to save the run they just completed to its original split file
