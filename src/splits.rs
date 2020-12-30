@@ -43,10 +43,10 @@ impl<'a> Split<'a> {
         &self.name_texture
     }
     pub fn comp_texture(&self) -> &Texture {
-        &self.pb_texture
+        &self.comp_texture
     }
     pub fn set_comp_tex(&mut self, tex: Texture<'a>) {
-        self.pb_texture = tex;
+        self.comp_texture = tex;
     }
     pub fn cur(&self) -> &Option<Texture> {
         &self.current_texture
