@@ -33,6 +33,13 @@ pub enum TimerState {
     },
 }
 
+// timer comparison types
+pub enum Comparison {
+	PersonalBest,
+	Golds,
+	None
+}
+
 // open a dialog box to ask the user if they want to save the run they just completed to its original split file
 pub fn save_check() -> bool {
     match tfd::message_box_yes_no(
