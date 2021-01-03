@@ -33,5 +33,3 @@ impl Comparison {
     		}
         }
 }
-
-pub fn recreate_comparison() {}
