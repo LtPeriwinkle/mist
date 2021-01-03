@@ -34,7 +34,7 @@ impl Config {
                     .read(true)
                     .write(true)
                     .create(true)
-                    .open("assets/default.mts")
+                    .open("assets/default.cfg")
                     .expect("file open failed");
             }
         }
