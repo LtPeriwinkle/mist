@@ -1,5 +1,12 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+
+### 1.5.0
+- add comparisons to PB, golds, and empty
+- calculate colors for timer based on comparison
+- switch comparisons with arrow keys
+- change displayed split times with comparison swap
+
 ### 1.4.0
 - convert to using run from [mist-split-utils](https://github.com/LtPeriwinkle/mist-split-utils)
 - clean up the code used to open and validate split files on startup
