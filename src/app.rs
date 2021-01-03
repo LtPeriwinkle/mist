@@ -17,7 +17,7 @@ use crate::config::{self, Config};
 use crate::render;
 use crate::splits::Split;
 use crate::timing;
-use crate::comparison::{Comparison, recreate_comp_textures};
+use crate::comparison::Comparison;
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
@@ -265,6 +265,8 @@ impl App {
         let mut elapsed: u128;
         // set when a run ends and is a pb to signal for a pop-up window to ask if the user wants to save
         let mut save = false;
+
+        let mut comp_changed = false;
         self.canvas.present();
 
         // main loop
@@ -527,13 +529,46 @@ impl App {
                     // right and left arrows to swap comparisons
                     Event::KeyDown {keycode: Some(Keycode::Right), ..} => {
 			self.comparison.next();
+			comp_changed = true;
                     }
                     Event::KeyDown {keycode: Some(Keycode::Left), ..} => {
 			self.comparison.prev();
+			comp_changed = true;
                     }
                     _ => {}
                 }
             }
+
+	    if comp_changed {
+		comp_changed = false;
+    		let mut index = 0;
+		if let Comparison::None = self.comparison {
+			while index < len {
+				let surface = font.render("-  ").blended(Color::WHITE).expect("render failed");
+				let tex = creator.create_texture_from_surface(&surface).expect("surface failed");
+				splits[index].set_comp_tex(tex);
+				index += 1;
+    			}
+    	        } else {
+			let split_times = match self.comparison {
+				Comparison::PersonalBest => {
+    					self.run.get_times().to_vec()
+    				},
+				Comparison::Golds => {
+    					self.run.get_golds().to_vec()
+    				},
+				_ => {vec![]},
+    			};
+    			let split_times_raw: Vec<String> = timing::split_time_sum(&split_times).iter().map(|val| timing::split_time_text(*val)).collect();
+			while index < len {
+				let surface = font.render(&split_times_raw[index]).blended(Color::WHITE).expect("render failed");
+				let tex = creator.create_texture_from_surface(&surface).expect("surface failed");
+				splits[index].set_comp_tex(tex);
+				index += 1;
+    			}
+        	}
+    	    }
+            
             window_width = self.canvas.viewport().width();
 
             // make some changes to stuff before updating screen based on what happened in past loop
