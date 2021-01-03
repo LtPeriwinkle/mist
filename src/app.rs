@@ -17,7 +17,7 @@ use crate::config::{self, Config};
 use crate::render;
 use crate::splits::Split;
 use crate::timing;
-
+use crate::comparison::{Comparison, recreate_comp_textures};
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
@@ -554,7 +554,7 @@ impl App {
                     if let Comparison::None = self.comparison {
 			color = Color::WHITE;
                     } else {
-                    // get the amount of time that the runner could spend on the split without being behind pb
+                    // get the amount of time that the runner could spend on the split without being behind comparison
 		    let allowed: i128;
 		    match self.comparison {
 			Comparison::PersonalBest => {
@@ -565,12 +565,12 @@ impl App {
 	                    allowed =
         	                splits[current_split].gold() as i128 - splits[current_split - 1].diff();
     			}
-			_ => { allowed = 0;}
+			_ => { allowed = 0; }
     		    }
                     let buffer = splits[current_split - 1].diff();
                     // get amount of time that has passed in the current split
                     let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
-                    // if the last split was ahead of pb split
+                    // if the last split was ahead of comparison split
                     if buffer < 0 {
                         // if the runner has spent more time than allowed they have to be behind
                         if time > allowed {
@@ -583,7 +583,7 @@ impl App {
                         } else {
                             color = AHEAD;
                         }
-                    // if last split was behind pb split
+                    // if last split was behind comparison split
                     } else {
                         // if the runner has gone over the amount of time they should take but are still on better pace than
                         // last split then they are making up time. a sort of light red color like livesplit

@@ -10,6 +10,7 @@ mod config;
 mod render;
 mod splits;
 mod timing;
+mod comparison;
 use app::App;
 
 fn main() {
