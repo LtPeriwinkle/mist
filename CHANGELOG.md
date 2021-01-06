@@ -1,6 +1,9 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
 
+### 1.5.1
+- move check to save run to after user has closed program
+
 ### 1.5.0
 - add comparisons to PB, golds, and empty
 - calculate colors for timer based on comparison
