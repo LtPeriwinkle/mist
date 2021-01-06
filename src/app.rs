@@ -290,12 +290,6 @@ impl App {
             }
             // check at the start of the loop (after rendering final frame of an ended run)
             // if the user wants to save the run or not with a yes/no popup window
-            if save {
-                save = false;
-                if save_check() {
-                    self.run.save_msf(&path);
-                }
-            }
 
             // repeat stuff in here for every event that occured between frames
             // in order to properly respond to them
@@ -708,6 +702,11 @@ impl App {
         }
         // after the loop is exited then save the config file
         self.config.save(cfg_path.as_ref());
+        if save {
+            if save_check() {
+                self.run.save_msf(&path);
+            }
+        }
     }
     // updates time string based on timer state, basically leaves it the same if timer is not running
     fn update_time(&self, before_pause: u128, total_time: Instant) -> String {
