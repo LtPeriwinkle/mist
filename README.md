@@ -4,11 +4,6 @@ a minimal, improved speedrun timer
 [Changelog](CHANGELOG.md) \
 [Latest Release](https://github.com/LtPeriwinkle/mist/releases/latest)
 
----
-
-The goal of this project is not to have more features than LiveSplit or to look better than LiveSplit.
-Rather, the goal is to be lighter and more efficient than LiveSplit and to maintain compatibility with 
-many platforms.
 ## Planned features
 More will probably be added to this list in the future
 - [X] Cross platform
@@ -24,7 +19,12 @@ More will probably be added to this list in the future
 - [ ] split file creation tool
 - [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
 - [X] dynamic colors
-- [ ] different run comparisons (i.e. SOB, average, last 5 runs avg, pb)
+- [ ] different run comparisons
+	* [X] sum of best
+	* [X] pb
+	* [X] none
+	* [ ] average overall
+	* [ ] last x runs average
 - [ ] integrated notes (like SpeedGuidesLive)
 
 ## Requested features
