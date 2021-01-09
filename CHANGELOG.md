@@ -1,6 +1,9 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
 
+### 1.5.2
+- increment index variables in loops when ending a run so it doesn't get stuck (i'm stupid)
+
 ### 1.5.1
 - move check to save run to after user has closed program
 
