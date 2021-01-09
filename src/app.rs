@@ -469,6 +469,7 @@ impl App {
                                         if splits[index].gold() < self.run.gold_time(index) {
                                             self.run.set_gold_time(index, splits[index].gold());
                                         }
+                                        index += 1;
                                     }
                                     self.state = TimerState::Finished {
                                         time_str: timing::ms_to_readable(
