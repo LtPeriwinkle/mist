@@ -495,6 +495,7 @@ impl App {
                                             splits[index].set_comp_tex(texture);
                                             splits[index].set_cur(None);
                                             splits[index].set_time(active_run_times[index]);
+                                            index += 1;
                                         }
                                         save = true;
                                         self.run.set_pb((elapsed - t) + before_pause);
