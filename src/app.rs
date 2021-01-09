@@ -139,10 +139,11 @@ impl App {
 
         // grab font sizes from config file and load the fonts
         let sizes = self.config.fsize();
-        let timer_font = self
+        let mut timer_font = self
             .ttf
             .load_font(self.config.tfont(), sizes.0)
             .expect("could not open font file");
+        timer_font.set_kerning(false);
         let font = self
             .ttf
             .load_font(self.config.sfont(), sizes.1)
