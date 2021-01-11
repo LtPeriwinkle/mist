@@ -49,9 +49,9 @@ dependencies = [
 
 [[package]]
 name = "mist-run-utils"
-version = "1.1.1"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "158e45142e97930be6c88c9e31e9dda44d68dcd397f9fc1a0f8c8ab56487efe9"
+checksum = "7df5cd959df9b4f4187f5d87b922dc07d8b1a71a5acde0b31d431da0b99acc19"
 dependencies = [
  "ron",
  "serde",
