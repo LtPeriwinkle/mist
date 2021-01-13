@@ -1,16 +1,10 @@
 // miscellaneous stuff that doesnt really fit anywhere else
-use sdl2::pixels::Color;
 use std::env;
 use tinyfiledialogs as tfd;
 
 pub const SPLITS_ON_SCREEN: usize = 8; // max splits allowed on screen
 
-pub static AHEAD: Color = Color::RGB(0, 255, 0);
-pub static BEHIND: Color = Color::RGB(255, 0, 0);
-pub static MAKING_UP_TIME: Color = Color::RGB(255, 90, 90); // color used when behind but gaining
-pub static LOSING_TIME: Color = Color::RGB(135, 255, 135); // color used when ahead but losing
-pub static GOLD: Color = Color::RGB(255, 255, 0); // default for when beating best split time
-// state of timer, might implement real state switching eventually
+//state of timer, might implement real state switching eventually
 #[derive(Debug)]
 pub enum TimerState {
     OffsetCountdown {

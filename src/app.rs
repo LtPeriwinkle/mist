@@ -137,6 +137,13 @@ impl App {
         self.config.set_file(&path);
         self.canvas.clear();
 
+	let colors = self.config.color_list();
+	let ahead = Color::from(colors[0]);
+	let behind = Color::from(colors[1]);
+	let making_up_time = Color::from(colors[2]);
+	let losing_time = Color::from(colors[3]);
+	let gold = Color::from(colors[4]);
+
         // grab font sizes from config file and load the fonts
         let sizes = self.config.fsize();
         let mut timer_font = self
@@ -446,7 +453,7 @@ impl App {
                                 time_str = timing::diff_text(diff);
                                 // set diff color to gold and replace split gold
                                 if active_run_times[current_split] < splits[current_split].gold() {
-                                    color = GOLD;
+                                    color = gold;
                                     splits[current_split].set_gold(active_run_times[current_split]);
                                 }
                                 text_surface = font.render(&time_str).blended(color).unwrap();
@@ -578,9 +585,9 @@ impl App {
                     if (elapsed - split_time_ticks) + before_pause_split
                         < splits[current_split].time()
                     {
-                        color = AHEAD;
+                        color = ahead;
                     } else {
-                        color = BEHIND;
+                        color = behind;
                     }
                 } else if len != 0 {
                     if let Comparison::None = self.comparison {
@@ -606,27 +613,27 @@ impl App {
                     if buffer < 0 {
                         // if the runner has spent more time than allowed they have to be behind
                         if time > allowed {
-                            color = BEHIND;
+                            color = behind;
                         // if they have spent less than the time it would take to become behind but more time than they took in the pb,
  			// then they are losing time but still ahead. default color for this is lightish green like LiveSplit
                         } else if time < allowed && time > allowed + buffer {
-                            color = LOSING_TIME;
+                            color = losing_time;
                         // if neither of those are true the runner must be ahead
                         } else {
-                            color = AHEAD;
+                            color = ahead;
                         }
                     // if last split was behind comparison split
                     } else {
                         // if the runner has gone over the amount of time they should take but are still on better pace than
                         // last split then they are making up time. a sort of light red color like livesplit
                         if time > allowed && time < allowed + buffer {
-                            color = MAKING_UP_TIME;
+                            color = making_up_time;
                         // if they are behind both the allowed time and their current pace they must be behind
                         } else if time > allowed && time > allowed + buffer {
-                            color = BEHIND;
+                            color = behind;
                         // even if the last split was behind, often during part of the split the runner could finish it and come out ahead
                         } else {
-                            color = AHEAD;
+                            color = ahead;
                         }
                     }
                     }
