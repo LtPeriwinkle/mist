@@ -56,6 +56,9 @@ impl Config {
     pub fn fsize(&self) -> (u16, u16) {
         self.font_size
     }
+    pub fn color_list(&self) -> [(u8, u8, u8); 5] {
+	self.colors
+    }
     pub fn save(&self, path: Option<&String>) {
         let mut file: std::fs::File;
         match path {
