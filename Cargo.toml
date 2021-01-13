@@ -28,6 +28,7 @@ features = ["serde_derive"]
 version = "3.3"
 
 [dependencies.mist-run-utils]
+path = "crates/mist-run-utils/"
 version = "2.0"
 default-features = false
 features = ["msf"]
