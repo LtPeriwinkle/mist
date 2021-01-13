@@ -1,0 +1,29 @@
+[package]
+name = "mist-run-utils"
+version = "2.0.0"
+authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
+edition = "2018"
+description = "mist speedrun timer utilities"
+readme = "README.md"
+repository = "https://github.com/LtPeriwinkle/mist-run-utils"
+license = "MIT OR Apache-2.0"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+lss = ["quick-xml"]
+msf = ["ron", "serde"]
+
+[dependencies.ron]
+version = "0.6"
+optional = true
+
+[dependencies.serde]
+version = "1.0"
+default-features = false
+features = ["serde_derive"]
+optional = true
+
+[dependencies.quick-xml]
+version = "0.20.0"
+optional = true
