@@ -1,5 +1,7 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.5.4
+- finally add customizable colors from config file
 
 ### 1.5.3
 - turn off kerning in order to fix timer jitter with certain fonts
