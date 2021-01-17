@@ -51,10 +51,8 @@ When you run mist, make sure it is in the same directory as the `assets` directo
 ### Linux
 Requirements are SDL2, SDL2\_Image and SDL2\_TTF shared libraries, as well as development libraries. On ubuntu:
 ```
-sudo apt-get install libsdl2 libsdl2-ttf libsdl2-image libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev
+sudo apt-get install libsdl2-2.0.0 libsdl2-ttf-2.0.0 libsdl2-image-2.0.0 libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev
 ```
-
-(i think)
 
 On arch:
 ```
