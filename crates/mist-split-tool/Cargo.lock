@@ -29,9 +29,9 @@ dependencies = [
 
 [[package]]
 name = "fltk"
-version = "0.13.4"
+version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "170e30c21587f6816a0115d9a3ce36821e8974df25b48da0c373cf45b91a5083"
+checksum = "9a1368fe6ea4908f5aad7d6f26c1ec650839ee1c5b1ecd58e4f766cb06a9e2b3"
 dependencies = [
  "bitflags",
  "fltk-derive",
@@ -72,9 +72,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89203f3fba0a3795506acaad8ebce3c80c0af93f994d5a1d7a0b1eeb23271929"
 
 [[package]]
+name = "memchr"
+version = "2.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
+
+[[package]]
 name = "mist-run-utils"
 version = "2.0.0"
 dependencies = [
+ "quick-xml",
  "ron",
  "serde",
 ]
@@ -84,6 +91,7 @@ name = "mist-split-tool"
 version = "0.1.0"
 dependencies = [
  "fltk",
+ "lazy_static",
  "mist-run-utils",
  "tinyfiledialogs",
 ]
@@ -95,6 +103,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e0704ee1a7e00d7bb417d0770ea303c1bccbabf0ef1667dae92b5967f5f8a71"
 dependencies = [
  "unicode-xid",
+]
+
+[[package]]
+name = "quick-xml"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26aab6b48e2590e4a64d1ed808749ba06257882b461d01ca71baeb747074a6dd"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]
