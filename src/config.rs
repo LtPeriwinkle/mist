@@ -9,6 +9,7 @@ use std::io::Write;
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     def_file: Option<String>,
+    img_file: Option<String>,
     colors: [(u8, u8, u8); 5],
     t_font: String,
     s_font: String,
@@ -43,6 +44,9 @@ impl Config {
     }
     pub fn file(&self) -> Option<&String> {
         self.def_file.as_ref()
+    }
+    pub fn img(&self) -> Option<&String> {
+	self.img_file.as_ref()
     }
     pub fn set_file(&mut self, file: &String) {
         self.def_file = Some(file.to_owned());
@@ -84,6 +88,7 @@ impl Default for Config {
     fn default() -> Config {
         Config {
             def_file: None,
+            img_file: None,
             colors: [
                 (0, 255, 0),
                 (255, 0, 0),
