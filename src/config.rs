@@ -33,7 +33,7 @@ impl Config {
         self.def_file.as_ref()
     }
     pub fn img(&self) -> Option<&String> {
-	self.img_file.as_ref()
+        self.img_file.as_ref()
     }
     pub fn set_file(&mut self, file: &String) {
         self.def_file = Some(file.to_owned());
@@ -48,7 +48,7 @@ impl Config {
         self.font_size
     }
     pub fn color_list(&self) -> [(u8, u8, u8); 5] {
-	self.colors
+        self.colors
     }
     pub fn save(&self) {
         let mut file = OpenOptions::new()

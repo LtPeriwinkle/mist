@@ -12,12 +12,12 @@ use std::time::{Duration, Instant};
 
 use mist_run_utils::run::Run;
 
+use crate::comparison::Comparison;
 use crate::components::*;
 use crate::config::{self, Config};
 use crate::render;
 use crate::splits::Split;
 use crate::timing;
-use crate::comparison::Comparison;
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
@@ -123,12 +123,12 @@ impl App {
         self.config.set_file(&path);
         self.canvas.clear();
 
-	let colors = self.config.color_list();
-	let ahead = Color::from(colors[0]);
-	let behind = Color::from(colors[1]);
-	let making_up_time = Color::from(colors[2]);
-	let losing_time = Color::from(colors[3]);
-	let gold = Color::from(colors[4]);
+        let colors = self.config.color_list();
+        let ahead = Color::from(colors[0]);
+        let behind = Color::from(colors[1]);
+        let making_up_time = Color::from(colors[2]);
+        let losing_time = Color::from(colors[3]);
+        let gold = Color::from(colors[4]);
 
         // grab font sizes from config file and load the fonts
         let sizes = self.config.fsize();
@@ -218,7 +218,7 @@ impl App {
 
         // if there are too few splits then set the max splits to the number of splits rather than
         // the max allowed amount
-	let max_initial_splits: usize  = ((500 - timer_height) / splits_height) as usize;
+        let max_initial_splits: usize = ((500 - timer_height) / splits_height) as usize;
         if max_initial_splits > split_names.len() {
             bottom_split_index = split_names.len();
             max_splits = split_names.len();
@@ -519,22 +519,31 @@ impl App {
                         _ => {}
                     },
                     // right and left arrows to swap comparisons
-                    Event::KeyDown {keycode: Some(Keycode::Right), ..} => {
-			self.comparison.next();
-			comp_changed = true;
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Right),
+                        ..
+                    } => {
+                        self.comparison.next();
+                        comp_changed = true;
                     }
-                    Event::KeyDown {keycode: Some(Keycode::Left), ..} => {
-			self.comparison.prev();
-			comp_changed = true;
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Left),
+                        ..
+                    } => {
+                        self.comparison.prev();
+                        comp_changed = true;
                     }
-                    Event::KeyDown {keycode: Some(Keycode::F1), ..} => {
-                        if let TimerState::NotStarted {..} = self.state {
+                    Event::KeyDown {
+                        keycode: Some(Keycode::F1),
+                        ..
+                    } => {
+                        if let TimerState::NotStarted { .. } = self.state {
                             match reload_splits() {
-			    	Some((r, p)) => {
-			    	    self.run = r;
-			    	    path = p;
-    			    	}
-    			    	_ => {}
+                                Some((r, p)) => {
+                                    self.run = r;
+                                    path = p;
+                                }
+                                _ => {}
                             }
                             offset = self.run.offset();
                             // if there is an offset, display it properly
@@ -547,56 +556,88 @@ impl App {
                                 _ => {}
                             }
                             let split_names = self.run.split_names();
-                            let split_times_ms: Vec<u128> = self.run.get_times().iter().cloned().collect();
+                            let split_times_ms: Vec<u128> =
+                                self.run.get_times().iter().cloned().collect();
                             summed_times = timing::split_time_sum(&split_times_ms);
-                            let split_times_raw: Vec<String> = summed_times.iter().map(|val| timing::split_time_text(*val)).collect();
+                            let split_times_raw: Vec<String> = summed_times
+                                .iter()
+                                .map(|val| timing::split_time_text(*val))
+                                .collect();
                             splits = vec![];
                             index = 0;
                             while index < split_names.len() {
-				let text_surface = font.render(&split_names[index]).blended(Color::WHITE).expect("split name render failed");
-				let texture = creator.create_texture_from_surface(&text_surface).expect("split name texture failed");
-				let comp = font.render(&split_times_raw[index]).blended(Color::WHITE).expect("split time render failed");
-				let comp_texture = creator.create_texture_from_surface(&comp).expect("split time texture failed");
-				let split = Split::new(split_times_ms[index], self.run.gold_time(index), 0, None, texture, comp_texture, None);
-				splits.push(split);
-				index += 1;
+                                let text_surface = font
+                                    .render(&split_names[index])
+                                    .blended(Color::WHITE)
+                                    .expect("split name render failed");
+                                let texture = creator
+                                    .create_texture_from_surface(&text_surface)
+                                    .expect("split name texture failed");
+                                let comp = font
+                                    .render(&split_times_raw[index])
+                                    .blended(Color::WHITE)
+                                    .expect("split time render failed");
+                                let comp_texture = creator
+                                    .create_texture_from_surface(&comp)
+                                    .expect("split time texture failed");
+                                let split = Split::new(
+                                    split_times_ms[index],
+                                    self.run.gold_time(index),
+                                    0,
+                                    None,
+                                    texture,
+                                    comp_texture,
+                                    None,
+                                );
+                                splits.push(split);
+                                index += 1;
                             }
-
                         }
                     }
                     _ => {}
                 }
             }
-	    if comp_changed {
-		comp_changed = false;
-    		let mut index = 0;
-		if let Comparison::None = self.comparison {
-			while index < len {
-				let surface = font.render("-  ").blended(Color::WHITE).expect("render failed");
-				let tex = creator.create_texture_from_surface(&surface).expect("surface failed");
-				splits[index].set_comp_tex(tex);
-				index += 1;
-    			}
-    	        } else {
-			let split_times = match self.comparison {
-				Comparison::PersonalBest => {
-    					self.run.get_times().to_vec()
-    				},
-				Comparison::Golds => {
-    					self.run.get_golds().to_vec()
-    				},
-				_ => {vec![]},
-    			};
-    			let split_times_raw: Vec<String> = timing::split_time_sum(&split_times).iter().map(|val| timing::split_time_text(*val)).collect();
-			while index < len {
-				let surface = font.render(&split_times_raw[index]).blended(Color::WHITE).expect("render failed");
-				let tex = creator.create_texture_from_surface(&surface).expect("surface failed");
-				splits[index].set_comp_tex(tex);
-				index += 1;
-    			}
-        	}
-    	    }
-            
+            if comp_changed {
+                comp_changed = false;
+                let mut index = 0;
+                if let Comparison::None = self.comparison {
+                    while index < len {
+                        let surface = font
+                            .render("-  ")
+                            .blended(Color::WHITE)
+                            .expect("render failed");
+                        let tex = creator
+                            .create_texture_from_surface(&surface)
+                            .expect("surface failed");
+                        splits[index].set_comp_tex(tex);
+                        index += 1;
+                    }
+                } else {
+                    let split_times = match self.comparison {
+                        Comparison::PersonalBest => self.run.get_times().to_vec(),
+                        Comparison::Golds => self.run.get_golds().to_vec(),
+                        _ => {
+                            vec![]
+                        }
+                    };
+                    let split_times_raw: Vec<String> = timing::split_time_sum(&split_times)
+                        .iter()
+                        .map(|val| timing::split_time_text(*val))
+                        .collect();
+                    while index < len {
+                        let surface = font
+                            .render(&split_times_raw[index])
+                            .blended(Color::WHITE)
+                            .expect("render failed");
+                        let tex = creator
+                            .create_texture_from_surface(&surface)
+                            .expect("surface failed");
+                        splits[index].set_comp_tex(tex);
+                        index += 1;
+                    }
+                }
+            }
+
             window_width = self.canvas.viewport().width();
 
             // make some changes to stuff before updating screen based on what happened in past loop
@@ -615,51 +656,53 @@ impl App {
                     }
                 } else if len != 0 {
                     if let Comparison::None = self.comparison {
-			color = Color::WHITE;
+                        color = Color::WHITE;
                     } else {
-                    // get the amount of time that the runner could spend on the split without being behind comparison
-		    let allowed: i128;
-		    match self.comparison {
-			Comparison::PersonalBest => {
-	                    allowed =
-        	                splits[current_split].time() as i128 - splits[current_split - 1].diff();
-    			}
-			Comparison::Golds => {
-	                    allowed =
-        	                splits[current_split].gold() as i128 - splits[current_split - 1].diff();
-    			}
-			_ => { allowed = 0; }
-    		    }
-                    let buffer = splits[current_split - 1].diff();
-                    // get amount of time that has passed in the current split
-                    let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
-                    // if the last split was ahead of comparison split
-                    if buffer < 0 {
-                        // if the runner has spent more time than allowed they have to be behind
-                        if time > allowed {
-                            color = behind;
-                        // if they have spent less than the time it would take to become behind but more time than they took in the pb,
- 			// then they are losing time but still ahead. default color for this is lightish green like LiveSplit
-                        } else if time < allowed && time > allowed + buffer {
-                            color = losing_time;
-                        // if neither of those are true the runner must be ahead
-                        } else {
-                            color = ahead;
+                        // get the amount of time that the runner could spend on the split without being behind comparison
+                        let allowed: i128;
+                        match self.comparison {
+                            Comparison::PersonalBest => {
+                                allowed = splits[current_split].time() as i128
+                                    - splits[current_split - 1].diff();
+                            }
+                            Comparison::Golds => {
+                                allowed = splits[current_split].gold() as i128
+                                    - splits[current_split - 1].diff();
+                            }
+                            _ => {
+                                allowed = 0;
+                            }
                         }
-                    // if last split was behind comparison split
-                    } else {
-                        // if the runner has gone over the amount of time they should take but are still on better pace than
-                        // last split then they are making up time. a sort of light red color like livesplit
-                        if time > allowed && time < allowed + buffer {
-                            color = making_up_time;
-                        // if they are behind both the allowed time and their current pace they must be behind
-                        } else if time > allowed && time > allowed + buffer {
-                            color = behind;
-                        // even if the last split was behind, often during part of the split the runner could finish it and come out ahead
+                        let buffer = splits[current_split - 1].diff();
+                        // get amount of time that has passed in the current split
+                        let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
+                        // if the last split was ahead of comparison split
+                        if buffer < 0 {
+                            // if the runner has spent more time than allowed they have to be behind
+                            if time > allowed {
+                                color = behind;
+                            // if they have spent less than the time it would take to become behind but more time than they took in the pb,
+                            // then they are losing time but still ahead. default color for this is lightish green like LiveSplit
+                            } else if time < allowed && time > allowed + buffer {
+                                color = losing_time;
+                            // if neither of those are true the runner must be ahead
+                            } else {
+                                color = ahead;
+                            }
+                        // if last split was behind comparison split
                         } else {
-                            color = ahead;
+                            // if the runner has gone over the amount of time they should take but are still on better pace than
+                            // last split then they are making up time. a sort of light red color like livesplit
+                            if time > allowed && time < allowed + buffer {
+                                color = making_up_time;
+                            // if they are behind both the allowed time and their current pace they must be behind
+                            } else if time > allowed && time > allowed + buffer {
+                                color = behind;
+                            // even if the last split was behind, often during part of the split the runner could finish it and come out ahead
+                            } else {
+                                color = ahead;
+                            }
                         }
-                    }
                     }
                 }
                 // set the split to highlight in blue when rendering

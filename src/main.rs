@@ -5,12 +5,12 @@
 extern crate sdl2;
 
 mod app;
+mod comparison;
 mod components;
 mod config;
 mod render;
 mod splits;
 mod timing;
-mod comparison;
 use app::App;
 
 fn main() {
