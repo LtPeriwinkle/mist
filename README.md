@@ -11,10 +11,11 @@ More will probably be added to this list in the future
 	* [X] Windows
 	* [X] MacOS (compiled & tested in macOS catalina VM)
 - [X] Human-readable split file (using [ron](https://github.com/ron-rs/ron))
-- [ ] LiveSplit split file transposing (for now, check out [this site](https://lsstomist.komali09.repl.co))
+- [ ] LiveSplit split file transposing
 - [ ] (limited) customizability 
-	* [X] custom fonts
-	* [ ] custom colors
+	* [X] custom fonts/font sizes
+	* [X] custom colors
+	* [ ] keybinds
 	* [ ] timer backgrounds (maybe)
 - [ ] split file creation tool
 - [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
@@ -26,6 +27,9 @@ More will probably be added to this list in the future
 	* [ ] average overall
 	* [ ] last x runs average
 - [ ] integrated notes (like SpeedGuidesLive)
+- [ ] hot reloading
+	* [X] split file reloading
+	* [ ] config reloading
 
 ## Requested features
 Features that people have asked for but i'm not sure if i can implement go here
@@ -39,7 +43,7 @@ These features are *highly unlikely* be implemented, in the spirit of minimalism
 * horizontal timer layout
 * Ingame time
 * Internet time sync
-* SRC/SRL/splits.io integration
+* SRC/SRL/splits.io/racetime.gg integration
 
 # Installation
 
@@ -59,8 +63,8 @@ On arch:
 sudo pacman -S sdl2 sdl2_ttf sdl2_image
 ```
 
-Clone this repo (`git clone https://github.com/LtPeriwinkle/mist`), enter the directory, and run `cargo build --release`. The resulting binary will be in
-`./target/release/`. 
+Clone this repo (`git clone https://github.com/LtPeriwinkle/mist`), enter the directory, and run `cargo build --release`. Move the
+resulting binary from `./target/release/` into the repository root (or just the same folder as `assets/`) to run.
 
 ### Windows
 Follow [this guide](https://github.com/Rust-SDL2/rust-sdl2#windows-msvc) to set up your SDL dependencies. You will have to follow this process for SDL2, SDL\_Image and SDL2\_TTF,
@@ -76,7 +80,15 @@ brew install sdl2 sdl2_image sdl2_ttf
 
 Then you should be able to run `cargo build --release`.
 
-## Credits
+# Usage
+The current default keybinds are:
+F1: Open new split file
+Space: Start/split/stop
+Enter: Pause
+R: Reset
+Left Arrow: Previous comparison
+Right Arrow: Next comparison
+Mousewheel: Scroll splits up/down (if there are more than fit in the window)
 
 ## Licensing
 Like Rust itself, mist is licensed under MIT or Apache 2.0, at your option.
