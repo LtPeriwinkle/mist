@@ -232,11 +232,12 @@ impl App {
 
         // if there are too few splits then set the max splits to the number of splits rather than
         // the max allowed amount
-        if SPLITS_ON_SCREEN > split_names.len() {
+	let max_initial_splits: usize  = ((500 - timer_height) / splits_height) as usize;
+        if max_initial_splits > split_names.len() {
             bottom_split_index = split_names.len();
             max_splits = split_names.len();
         } else {
-            max_splits = SPLITS_ON_SCREEN;
+            max_splits = max_initial_splits;
         }
         // drop stuff that isnt needed after initializing
         drop(split_times_ms);
@@ -542,7 +543,6 @@ impl App {
                     _ => {}
                 }
             }
-
 	    if comp_changed {
 		comp_changed = false;
     		let mut index = 0;

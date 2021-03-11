@@ -2,8 +2,6 @@
 use std::env;
 use tinyfiledialogs as tfd;
 
-pub const SPLITS_ON_SCREEN: usize = 8; // max splits allowed on screen
-
 //state of timer, might implement real state switching eventually
 #[derive(Debug)]
 pub enum TimerState {
