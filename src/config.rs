@@ -50,22 +50,11 @@ impl Config {
     pub fn color_list(&self) -> [(u8, u8, u8); 5] {
 	self.colors
     }
-    pub fn save(&self, path: Option<&String>) {
-        let mut file: std::fs::File;
-        match path {
-            Some(x) => {
-                file = OpenOptions::new()
-                    .write(true)
-                    .open(x)
-                    .expect("file open failed");
-            }
-            None => {
-                file = OpenOptions::new()
-                    .write(true)
-                    .open("assets/default.cfg")
-                    .expect("file open failed");
-            }
-        }
+    pub fn save(&self) {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .open("assets/mist.cfg")
+            .expect("file open failed");
         let string = to_string_pretty(self, PrettyConfig::new()).unwrap();
         file.write(&string.as_bytes()).unwrap();
     }
