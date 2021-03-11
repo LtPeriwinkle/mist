@@ -1,6 +1,7 @@
 // miscellaneous stuff that doesnt really fit anywhere else
 use std::env;
 use tinyfiledialogs as tfd;
+use mist_run_utils::run::Run;
 
 //state of timer, might implement real state switching eventually
 #[derive(Debug)]
@@ -66,4 +67,22 @@ pub fn bad_file_dialog(err: &str) -> bool {
 // wrapper function so the tfd stuff can all stay in this file
 pub fn info_dialog(title: &str, text: &str) {
     tfd::message_box_ok(title, text, tfd::MessageBoxIcon::Info);
+}
+
+pub fn reload_splits() -> Option<(Run, String)> {
+    let mut path: Option<String>;
+    loop {
+        path = open_file("Open split file", "*.msf");
+        match path {
+            None => return None,
+            Some(ref p) => match Run::from_msf_file(&p) {
+    		Some(r) => return Some((r, path.unwrap())),
+    		None => {
+		    if !bad_file_dialog("Split file parse failed. Try another file?") {
+			return None;
+    		    }
+        	},
+            }
+        }
+    }
 }

@@ -118,7 +118,7 @@ impl App {
             }
         }
         // remove Option wrapper from filepath for later use since it now is guaranteed not to be None
-        let path = path.unwrap();
+        let mut path = path.unwrap();
         // set the config file's run path to the given path in case a new one was chosen
         self.config.set_file(&path);
         self.canvas.clear();
@@ -158,7 +158,7 @@ impl App {
 
         // get first vec of split name textures from file
         let split_names = self.run.split_names();
-        let offset = self.run.offset();
+        let mut offset = self.run.offset();
         // if there is an offset, display it properly
         match offset {
             Some(x) => {
@@ -526,6 +526,43 @@ impl App {
                     Event::KeyDown {keycode: Some(Keycode::Left), ..} => {
 			self.comparison.prev();
 			comp_changed = true;
+                    }
+                    Event::KeyDown {keycode: Some(Keycode::F1), ..} => {
+                        if let TimerState::NotStarted {..} = self.state {
+                            match reload_splits() {
+			    	Some((r, p)) => {
+			    	    self.run = r;
+			    	    path = p;
+    			    	}
+    			    	_ => {}
+                            }
+                            offset = self.run.offset();
+                            // if there is an offset, display it properly
+                            match offset {
+                                Some(x) => {
+                                    self.state = TimerState::NotStarted {
+                                        time_str: format!("-{}", timing::ms_to_readable(x, false)),
+                                    };
+                                }
+                                _ => {}
+                            }
+                            let split_names = self.run.split_names();
+                            let split_times_ms: Vec<u128> = self.run.get_times().iter().cloned().collect();
+                            summed_times = timing::split_time_sum(&split_times_ms);
+                            let split_times_raw: Vec<String> = summed_times.iter().map(|val| timing::split_time_text(*val)).collect();
+                            splits = vec![];
+                            index = 0;
+                            while index < split_names.len() {
+				let text_surface = font.render(&split_names[index]).blended(Color::WHITE).expect("split name render failed");
+				let texture = creator.create_texture_from_surface(&text_surface).expect("split name texture failed");
+				let comp = font.render(&split_times_raw[index]).blended(Color::WHITE).expect("split time render failed");
+				let comp_texture = creator.create_texture_from_surface(&comp).expect("split time texture failed");
+				let split = Split::new(split_times_ms[index], self.run.gold_time(index), 0, None, texture, comp_texture, None);
+				splits.push(split);
+				index += 1;
+                            }
+
+                        }
                     }
                     _ => {}
                 }
