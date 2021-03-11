@@ -67,7 +67,7 @@ impl App {
             },
             comparison: Comparison::PersonalBest,
             run: Run::default(),
-            config: Config::default(),
+            config: Config::open(),
         }
     }
 

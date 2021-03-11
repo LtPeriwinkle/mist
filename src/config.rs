@@ -19,26 +19,13 @@ pub struct Config {
 impl Config {
     // open a Config from the provided filepath. If the filepath is None, open the default configuration file.
     // if the file does not exist, then creates it and if any error occurs then returns the default configuration
-    pub fn from_file(path: Option<&str>) -> Self {
-        let file: std::fs::File;
-        match path {
-            Some(x) => {
-                file = OpenOptions::new()
-                    .read(true)
-                    .write(true)
-                    .create(true)
-                    .open(x)
-                    .expect("file open failed");
-            }
-            None => {
-                file = OpenOptions::new()
-                    .read(true)
-                    .write(true)
-                    .create(true)
-                    .open("assets/default.cfg")
-                    .expect("file open failed");
-            }
-        }
+    pub fn open() -> Self {
+        let file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open("assets/mist.cfg")
+            .expect("file open failed");
         let cfg: Self = from_reader(&file).unwrap_or(Config::default());
         return cfg;
     }
