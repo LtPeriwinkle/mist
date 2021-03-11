@@ -1,5 +1,11 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.6.0
+- make config loading more logical
+- only reads `assets/mist.cfg` now for consistency
+- removed terrible config select dialog boxes on startup
+- dynamically determine max splits on startup based on the window size and font size
+
 ### 1.5.4
 - finally add customizable colors from config file
 
