@@ -213,7 +213,7 @@ impl App {
         }
 
         let mut max_splits: usize;
-        let mut bottom_split_index = SPLITS_ON_SCREEN;
+        let mut bottom_split_index: usize;
         let mut top_split_index = 0;
 
         // if there are too few splits then set the max splits to the number of splits rather than
@@ -224,6 +224,7 @@ impl App {
             max_splits = split_names.len();
         } else {
             max_splits = max_initial_splits;
+            bottom_split_index = max_initial_splits;
         }
         // drop stuff that isnt needed after initializing
         drop(split_times_ms);
@@ -398,7 +399,7 @@ impl App {
                             recreate_on_screen = Some(1);
                         } else if rows_height < height - timer_height {
                             diff = ((height - timer_height) - rows_height) / splits_height;
-                            if !(max_splits + diff as usize > SPLITS_ON_SCREEN
+                            if !(max_splits + diff as usize > max_initial_splits
                                 || max_splits + diff as usize > len)
                             {
                                 recreate_on_screen = Some(1);
