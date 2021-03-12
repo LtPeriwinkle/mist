@@ -122,8 +122,8 @@ impl App {
     }
 
     pub fn run(&mut self) {
-	let mut path = self.config.file().unwrap().to_string();
-        
+        let mut path = self.config.file().unwrap().to_string();
+
         self.canvas.clear();
 
         let colors = self.config.color_list();
@@ -601,11 +601,11 @@ impl App {
                                 index += 1;
                             }
                             if max_splits > splits.len() {
-				max_splits = splits.len();
+                                max_splits = splits.len();
                             }
-			    top_split_index = 0;
-			    bottom_split_index = max_splits;
-			    len = splits.len();
+                            top_split_index = 0;
+                            bottom_split_index = max_splits;
+                            len = splits.len();
                         }
                     }
                     _ => {}
