@@ -56,7 +56,7 @@ impl App {
         // start the overarching application timer (kinda)
         let timer = Instant::now();
         // return an App that hasn't started and has an empty run
-        App {
+        let mut app = App {
             context,
             ev_pump,
             timer,
@@ -68,20 +68,17 @@ impl App {
             comparison: Comparison::PersonalBest,
             run: Run::default(),
             config: Config::open(),
-        }
-    }
-
-    pub fn run(&mut self) {
+        };
         let mut path: Option<String> = None;
         let retry: bool;
         // try to use the filepath specified in the config file
         // if it doesnt exist then set retry to true
         // if the specified file is invalid also set retry
-        if let Some(x) = self.config.file() {
+        if let Some(x) = app.config.file() {
             path = Some(x.to_owned());
             match Run::from_msf_file(&x) {
                 Some(r) => {
-                    self.run = r;
+                    app.run = r;
                     retry = false;
                 }
                 None => retry = true,
@@ -97,20 +94,20 @@ impl App {
                 // if the user didn't pick a file and hit cancel, then exit this function (which currently will exit the program)
                 match path {
                     None => {
-                        return;
+                        std::process::exit(0);
                     }
                     // if the user did choose a file, try to parse a Run from it.
                     // if the run is valid, break the file loop and continue on
                     Some(ref p) => match Run::from_msf_file(&p) {
                         Some(x) => {
-                            self.run = x;
+                            app.run = x;
                             break;
                         }
                         None => {
                             // if it is invalid, ask the user whether they want to try another file
                             // if they don't then exit the program
                             if !bad_file_dialog("Split file parse failed. Try another file?") {
-                                return;
+                                std::process::exit(0)
                             }
                         }
                     },
@@ -120,7 +117,13 @@ impl App {
         // remove Option wrapper from filepath for later use since it now is guaranteed not to be None
         let mut path = path.unwrap();
         // set the config file's run path to the given path in case a new one was chosen
-        self.config.set_file(&path);
+        app.config.set_file(&path);
+        return app;
+    }
+
+    pub fn run(&mut self) {
+	let mut path = self.config.file().unwrap().to_string();
+        
         self.canvas.clear();
 
         let colors = self.config.color_list();
