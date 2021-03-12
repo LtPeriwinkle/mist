@@ -1,5 +1,10 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.6.1
+- rearrange some code in App::init() and run()
+- patch index-related issues when hot-reloading a split file with a different number of splits
+- fix an issue where splits decreased when increasing the window size
+
 ### 1.6.0
 - make config loading more logical
 - only reads `assets/mist.cfg` now for consistency
