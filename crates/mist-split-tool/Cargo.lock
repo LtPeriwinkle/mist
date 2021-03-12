@@ -29,21 +29,23 @@ dependencies = [
 
 [[package]]
 name = "fltk"
-version = "0.13.5"
+version = "0.15.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a1368fe6ea4908f5aad7d6f26c1ec650839ee1c5b1ecd58e4f766cb06a9e2b3"
+checksum = "117a785da121982d89d0aab1f125197f3d3b31f9a4b045d90395a5609f043e6e"
 dependencies = [
  "bitflags",
  "fltk-derive",
  "fltk-sys",
  "lazy_static",
+ "objc",
+ "raw-window-handle",
 ]
 
 [[package]]
 name = "fltk-derive"
-version = "0.13.3"
+version = "0.15.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9223fa72f95065ef2e9ff3c411f9d3cd58dd26a2c81058a87898a944f58af845"
+checksum = "526bb3e9ff71a85c968b8316afd134f09b44f28824db473dd2dd6defb166dd50"
 dependencies = [
  "quote",
  "syn",
@@ -51,9 +53,9 @@ dependencies = [
 
 [[package]]
 name = "fltk-sys"
-version = "0.13.3"
+version = "0.15.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9451366d944ec83a4d23ab34476e84a9e33ed3cd1d2f95f4c4925e99724ff51"
+checksum = "13117cf92b8712db7fa0208b4c6133b4e01155e6893cd8296356266ef66e9da8"
 dependencies = [
  "cmake",
  "libc",
@@ -67,9 +69,18 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.82"
+version = "0.2.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89203f3fba0a3795506acaad8ebce3c80c0af93f994d5a1d7a0b1eeb23271929"
+checksum = "03b07a082330a35e43f63177cc01689da34fbffa0105e1246cf0311472cac73a"
+
+[[package]]
+name = "malloc_buf"
+version = "0.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62bb907fe88d54d8d9ce32a3cceab4218ed2f6b7d35617cafe9adf84e43919cb"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "memchr"
@@ -97,6 +108,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "objc"
+version = "0.2.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "915b1b472bc21c53464d6c8461c9d3af805ba1ef837e1cac254428f4a77177b1"
+dependencies = [
+ "malloc_buf",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -116,11 +136,20 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.8"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "991431c3519a3f36861882da93630ce66b52918dcf1b8e2fd66b397fc96f28df"
+checksum = "c3d0b9745dc2debf507c8422de05d7226cc1f0644216dfdfead988f9b1ab32a7"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "raw-window-handle"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a441a7a6c80ad6473bd4b74ec1c9a4c951794285bf941c2126f607c72e48211"
+dependencies = [
+ "libc",
 ]
 
 [[package]]
@@ -156,9 +185,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.58"
+version = "1.0.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc60a3d73ea6594cd712d830cc1f0390fd71542d8c8cd24e70cc54cdfd5e05d5"
+checksum = "8fd9bc7ccc2688b3344c2f48b9b546648b25ce0b20fc717ee7fa7981a8ca9717"
 dependencies = [
  "proc-macro2",
  "quote",
