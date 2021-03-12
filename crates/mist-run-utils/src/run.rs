@@ -56,7 +56,7 @@ impl Run {
 	self.splits[index] = name;
     }
     pub fn set_time(&mut self, time: u128, index: usize) {
-	self.pb_times[index] = name;
+	self.pb_times[index] = time;
     }
 }
 
