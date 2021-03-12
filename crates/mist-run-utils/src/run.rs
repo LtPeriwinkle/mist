@@ -52,6 +52,12 @@ impl Run {
     pub fn split_names(&self) -> &Vec<String> {
         &self.splits
     }
+    pub fn set_name(&mut self, name: String, index: usize) {
+	self.splits[index] = name;
+    }
+    pub fn set_time(&mut self, time: u128, index: usize) {
+	self.pb_times[index] = name;
+    }
 }
 
 /// create an empty run
