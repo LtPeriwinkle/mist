@@ -252,7 +252,7 @@ impl App {
         let mut recreate_on_screen: Option<u8> = Some(0);
         // diff between max on screen and current, used when resizing window
         let mut diff: u32 = 0;
-        let len: usize = splits.len();
+        let mut len: usize = splits.len();
         // current split in the slice of splits sent to render_time()
         let mut cur: usize;
         // elapsed time when last split happened
@@ -541,6 +541,11 @@ impl App {
                         ..
                     } => {
                         if let TimerState::NotStarted { .. } = self.state {
+                            if save {
+                                if save_check() {
+                                    self.run.save_msf(&path);
+                                }
+                            }
                             match reload_splits() {
                                 Some((r, p)) => {
                                     self.run = r;
@@ -595,6 +600,12 @@ impl App {
                                 splits.push(split);
                                 index += 1;
                             }
+                            if max_splits > splits.len() {
+				max_splits = splits.len();
+                            }
+			    top_split_index = 0;
+			    bottom_split_index = max_splits;
+			    len = splits.len();
                         }
                     }
                     _ => {}
