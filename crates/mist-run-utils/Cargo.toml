@@ -1,6 +1,6 @@
 [package]
 name = "mist-run-utils"
-version = "2.1.0"
+version = "2.1.1"
 authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
 edition = "2018"
 description = "mist speedrun timer utilities"
