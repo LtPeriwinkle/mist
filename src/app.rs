@@ -315,7 +315,7 @@ impl App {
 
                     // if scroll up and there are enough splits in the list, scroll splits up
                     Event::MouseWheel { y: 1, .. } => {
-                        if bottom_split_index != max_splits {
+                        if top_split_index != 0 {
                             bottom_split_index -= 1;
                             recreate_on_screen = Some(2);
                         }
@@ -394,7 +394,8 @@ impl App {
                         ..
                     } => {
                         let height = self.canvas.viewport().height();
-                        let rows_height = max_splits as u32 * (splits_height + 5);
+                        let rows_height =
+                            (bottom_split_index - top_split_index) as u32 * (splits_height + 5);
                         // if there are too many splits, calculate how many and set flag to make a new list to display
                         // otherwise if there are too few and there are enough to display more, set recreate flag
                         if height - timer_height < rows_height {
@@ -402,10 +403,11 @@ impl App {
                             recreate_on_screen = Some(1);
                         } else if rows_height < height - timer_height {
                             diff = ((height - timer_height) - rows_height) / splits_height;
+                            println!("{}", diff);
                             if !(max_splits + diff as usize > max_initial_splits
                                 || max_splits + diff as usize > len)
                             {
-                                recreate_on_screen = Some(1);
+                                recreate_on_screen = Some(3);
                             }
                         }
                     }
@@ -600,9 +602,9 @@ impl App {
                                 splits.push(split);
                                 index += 1;
                             }
-                            if max_splits > splits.len() {
+                            /*if max_splits > splits.len() {
                                 max_splits = splits.len();
-                            }
+                            }*/
                             top_split_index = 0;
                             bottom_split_index = max_splits;
                             len = splits.len();
@@ -760,6 +762,20 @@ impl App {
                 // creates new slices based on the current top and bottom split
                 Some(2) => {
                     top_split_index = bottom_split_index - max_splits;
+                }
+                // similar to Some(1) except set when window grows instead of shrinks
+                Some(3) => {
+                    max_splits += diff as usize;
+                    if current_split + max_splits > len {
+                        bottom_split_index = len;
+                        top_split_index = len - max_splits;
+                    } else if current_split < max_splits {
+                        bottom_split_index = max_splits;
+                        top_split_index = 0;
+                    } else if current_split >= max_splits {
+                        bottom_split_index = current_split + max_splits;
+                        top_split_index = current_split;
+                    }
                 }
                 _ => {}
             }
