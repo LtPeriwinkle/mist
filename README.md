@@ -90,6 +90,8 @@ Left Arrow: Previous comparison
 Right Arrow: Next comparison
 Mousewheel: Scroll splits up/down (if there are more than fit in the window)
 
+Mist reads configuration info from assets/mist.cfg in the directory where its executable is located.
+
 ## Licensing
 Like Rust itself, mist is licensed under MIT or Apache 2.0, at your option.
 Unless you explicitly state otherwise, any contribution intentionally submitted
