@@ -28,7 +28,7 @@ fn get_save_as() -> Option<String> {
     let cwd = current_dir().unwrap();
     let mut dir = cwd.to_string_lossy();
     dir.to_mut().push('/');
-    return tfd::open_file_dialog("Save to MSF file", &dir, Some((&["*.msf"], "")));
+    return tfd::save_file_dialog_with_filter("Save to MSF file", &dir, &["*.msf"], "mist split files");
 }
 
 fn ms_to_readable(mut ms: u128) -> String {
@@ -114,8 +114,9 @@ fn main() {
             RUN.lock().unwrap().save_msf(path.as_ref().unwrap());
         } else {
             let name = get_save_as();
+            println!("{:?}", name);
             match name {
-                Some(p) => RUN.lock().unwrap().save_msf(&p),
+                Some(p) => if p != "()" {RUN.lock().unwrap().save_msf(&p)},
                 None => {}
             }
         }
