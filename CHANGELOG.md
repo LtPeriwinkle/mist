@@ -1,5 +1,8 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.6.2
+- fix timer overlapping splits when window is shrunk vertically
+
 ### 1.6.1
 - rearrange some code in App::init() and run()
 - patch index-related issues when hot-reloading a split file with a different number of splits
