@@ -137,7 +137,6 @@ impl Run {
 			pb_splits,
 			gold_splits
         	);
-        	println!("{:?}", run);
         	return Some(run);
     	}
 }
