@@ -63,7 +63,7 @@ impl App {
             canvas,
             ttf,
             state: TimerState::NotStarted {
-                time_str: "".to_string(),
+                time_str: "0.000".to_string(),
             },
             comparison: Comparison::PersonalBest,
             run: Run::default(),
