@@ -403,7 +403,6 @@ impl App {
                             recreate_on_screen = Some(1);
                         } else if rows_height < height - timer_height {
                             diff = ((height - timer_height) - rows_height) / splits_height;
-                            println!("{}", diff);
                             if !(max_splits + diff as usize > max_initial_splits
                                 || max_splits + diff as usize > len)
                             {
@@ -602,12 +601,15 @@ impl App {
                                 splits.push(split);
                                 index += 1;
                             }
-                            /*if max_splits > splits.len() {
-                                max_splits = splits.len();
-                            }*/
+                            if len == 0 {
+				max_splits = ((self.canvas.viewport().height() - timer_height) / splits_height) as usize;
+                            }
+                            len = splits.len();
+                            if max_splits > len {
+                                max_splits = len;
+                            }
                             top_split_index = 0;
                             bottom_split_index = max_splits;
-                            len = splits.len();
                         }
                     }
                     _ => {}
