@@ -1,6 +1,10 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
 ### 1.6.2
+- fix crash when timer offset is None
+- fix incorrect behavior when a new split file is loaded that has a different number of splits than the previous
+
+### 1.6.2
 - fix timer overlapping splits when window is shrunk vertically
 
 ### 1.6.1
