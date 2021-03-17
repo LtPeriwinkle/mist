@@ -94,7 +94,7 @@ pub fn render_rows(
 // Puts the big display timer at the bottom into the SDL backbuffer
 // aligns the texture with the right side of the window. if the window is not wide enough to show the entire thing
 // it currently just won't render it
-pub fn render_time(texture: &Texture, canvas: &mut Canvas<Window>) {
+/*pub fn render_time(texture: &Texture, canvas: &mut Canvas<Window>) {
     let vp = canvas.viewport();
     let h = vp.height();
     let w = vp.width();
@@ -105,4 +105,38 @@ pub fn render_time(texture: &Texture, canvas: &mut Canvas<Window>) {
             .copy(&texture, None, Some(rect))
             .expect("time texture copy failed");
     }
+}*/
+pub fn render_time(time_str: String, atlas: &Texture, coords: &[u32], font_y: u32, canvas: &mut Canvas<Window>) {
+        let mut x = 0;
+        let vp = canvas.viewport();
+        let h = vp.height();
+        let w = vp.width();
+        let mut src = Rect::new(0, 0, 0, font_y);
+        let mut dst = Rect::new(0, (h - font_y) as i32, 0, font_y);
+        let mut idx = 0;
+	for chr in time_str.chars().rev() {
+		idx = match chr {
+			'-' => 0,
+			'0' => 1,
+			'1' => 2,
+			'2' => 3,
+			'3' => 4,
+			'4' => 5,
+			'5' => 6,
+			'6' => 7,
+			'7' => 8,
+			'8' => 9,
+			'9' => 10,
+			':' => 11,
+			'.' => 12,
+			_ => 0
+    		};
+    		let width = coords[idx + 1] - coords[idx];
+    		x += width;
+    		src.set_x(coords[idx] as i32);
+    		src.set_width(width);
+    		dst.set_x((w - x) as i32);
+    		dst.set_width(width);
+    		canvas.copy(atlas, Some(src), Some(dst)).unwrap();
+    	}
 }
