@@ -152,7 +152,20 @@ impl App {
             .size_of("qwertyuiopasdfghjklzxcvbnm01234567890!@#$%^&*(){}[]|\\:;'\",.<>?/`~-_=+")
             .unwrap()
             .1;
-        let timer_height = timer_font.size_of("-0123456789:.").unwrap().1 + (splits_height - 1);
+        let coords: Vec<u32> = {
+            let mut raw: Vec<u32> = vec![];
+            let mut ret: Vec<u32> = vec![0];
+            for chr in "-0123456789:.".chars() {
+              	let size = timer_font.size_of(&chr.to_string()).unwrap();
+              	raw.push(size.0);
+	  	ret.push(raw.iter().sum::<u32>());
+            }
+            ret
+        };
+        let font_y = timer_font.size_of("0").unwrap().1;
+        let map = timer_font.render("-0123456789:.").blended(Color::WHITE).unwrap();
+        let map_tex = creator.create_texture_from_surface(&map).unwrap();
+        let timer_height = timer_font.size_of("-0123456789:.").unwrap().1 + splits_height;
         // set the minimum height of the window to the size of the time texture
         self.canvas
             .window_mut()
@@ -801,6 +814,7 @@ impl App {
                 .expect("time texture creation failed");
             // copy the time texture to the canvas. function takes care of placing and making sure it doesnt try to place the texture offscreen
             render::render_time(&texture, &mut self.canvas);
+            self.canvas.copy(&map_tex, Some(sdl2::rect::Rect::new(coords[2] as i32,0,coords[3] - coords[2],font_y)), Some(sdl2::rect::Rect::new(0,0,coords[3] - coords[2],font_y))).unwrap();
             self.canvas.present();
             if Instant::now().duration_since(frame_time) <= one_sixtieth {
                 thread::sleep(
