@@ -162,10 +162,11 @@ impl App {
             }
             ret
         };
-        let font_y = timer_font.size_of("0").unwrap().1;
+        let font_y = timer_font.size_of("-0123456789:.").unwrap().1;
         let map = timer_font.render("-0123456789:.").blended(Color::WHITE).unwrap();
-        let map_tex = creator.create_texture_from_surface(&map).unwrap();
-        let timer_height = timer_font.size_of("-0123456789:.").unwrap().1 + splits_height;
+        let mut map_tex = creator.create_texture_from_surface(&map).unwrap();
+        drop(map);
+        let timer_height = font_y + splits_height;
         // set the minimum height of the window to the size of the time texture
         self.canvas
             .window_mut()
@@ -279,6 +280,8 @@ impl App {
         let mut save = false;
 
         let mut comp_changed = false;
+
+        let mut old_color = color;
         self.canvas.present();
 
         // main loop
@@ -673,6 +676,7 @@ impl App {
 
             // make some changes to stuff before updating screen based on what happened in past loop
             // but only if the timer is running
+		old_color = color;
             if let TimerState::Running { .. } = self.state {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
                 elapsed = self.timer.elapsed().as_millis();
@@ -704,6 +708,7 @@ impl App {
                                 allowed = 0;
                             }
                         }
+                        println!("{:?}, {:?}", color, old_color);
                         let buffer = splits[current_split - 1].diff();
                         // get amount of time that has passed in the current split
                         let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
@@ -750,6 +755,15 @@ impl App {
             } else {
                 cur = usize::MAX;
                 color = Color::WHITE;
+            }
+            if old_color != color {
+                let map = timer_font
+                    .render("-0123456789:.")
+                    .blended(color)
+                    .expect("time font render failed");
+                map_tex = creator
+                    .create_texture_from_surface(&map)
+                    .expect("time texture creation failed");
             }
             // change top and bottom split indices based on flags set earlier in loop
             match recreate_on_screen.take() {
@@ -805,16 +819,15 @@ impl App {
             );
             // update the time based on the current timer state
             time_str = self.update_time(before_pause, total_time);
-            text_surface = timer_font
+            /*text_surface = timer_font
                 .render(&time_str)
                 .shaded(color, Color::BLACK)
                 .expect("time font render failed");
             texture = creator
                 .create_texture_from_surface(&text_surface)
-                .expect("time texture creation failed");
+                .expect("time texture creation failed");*/
             // copy the time texture to the canvas. function takes care of placing and making sure it doesnt try to place the texture offscreen
-            render::render_time(&texture, &mut self.canvas);
-            self.canvas.copy(&map_tex, Some(sdl2::rect::Rect::new(coords[2] as i32,0,coords[3] - coords[2],font_y)), Some(sdl2::rect::Rect::new(0,0,coords[3] - coords[2],font_y))).unwrap();
+	    render::render_time(time_str, &map_tex, &coords, font_y, &mut self.canvas);
             self.canvas.present();
             if Instant::now().duration_since(frame_time) <= one_sixtieth {
                 thread::sleep(
