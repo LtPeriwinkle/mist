@@ -155,7 +155,7 @@ impl App {
         let coords: Vec<u32> = {
             let mut raw: Vec<u32> = vec![];
             let mut ret: Vec<u32> = vec![0];
-            for chr in "-0123456789:.".chars() {
+            for chr in "- 0 1 2 3 4 5 6 7 8 9 : .".chars() {
               	let size = timer_font.size_of(&chr.to_string()).unwrap();
               	raw.push(size.0);
 	  	ret.push(raw.iter().sum::<u32>());
@@ -163,7 +163,7 @@ impl App {
             ret
         };
         let font_y = timer_font.size_of("-0123456789:.").unwrap().1;
-        let map = timer_font.render("-0123456789:.").blended(Color::WHITE).unwrap();
+        let map = timer_font.render("- 0 1 2 3 4 5 6 7 8 9 : .").blended(Color::WHITE).unwrap();
         let mut map_tex = creator.create_texture_from_surface(&map).unwrap();
         drop(map);
         let timer_height = font_y + splits_height;
@@ -758,7 +758,7 @@ impl App {
             }
             if old_color != color {
                 let map = timer_font
-                    .render("-0123456789:.")
+                    .render("- 0 1 2 3 4 5 6 7 8 9 : .")
                     .blended(color)
                     .expect("time font render failed");
                 map_tex = creator

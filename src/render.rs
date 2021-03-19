@@ -117,25 +117,28 @@ pub fn render_time(time_str: String, atlas: &Texture, coords: &[u32], font_y: u3
 	for chr in time_str.chars().rev() {
 		idx = match chr {
 			'-' => 0,
-			'0' => 1,
-			'1' => 2,
-			'2' => 3,
-			'3' => 4,
-			'4' => 5,
-			'5' => 6,
-			'6' => 7,
-			'7' => 8,
-			'8' => 9,
-			'9' => 10,
-			':' => 11,
-			'.' => 12,
+			'0' => 2,
+			'1' => 4,
+			'2' => 6,
+			'3' => 8,
+			'4' => 10,
+			'5' => 12,
+			'6' => 14,
+			'7' => 16,
+			'8' => 18,
+			'9' => 20,
+			':' => 22,
+			'.' => 24,
 			_ => 0
     		};
-    		let width = coords[idx + 1] - coords[idx];
-    		x += width;
-    		src.set_x(coords[idx] as i32);
+    		let width = (coords[idx + 1] - coords[idx]);
+    		println!("{}, {}", width, chr);
+    		x += 35;
+    		src.set_x((coords[idx]) as i32);
     		src.set_width(width);
+    		//println!("{}, {}", width, x);
     		dst.set_x((w - x) as i32);
+		//dst.set_x((idx/2) as i32 * 41);
     		dst.set_width(width);
     		canvas.copy(atlas, Some(src), Some(dst)).unwrap();
     	}
