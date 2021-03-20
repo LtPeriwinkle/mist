@@ -445,7 +445,9 @@ impl App {
                                 time_str = timing::diff_text(diff);
                                 // set diff color to gold and replace split gold
                                 if active_run_times[current_split] < splits[current_split].gold() {
+                                    save = true;
                                     color = gold;
+                                    self.run.set_gold_time(current_split, active_run_times[current_split]);
                                     splits[current_split].set_gold(active_run_times[current_split]);
                                 }
                                 text_surface = font.render(&time_str).blended(color).unwrap();
@@ -463,14 +465,6 @@ impl App {
                                     current_split += 1;
                                 // otherwise end the run
                                 } else {
-                                    let mut index = 0;
-                                    while index < len {
-                                        // if the split has a new gold then set the run's gold to that time
-                                        if splits[index].gold() < self.run.gold_time(index) {
-                                            self.run.set_gold_time(index, splits[index].gold());
-                                        }
-                                        index += 1;
-                                    }
                                     self.state = TimerState::Finished {
                                         time_str: timing::ms_to_readable(
                                             (elapsed - t) + before_pause,

@@ -29,7 +29,7 @@ pub enum TimerState {
 pub fn save_check() -> bool {
     match tfd::message_box_yes_no(
         "Save run?",
-        "Your run was a PB; do you want to save it?",
+        "Your splits have been updated; do you want to save them?",
         tfd::MessageBoxIcon::Question,
         tfd::YesNo::Yes,
     ) {
