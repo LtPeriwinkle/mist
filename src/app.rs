@@ -395,8 +395,9 @@ impl App {
                         ..
                     } => {
                         let height = self.canvas.viewport().height();
-                        let rows_height =
-                            ((bottom_split_index - top_split_index) as u32 * (splits_height + 2)) + splits_height;
+                        let rows_height = ((bottom_split_index - top_split_index) as u32
+                            * (splits_height + 2))
+                            + splits_height;
                         // if there are too many splits, calculate how many and set flag to make a new list to display
                         // otherwise if there are too few and there are enough to display more, set recreate flag
                         if height - timer_height < rows_height {
@@ -450,7 +451,10 @@ impl App {
                                 if active_run_times[current_split] < splits[current_split].gold() {
                                     save = true;
                                     color = gold;
-                                    self.run.set_gold_time(current_split, active_run_times[current_split]);
+                                    self.run.set_gold_time(
+                                        current_split,
+                                        active_run_times[current_split],
+                                    );
                                     splits[current_split].set_gold(active_run_times[current_split]);
                                 }
                                 text_surface = font.render(&time_str).blended(color).unwrap();
@@ -599,7 +603,9 @@ impl App {
                                 index += 1;
                             }
                             if len == 0 {
-				max_splits = ((self.canvas.viewport().height() - timer_height) / splits_height) as usize;
+                                max_splits = ((self.canvas.viewport().height() - timer_height)
+                                    / splits_height)
+                                    as usize;
                             }
                             len = splits.len();
                             if max_splits > len {
