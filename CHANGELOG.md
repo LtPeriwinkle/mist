@@ -1,5 +1,9 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.6.5
+- fix incorrect color calculation after pausing and unpausing
+- fix weird diff calculation after pausing
+
 ### 1.6.4
 - prompt to save run on exit if a gold occurred
 
