@@ -5,9 +5,8 @@ authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
 edition = "2018"
 description = "mist speedrun timer utilities"
 readme = "README.md"
-repository = "https://github.com/LtPeriwinkle/mist-run-utils"
+repository = "https://github.com/LtPeriwinkle/mist"
 license = "MIT OR Apache-2.0"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
 default = []
