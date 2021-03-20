@@ -1,5 +1,10 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.7.0
+- implement large timer font rendering from a cache texture of all the characters to avoid recreating a new texture each frame
+- make millisecond display on large timer smaller so that longer times fit better on the screen and look nicer
+- finally get rid of text jitter when updating large timer on some weird fonts
+
 ### 1.6.5
 - fix incorrect color calculation after pausing and unpausing
 - fix weird diff calculation after pausing
