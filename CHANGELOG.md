@@ -1,6 +1,9 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
-### 1.6.2
+### 1.6.4
+- prompt to save run on exit if a gold occurred
+
+### 1.6.3
 - fix crash when timer offset is None
 - fix incorrect behavior when a new split file is loaded that has a different number of splits than the previous
 
