@@ -156,15 +156,18 @@ impl App {
             let mut raw: Vec<u32> = vec![];
             let mut ret: Vec<u32> = vec![0];
             for chr in "- 0 1 2 3 4 5 6 7 8 9 : .".chars() {
-              	let size = timer_font.size_of(&chr.to_string()).unwrap();
-              	raw.push(size.0);
-	  	ret.push(raw.iter().sum::<u32>());
+                let size = timer_font.size_of(&chr.to_string()).unwrap();
+                raw.push(size.0);
+                ret.push(raw.iter().sum::<u32>());
             }
             ret.push(*raw.iter().max().unwrap());
             ret
         };
         let font_y = timer_font.size_of("-0123456789:.").unwrap().1;
-        let map = timer_font.render("- 0 1 2 3 4 5 6 7 8 9 : .").blended(Color::WHITE).unwrap();
+        let map = timer_font
+            .render("- 0 1 2 3 4 5 6 7 8 9 : .")
+            .blended(Color::WHITE)
+            .unwrap();
         let mut map_tex = creator.create_texture_from_surface(&map).unwrap();
         drop(map);
         let timer_height = font_y + splits_height;
@@ -680,7 +683,7 @@ impl App {
 
             // make some changes to stuff before updating screen based on what happened in past loop
             // but only if the timer is running
-		old_color = color;
+            old_color = color;
             if let TimerState::Running { .. } = self.state {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
                 elapsed = self.timer.elapsed().as_millis();
@@ -830,7 +833,7 @@ impl App {
                 .create_texture_from_surface(&text_surface)
                 .expect("time texture creation failed");*/
             // copy the time texture to the canvas. function takes care of placing and making sure it doesnt try to place the texture offscreen
-	    render::render_time(time_str, &map_tex, &coords, font_y, &mut self.canvas);
+            render::render_time(time_str, &map_tex, &coords, font_y, &mut self.canvas);
             self.canvas.present();
             if Instant::now().duration_since(frame_time) <= one_sixtieth {
                 thread::sleep(
