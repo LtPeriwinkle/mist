@@ -160,6 +160,7 @@ impl App {
               	raw.push(size.0);
 	  	ret.push(raw.iter().sum::<u32>());
             }
+            ret.push(*raw.iter().max().unwrap());
             ret
         };
         let font_y = timer_font.size_of("-0123456789:.").unwrap().1;
@@ -711,7 +712,6 @@ impl App {
                                 allowed = 0;
                             }
                         }
-                        println!("{:?}, {:?}", color, old_color);
                         let buffer = splits[current_split - 1].diff();
                         // get amount of time that has passed in the current split
                         let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
