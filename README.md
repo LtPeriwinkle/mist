@@ -1,4 +1,5 @@
 # <img src="assets/MIST.png" width="50" height="50"/> mist
+![Lines of code](https://img.shields.io/tokei/lines/github/ltperiwinkle/mist)
 a minimal, improved speedrun timer
 
 [Changelog](CHANGELOG.md) \
@@ -11,13 +12,16 @@ More will probably be added to this list in the future
 	* [X] Windows
 	* [X] MacOS (compiled & tested in macOS catalina VM)
 - [X] Human-readable split file (using [ron](https://github.com/ron-rs/ron))
-- [ ] LiveSplit split file transposing
+- [X] LiveSplit split file transposing
 - [ ] (limited) customizability 
 	* [X] custom fonts/font sizes
 	* [X] custom colors
 	* [ ] keybinds
 	* [ ] timer backgrounds (maybe)
 - [ ] split file creation tool
+	* [X] edit existing msf
+	* [X] convert lss to msf
+	* [ ] create new splits
 - [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
 - [X] dynamic colors
 - [ ] different run comparisons

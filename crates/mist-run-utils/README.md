@@ -1,4 +1,5 @@
 # mist-run-utils
+![Crates.io](https://img.shields.io/crates/v/mist-run-utils)
 
 library for parsing [mist](https://github.com/LtPeriwinkle/mist) split files and converting livesplit
 files to mist runs. also defines interaction with the run struct, used in mist and mist-split-tool
