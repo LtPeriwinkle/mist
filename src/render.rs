@@ -112,8 +112,9 @@ pub fn render_time(time_str: String, atlas: &Texture, coords: &[u32], font_y: u3
         let h = vp.height();
         let w = vp.width();
         let mut src = Rect::new(0, 0, 0, font_y);
-        let mut dst = Rect::new(0, (h - font_y) as i32 - 5, 0, font_y);
+        let mut dst = Rect::new(0, (h - (font_y * 8 / 10)) as i32 - 5, 0, font_y * 8 / 10);
         let mut idx: usize;
+        let mut char_num = 0;
 	for chr in time_str.chars().rev() {
 		idx = match chr {
 			'-' => 0,
@@ -135,12 +136,23 @@ pub fn render_time(time_str: String, atlas: &Texture, coords: &[u32], font_y: u3
     		if chr == '.' || chr == ':' {
 			x += width;
             	} else {
-			x += coords[26];
+                	if char_num < 4 {
+				x += coords[26] * 8 / 10;
+                    	} else {
+				x += coords[26];
+                    	}
                 }
     		src.set_x((coords[idx] - 2) as i32);
     		src.set_width(width);
     		dst.set_x((w - x) as i32);
-    		dst.set_width(width);
+    		if char_num < 4 {
+    			dst.set_width(width * 8 / 10);
+    		} else {
+    			dst.set_width(width);
+    			dst.set_y((h - font_y) as i32);
+    			dst.set_height(font_y);
+        	}
     		canvas.copy(atlas, Some(src), Some(dst)).unwrap();
+    		char_num += 1;
     	}
 }
