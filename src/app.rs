@@ -364,11 +364,12 @@ impl App {
                         // reset active run times and return the list of splits to the top
                         active_run_times = vec![];
                         bottom_split_index = max_splits;
-                        recreate_on_screen = Some(2);
+                        before_pause = 0;
+                        before_pause_split = 0;
+                        color = ahead;
                         match offset {
                             // if there is an offset, reset the timer to that, if not, reset timer to 0
                             Some(x) => {
-                                before_pause = 0;
                                 self.state = TimerState::NotStarted {
                                     time_str: format!("-{}", timing::ms_to_readable(x, false)),
                                 };
@@ -420,6 +421,7 @@ impl App {
                         // if timer isnt started, start it.
                         TimerState::NotStarted { .. } => {
                             elapsed = self.timer.elapsed().as_millis();
+                            split_time_ticks = elapsed;
                             total_time = Instant::now();
                             match offset {
                                 // if we are in the start offset, tell it to offset
@@ -440,6 +442,7 @@ impl App {
                                 active_run_times
                                     .push((elapsed - split_time_ticks) + before_pause_split);
                                 split_time_ticks = elapsed;
+                                before_pause_split = 0;
                                 let sum = timing::split_time_sum(&active_run_times)[current_split];
                                 let diff = sum as i128 - summed_times[current_split] as i128;
                                 time_str = timing::diff_text(diff);
