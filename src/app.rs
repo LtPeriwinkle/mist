@@ -156,12 +156,13 @@ impl App {
         let coords: Vec<u32> = {
             let mut raw: Vec<u32> = vec![];
             let mut ret: Vec<u32> = vec![0];
-            for chr in "- 0 1 2 3 4 5 6 7 8 9 : .".chars() {
+            for chr in "-0123456789:. ".chars() {
                 let size = timer_font.size_of(&chr.to_string()).unwrap();
                 raw.push(size.0);
                 ret.push(raw.iter().sum::<u32>());
             }
             ret.push(*raw.iter().max().unwrap());
+            
             ret
         };
         let font_y = timer_font.size_of("-0123456789:.").unwrap().1;

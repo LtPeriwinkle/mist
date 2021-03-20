@@ -110,22 +110,23 @@ pub fn render_time(
     let mut dst = Rect::new(0, (h - (font_y * 8 / 10)) as i32 - 5, 0, font_y * 8 / 10);
     let mut idx: usize;
     let mut char_num = 0;
+    let space = coords[14] - coords[13];
     for chr in time_str.chars().rev() {
         // get the index in the coordinate slice based on the character to render
         idx = match chr {
             '-' => 0,
-            '0' => 2,
-            '1' => 4,
-            '2' => 6,
-            '3' => 8,
-            '4' => 10,
-            '5' => 12,
-            '6' => 14,
-            '7' => 16,
-            '8' => 18,
-            '9' => 20,
-            ':' => 22,
-            '.' => 24,
+            '0' => 1,
+            '1' => 2,
+            '2' => 3,
+            '3' => 4,
+            '4' => 5,
+            '5' => 6,
+            '6' => 7,
+            '7' => 8,
+            '8' => 9,
+            '9' => 10,
+            ':' => 11,
+            '.' => 12,
             _ => 0,
         };
         let width = coords[idx + 1] - coords[idx];
@@ -134,12 +135,12 @@ pub fn render_time(
             x += width;
         } else {
             if char_num < 4 {
-                x += coords[26] * 8 / 10;
+                x += coords[15] * 8 / 10;
             } else {
-                x += coords[26];
+                x += coords[15];
             }
         }
-        src.set_x((coords[idx] - 2) as i32);
+        src.set_x((coords[idx] - 2) as i32 + (idx as u32 * space) as i32);
         src.set_width(width);
         dst.set_x((w - x) as i32);
         if char_num < 4 {
