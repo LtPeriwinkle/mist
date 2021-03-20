@@ -76,14 +76,12 @@ fn str_to_ms(tm: String) -> u128 {
 
 fn main() {
     let path = open_split_file();
-    let req_file: bool;
+    let mut save_path: String = "".to_string();
     match path {
         Some(ref p) => {
             if p.ends_with(".msf") {
-                req_file = false;
                 *RUN.lock().unwrap() = Run::from_msf_file(&p).unwrap();
             } else {
-                req_file = true;
                 *RUN.lock().unwrap() = Run::from_lss_file(&p).unwrap();
             }
         }
@@ -110,13 +108,12 @@ fn main() {
     win.end();
     win.show();
     save_button.set_callback(move || {
-        if !req_file {
-            RUN.lock().unwrap().save_msf(path.as_ref().unwrap());
+        if save_path != "".to_string() {
+            RUN.lock().unwrap().save_msf(&save_path);
         } else {
             let name = get_save_as();
-            println!("{:?}", name);
             match name {
-                Some(p) => if p != "()" {RUN.lock().unwrap().save_msf(&p)},
+                Some(p) => if p != "()" {RUN.lock().unwrap().save_msf(&p); save_path = p;},
                 None => {}
             }
         }

@@ -380,11 +380,12 @@ impl App {
                         // reset active run times and return the list of splits to the top
                         active_run_times = vec![];
                         bottom_split_index = max_splits;
-                        recreate_on_screen = Some(2);
+                        before_pause = 0;
+                        before_pause_split = 0;
+                        color = ahead;
                         match offset {
                             // if there is an offset, reset the timer to that, if not, reset timer to 0
                             Some(x) => {
-                                before_pause = 0;
                                 self.state = TimerState::NotStarted {
                                     time_str: format!("-{}", timing::ms_to_readable(x, false)),
                                 };
@@ -410,8 +411,9 @@ impl App {
                         ..
                     } => {
                         let height = self.canvas.viewport().height();
-                        let rows_height =
-                            ((bottom_split_index - top_split_index) as u32 * (splits_height + 2)) + splits_height;
+                        let rows_height = ((bottom_split_index - top_split_index) as u32
+                            * (splits_height + 2))
+                            + splits_height;
                         // if there are too many splits, calculate how many and set flag to make a new list to display
                         // otherwise if there are too few and there are enough to display more, set recreate flag
                         if height - timer_height < rows_height {
@@ -436,6 +438,7 @@ impl App {
                         // if timer isnt started, start it.
                         TimerState::NotStarted { .. } => {
                             elapsed = self.timer.elapsed().as_millis();
+                            split_time_ticks = elapsed;
                             total_time = Instant::now();
                             match offset {
                                 // if we are in the start offset, tell it to offset
@@ -456,12 +459,18 @@ impl App {
                                 active_run_times
                                     .push((elapsed - split_time_ticks) + before_pause_split);
                                 split_time_ticks = elapsed;
+                                before_pause_split = 0;
                                 let sum = timing::split_time_sum(&active_run_times)[current_split];
                                 let diff = sum as i128 - summed_times[current_split] as i128;
                                 time_str = timing::diff_text(diff);
                                 // set diff color to gold and replace split gold
                                 if active_run_times[current_split] < splits[current_split].gold() {
+                                    save = true;
                                     color = gold;
+                                    self.run.set_gold_time(
+                                        current_split,
+                                        active_run_times[current_split],
+                                    );
                                     splits[current_split].set_gold(active_run_times[current_split]);
                                 }
                                 text_surface = font.render(&time_str).blended(color).unwrap();
@@ -479,14 +488,6 @@ impl App {
                                     current_split += 1;
                                 // otherwise end the run
                                 } else {
-                                    let mut index = 0;
-                                    while index < len {
-                                        // if the split has a new gold then set the run's gold to that time
-                                        if splits[index].gold() < self.run.gold_time(index) {
-                                            self.run.set_gold_time(index, splits[index].gold());
-                                        }
-                                        index += 1;
-                                    }
                                     self.state = TimerState::Finished {
                                         time_str: timing::ms_to_readable(
                                             (elapsed - t) + before_pause,
@@ -618,7 +619,9 @@ impl App {
                                 index += 1;
                             }
                             if len == 0 {
-				max_splits = ((self.canvas.viewport().height() - timer_height) / splits_height) as usize;
+                                max_splits = ((self.canvas.viewport().height() - timer_height)
+                                    / splits_height)
+                                    as usize;
                             }
                             len = splits.len();
                             if max_splits > len {
