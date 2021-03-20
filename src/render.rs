@@ -92,20 +92,8 @@ pub fn render_rows(
 }
 
 // Puts the big display timer at the bottom into the SDL backbuffer
-// aligns the texture with the right side of the window. if the window is not wide enough to show the entire thing
-// it currently just won't render it
-/*pub fn render_time(texture: &Texture, canvas: &mut Canvas<Window>) {
-    let vp = canvas.viewport();
-    let h = vp.height();
-    let w = vp.width();
-    let TextureQuery { width, height, .. } = texture.query();
-    if w > width {
-        let rect = Rect::new((w - width) as i32, h as i32 - height as i32, width, height);
-        canvas
-            .copy(&texture, None, Some(rect))
-            .expect("time texture copy failed");
-    }
-}*/
+// cuts the individual characters out of the font map produced earlier
+// scales milliseconds down to look nicer
 pub fn render_time(
     time_str: String,
     atlas: &Texture,
@@ -118,10 +106,12 @@ pub fn render_time(
     let h = vp.height();
     let w = vp.width();
     let mut src = Rect::new(0, 0, 0, font_y);
+    // multiply initial values by 8/10 so that the font is smaller
     let mut dst = Rect::new(0, (h - (font_y * 8 / 10)) as i32 - 5, 0, font_y * 8 / 10);
     let mut idx: usize;
     let mut char_num = 0;
     for chr in time_str.chars().rev() {
+        // get the index in the coordinate slice based on the character to render
         idx = match chr {
             '-' => 0,
             '0' => 2,
@@ -139,6 +129,7 @@ pub fn render_time(
             _ => 0,
         };
         let width = coords[idx + 1] - coords[idx];
+        // only monospace numbers so that the typically smaller punctuation looks better
         if chr == '.' || chr == ':' {
             x += width;
         } else {

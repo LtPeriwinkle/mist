@@ -152,6 +152,7 @@ impl App {
             .size_of("qwertyuiopasdfghjklzxcvbnm01234567890!@#$%^&*(){}[]|\\:;'\",.<>?/`~-_=+")
             .unwrap()
             .1;
+        // get the x-coordinates of characters in the font spritemap
         let coords: Vec<u32> = {
             let mut raw: Vec<u32> = vec![];
             let mut ret: Vec<u32> = vec![0];
@@ -164,12 +165,13 @@ impl App {
             ret
         };
         let font_y = timer_font.size_of("-0123456789:.").unwrap().1;
+        // render initial white font map. gets overwritten when color changes
         let map = timer_font
             .render("- 0 1 2 3 4 5 6 7 8 9 : .")
             .blended(Color::WHITE)
             .unwrap();
         let mut map_tex = creator.create_texture_from_surface(&map).unwrap();
-        drop(map);
+        // set the height where overlap with splits is checked when resizing window
         let timer_height = font_y + splits_height;
         // set the minimum height of the window to the size of the time texture
         self.canvas
@@ -196,7 +198,7 @@ impl App {
             .iter()
             .map(|val| timing::split_time_text(*val))
             .collect();
-        // initialize variables that are used in the loop for replacing timer texture
+        // initialize variables that are used in the loop for replacing textures
         let mut text_surface: Surface;
         let mut texture: Texture;
         // vectors that hold the textures for split names and their associated times
@@ -251,25 +253,33 @@ impl App {
         drop(split_times_ms);
         drop(split_times_raw);
         drop(split_names);
+        drop(map);
+
         // set up variables used in the mainloop
         // framerate cap timer
         let mut frame_time: Instant;
+        // instant used to calculate time that the timer has been running
         let mut total_time = Instant::now();
         // display time
         let mut time_str: String;
-        // keeps track of whether timer has been paused and paused value
+        // keep track of amount of time that passed before the timer was paused
         let mut before_pause = 0;
         let mut before_pause_split = 0;
         // this one should be a static but duration isnt allowed to be static apparently
         let one_sixtieth = Duration::new(0, 1_000_000_000 / 60);
+        // active split's index
         let mut current_split = 0;
-        // these two to avoid having to drop and reallocate every loop
+        // width of the canvas
         let mut window_width: u32;
+        // color of text
         let mut color = Color::WHITE;
+        // used to determine if timer font map should be rerendered
+        let mut old_color = color;
         // sum of split times for display on rows
         let mut recreate_on_screen: Option<u8> = Some(0);
         // diff between max on screen and current, used when resizing window
         let mut diff: u32 = 0;
+        // number of splits
         let mut len: usize = splits.len();
         // current split in the slice of splits sent to render_time()
         let mut cur: usize;
@@ -277,15 +287,12 @@ impl App {
         let mut split_time_ticks = 0;
         // split times of current run
         let mut active_run_times: Vec<u128> = vec![];
-
         // variable used to hold elapsed milliseconds of the application timer
         let mut elapsed: u128;
         // set when a run ends and is a pb to signal for a pop-up window to ask if the user wants to save
         let mut save = false;
-
+        // set when comparison has changed and textures need to be rerendered
         let mut comp_changed = false;
-
-        let mut old_color = color;
         self.canvas.present();
 
         // main loop
@@ -303,13 +310,9 @@ impl App {
                     elapsed = self.timer.elapsed().as_millis();
                     self.state = TimerState::Running { timestamp: elapsed };
                     split_time_ticks = elapsed;
-                    before_pause_split = 0;
                     total_time = Instant::now();
                 }
             }
-            // check at the start of the loop (after rendering final frame of an ended run)
-            // if the user wants to save the run or not with a yes/no popup window
-
             // repeat stuff in here for every event that occured between frames
             // in order to properly respond to them
             for event in self.ev_pump.poll_iter() {
@@ -381,14 +384,16 @@ impl App {
                         repeat: false,
                         ..
                     } => {
-                        // reset active run times and return the list of splits to the top
+                        // reset stuff specific to the active run and return splits to the top of the list
                         active_run_times = vec![];
+                        top_split_index = 0;
                         bottom_split_index = max_splits;
                         before_pause = 0;
                         before_pause_split = 0;
+                        current_split = 0;
                         color = ahead;
+                        // if there is an offset, reset the timer to that, if not, reset timer to 0
                         match offset {
-                            // if there is an offset, reset the timer to that, if not, reset timer to 0
                             Some(x) => {
                                 self.state = TimerState::NotStarted {
                                     time_str: format!("-{}", timing::ms_to_readable(x, false)),
@@ -414,6 +419,7 @@ impl App {
                         win_event: WindowEvent::Resized(..),
                         ..
                     } => {
+                        // calculate the height taken by the splits and the total new height of the window
                         let height = self.canvas.viewport().height();
                         let rows_height = ((bottom_split_index - top_split_index) as u32
                             * (splits_height + 2))
@@ -443,17 +449,16 @@ impl App {
                         TimerState::NotStarted { .. } => {
                             elapsed = self.timer.elapsed().as_millis();
                             split_time_ticks = elapsed;
-                            total_time = Instant::now();
                             match offset {
                                 // if we are in the start offset, tell it to offset
                                 Some(x) => {
                                     self.state = TimerState::OffsetCountdown { amt: x };
                                 }
                                 None => {
+                                    total_time = Instant::now();
                                     self.state = TimerState::Running { timestamp: elapsed };
                                 }
                             }
-                            current_split = 0;
                         }
                         // if it is running, either split or end
                         TimerState::Running { timestamp: t, .. } => {
@@ -464,9 +469,14 @@ impl App {
                                     .push((elapsed - split_time_ticks) + before_pause_split);
                                 split_time_ticks = elapsed;
                                 before_pause_split = 0;
+                                // create the difference time shown after a split
                                 let sum = timing::split_time_sum(&active_run_times)[current_split];
                                 let diff = sum as i128 - summed_times[current_split] as i128;
                                 time_str = timing::diff_text(diff);
+                                text_surface = font.render(&time_str).blended(color).unwrap();
+                                texture =
+                                    creator.create_texture_from_surface(&text_surface).unwrap();
+                                splits[current_split].set_diff(diff, Some(texture));
                                 // set diff color to gold and replace split gold
                                 if active_run_times[current_split] < splits[current_split].gold() {
                                     save = true;
@@ -477,10 +487,6 @@ impl App {
                                     );
                                     splits[current_split].set_gold(active_run_times[current_split]);
                                 }
-                                text_surface = font.render(&time_str).blended(color).unwrap();
-                                texture =
-                                    creator.create_texture_from_surface(&text_surface).unwrap();
-                                splits[current_split].set_diff(diff, Some(texture));
                                 time_str = timing::split_time_text((elapsed - t) + before_pause);
                                 text_surface =
                                     font.render(&time_str).blended(Color::WHITE).unwrap();
@@ -492,6 +498,7 @@ impl App {
                                     current_split += 1;
                                 // otherwise end the run
                                 } else {
+                                    // set the state of the timer to finished, round string to 30fps
                                     self.state = TimerState::Finished {
                                         time_str: timing::ms_to_readable(
                                             (elapsed - t) + before_pause,
@@ -558,16 +565,19 @@ impl App {
                         self.comparison.prev();
                         comp_changed = true;
                     }
+                    // f1 key to open a new split file
                     Event::KeyDown {
                         keycode: Some(Keycode::F1),
                         ..
                     } => {
+                        // only allow opening a new file if the timer is not running
                         if let TimerState::NotStarted { .. } = self.state {
-                            if save {
-                                if save_check() {
-                                    self.run.save_msf(&path);
-                                }
+                            // save the previous run if it was updated
+                            if save && save_check() {
+                                self.run.save_msf(&path);
                             }
+                            // open a file dialog to get a new split file + run
+                            // if the user cancelled, do nothing
                             match reload_splits() {
                                 Some((r, p)) => {
                                     self.run = r;
@@ -585,6 +595,7 @@ impl App {
                                 }
                                 _ => {}
                             }
+                            // recreate split names, times, textures, etc
                             let split_names = self.run.split_names();
                             let split_times_ms: Vec<u128> =
                                 self.run.get_times().iter().cloned().collect();
@@ -622,6 +633,7 @@ impl App {
                                 splits.push(split);
                                 index += 1;
                             }
+                            // reset max splits, length of splits, and split indices to reflect new run
                             if len == 0 {
                                 max_splits = ((self.canvas.viewport().height() - timer_height)
                                     / splits_height)
@@ -638,10 +650,12 @@ impl App {
                     _ => {}
                 }
             }
+            // rebuild comparisons if the comparison was swapped
             if comp_changed {
                 comp_changed = false;
-                let mut index = 0;
+                index = 0;
                 if let Comparison::None = self.comparison {
+                    // set comp textures to just "-" if there is no comparison
                     while index < len {
                         let surface = font
                             .render("-  ")
@@ -661,6 +675,7 @@ impl App {
                             vec![]
                         }
                     };
+                    // rerender comparisons to either personal best or golds
                     let split_times_raw: Vec<String> = timing::split_time_sum(&split_times)
                         .iter()
                         .map(|val| timing::split_time_text(*val))
@@ -678,7 +693,7 @@ impl App {
                     }
                 }
             }
-
+            // reset window width for placing text
             window_width = self.canvas.viewport().width();
 
             // make some changes to stuff before updating screen based on what happened in past loop
@@ -762,6 +777,7 @@ impl App {
                 cur = usize::MAX;
                 color = Color::WHITE;
             }
+            // if the color has changed due to above calculations, recreate the font map in the new color
             if old_color != color {
                 let map = timer_font
                     .render("- 0 1 2 3 4 5 6 7 8 9 : .")
@@ -825,14 +841,7 @@ impl App {
             );
             // update the time based on the current timer state
             time_str = self.update_time(before_pause, total_time);
-            /*text_surface = timer_font
-                .render(&time_str)
-                .shaded(color, Color::BLACK)
-                .expect("time font render failed");
-            texture = creator
-                .create_texture_from_surface(&text_surface)
-                .expect("time texture creation failed");*/
-            // copy the time texture to the canvas. function takes care of placing and making sure it doesnt try to place the texture offscreen
+            // copy the time texture to the canvas, place individual characters from map
             render::render_time(time_str, &map_tex, &coords, font_y, &mut self.canvas);
             self.canvas.present();
             if Instant::now().duration_since(frame_time) <= one_sixtieth {
@@ -844,10 +853,9 @@ impl App {
         }
         // after the loop is exited then save the config file
         self.config.save();
-        if save {
-            if save_check() {
-                self.run.save_msf(&path);
-            }
+        // if splits were updated, prompt user to save the split file
+        if save && save_check() {
+            self.run.save_msf(&path);
         }
     }
     // updates time string based on timer state, basically leaves it the same if timer is not running

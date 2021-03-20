@@ -69,6 +69,8 @@ pub fn info_dialog(title: &str, text: &str) {
     tfd::message_box_ok(title, text, tfd::MessageBoxIcon::Info);
 }
 
+// get a new split file path from the user and try to load a run from it, then return
+// both the run and the path
 pub fn reload_splits() -> Option<(Run, String)> {
     let mut path: Option<String>;
     loop {
