@@ -306,6 +306,7 @@ impl App {
 
             // if the timer is doing an offset, make sure it should still be negative
             // if it shouldnt, convert to running state
+		println!("{:?}", self.state);
             if let TimerState::OffsetCountdown { amt } = self.state {
                 if amt <= total_time.elapsed().as_millis() {
                     elapsed = self.timer.elapsed().as_millis();
@@ -450,13 +451,13 @@ impl App {
                         TimerState::NotStarted { .. } => {
                             elapsed = self.timer.elapsed().as_millis();
                             split_time_ticks = elapsed;
+                            total_time = Instant::now();
                             match offset {
                                 // if we are in the start offset, tell it to offset
                                 Some(x) => {
                                     self.state = TimerState::OffsetCountdown { amt: x };
                                 }
                                 None => {
-                                    total_time = Instant::now();
                                     self.state = TimerState::Running { timestamp: elapsed };
                                 }
                             }
