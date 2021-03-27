@@ -58,6 +58,12 @@ impl Run {
     pub fn set_time(&mut self, time: u128, index: usize) {
 	self.pb_times[index] = time;
     }
+    pub fn set_golds(&mut self, golds: &Vec<u128>) {
+	self.gold_times = golds.to_vec()
+    }
+    pub fn set_names(&mut self, names: &Vec<String>) {
+	self.splits = names.to_vec()
+    }
 }
 
 /// create an empty run
