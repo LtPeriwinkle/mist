@@ -11,7 +11,8 @@ static HEADERS: [&'static str; 3] = ["Split Name", "Personal Best", "Gold"];
 
 lazy_static! {
     static ref RUN: Mutex<Run> = Mutex::new(Run::default());
-    static ref VECS: Mutex<(Vec<u128>, Vec<u128>, Vec<String>)> = Mutex::new((vec![], vec![], vec![]));
+    static ref VECS: Mutex<(Vec<u128>, Vec<u128>, Vec<String>)> =
+        Mutex::new((vec![], vec![], vec![]));
 }
 
 static mut ILLEGAL: bool = false;
@@ -31,7 +32,12 @@ fn get_save_as() -> Option<String> {
     let cwd = current_dir().unwrap();
     let mut dir = cwd.to_string_lossy();
     dir.to_mut().push('/');
-    return tfd::save_file_dialog_with_filter("Save to MSF file", &dir, &["*.msf"], "mist split files");
+    return tfd::save_file_dialog_with_filter(
+        "Save to MSF file",
+        &dir,
+        &["*.msf"],
+        "mist split files",
+    );
 }
 
 fn ms_to_readable(mut ms: u128) -> String {
@@ -60,9 +66,17 @@ fn ms_to_readable(mut ms: u128) -> String {
 }
 
 fn str_to_ms(tm: String) -> u128 {
-    unsafe {ILLEGAL = false};
+    unsafe {
+        ILLEGAL = false
+    };
     let mut ms: u128 = 0;
-    let alert = {dialog::alert_default("invalid time entered"); unsafe {ILLEGAL = true} 0};
+    let alert = {
+        dialog::alert_default("invalid time entered");
+        unsafe {
+            ILLEGAL = true
+        }
+        0
+    };
     let split: Vec<&str> = tm.split(':').collect();
     if split.len() == 2 {
         ms += split[0].parse::<u128>().unwrap_or(alert) * 60000;
@@ -135,12 +149,17 @@ fn main() {
                 } else {
                     let name = get_save_as();
                     match name {
-                        Some(p) => if p != "()" {run.save_msf(&p); save_path = p;},
+                        Some(p) => {
+                            if p != "()" {
+                                run.save_msf(&p);
+                                save_path = p;
+                            }
+                        }
                         None => {}
                     }
                 }
             } else {
-	    	dialog::alert_default("invalid time(s) entered");
+                dialog::alert_default("invalid time(s) entered");
             }
         }
     });
@@ -194,7 +213,7 @@ fn main() {
                             if (row as usize) > VECS.lock().unwrap().2.len() {
                                 VECS.lock().unwrap().2.push(input.value())
                             } else {
-				VECS.lock().unwrap().2.insert(row as usize, input.value());
+                                VECS.lock().unwrap().2.insert(row as usize, input.value());
                             }
                             //RUN.lock().unwrap().set_name(input.value(), row as usize);
                         })
@@ -203,7 +222,10 @@ fn main() {
                             if (row as usize) > VECS.lock().unwrap().0.len() {
                                 VECS.lock().unwrap().0.push(str_to_ms(input.value()))
                             } else {
-				VECS.lock().unwrap().0.insert(row as usize, str_to_ms(input.value()));
+                                VECS.lock()
+                                    .unwrap()
+                                    .0
+                                    .insert(row as usize, str_to_ms(input.value()));
                             }
                         })
                     } else if col == 2 {
@@ -211,7 +233,10 @@ fn main() {
                             if (row as usize) > VECS.lock().unwrap().1.len() {
                                 VECS.lock().unwrap().1.push(str_to_ms(input.value()))
                             } else {
-				VECS.lock().unwrap().1.insert(row as usize, str_to_ms(input.value()));
+                                VECS.lock()
+                                    .unwrap()
+                                    .1
+                                    .insert(row as usize, str_to_ms(input.value()));
                             }
                         })
                     }
@@ -222,7 +247,13 @@ fn main() {
         }
     });
     let mut table1 = table.clone();
-    add_button.set_callback(move || {table.set_rows(table.rows() + 1); table.redraw();});
-    sub_button.set_callback(move || {table1.set_rows(table1.rows() - 1); table1.redraw();});
+    add_button.set_callback(move || {
+        table.set_rows(table.rows() + 1);
+        table.redraw();
+    });
+    sub_button.set_callback(move || {
+        table1.set_rows(table1.rows() - 1);
+        table1.redraw();
+    });
     app.run().unwrap();
 }
