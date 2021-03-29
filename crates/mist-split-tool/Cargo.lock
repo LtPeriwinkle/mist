@@ -29,9 +29,9 @@ dependencies = [
 
 [[package]]
 name = "fltk"
-version = "0.15.9"
+version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "117a785da121982d89d0aab1f125197f3d3b31f9a4b045d90395a5609f043e6e"
+checksum = "8e58a706d06244328596342ac1b3747f94e0fc70455487112925923a808757a0"
 dependencies = [
  "bitflags",
  "fltk-derive",
@@ -43,9 +43,9 @@ dependencies = [
 
 [[package]]
 name = "fltk-derive"
-version = "0.15.9"
+version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "526bb3e9ff71a85c968b8316afd134f09b44f28824db473dd2dd6defb166dd50"
+checksum = "51846066a70271cff0cdd247b113966a896193511a0e26748ea7f95e19edda8d"
 dependencies = [
  "quote",
  "syn",
@@ -53,9 +53,9 @@ dependencies = [
 
 [[package]]
 name = "fltk-sys"
-version = "0.15.9"
+version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13117cf92b8712db7fa0208b4c6133b4e01155e6893cd8296356266ef66e9da8"
+checksum = "0b8a8625a4b63639761ab5fcdc3853125e2c20949f925791e1ef91d77193b824"
 dependencies = [
  "cmake",
  "libc",
@@ -69,9 +69,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.88"
+version = "0.2.91"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03b07a082330a35e43f63177cc01689da34fbffa0105e1246cf0311472cac73a"
+checksum = "8916b1f6ca17130ec6568feccee27c156ad12037880833a3b842a823236502e7"
 
 [[package]]
 name = "malloc_buf"
@@ -99,7 +99,7 @@ dependencies = [
 
 [[package]]
 name = "mist-split-tool"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "fltk",
  "lazy_static",
@@ -185,9 +185,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.63"
+version = "1.0.65"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fd9bc7ccc2688b3344c2f48b9b546648b25ce0b20fc717ee7fa7981a8ca9717"
+checksum = "f3a1d708c221c5a612956ef9f75b37e454e88d1f7b899fbd3a18d4252012d663"
 dependencies = [
  "proc-macro2",
  "quote",
