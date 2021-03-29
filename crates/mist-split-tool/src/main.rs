@@ -1,4 +1,4 @@
-use fltk::{app, button, draw, input, table, window::*};
+use fltk::{app, button, dialog, draw, input, table, window::*};
 use mist_run_utils::run::Run;
 use std::convert::TryInto;
 use std::env::current_dir;
@@ -11,7 +11,10 @@ static HEADERS: [&'static str; 3] = ["Split Name", "Personal Best", "Gold"];
 
 lazy_static! {
     static ref RUN: Mutex<Run> = Mutex::new(Run::default());
+    static ref VECS: Mutex<(Vec<u128>, Vec<u128>, Vec<String>)> = Mutex::new((vec![], vec![], vec![]));
 }
+
+static mut ILLEGAL: bool = false;
 
 fn open_split_file() -> Option<String> {
     let cwd = current_dir().unwrap();
@@ -57,19 +60,21 @@ fn ms_to_readable(mut ms: u128) -> String {
 }
 
 fn str_to_ms(tm: String) -> u128 {
+    unsafe {ILLEGAL = false};
     let mut ms: u128 = 0;
+    let alert = {dialog::alert_default("invalid time entered"); unsafe {ILLEGAL = true} 0};
     let split: Vec<&str> = tm.split(':').collect();
     if split.len() == 2 {
-        ms += split[0].parse::<u128>().unwrap() * 60000;
+        ms += split[0].parse::<u128>().unwrap_or(alert) * 60000;
         let split2: Vec<&str> = split[1].split('.').collect();
-        ms += split2[0].parse::<u128>().unwrap() * 1000;
-        ms += split2[1].parse::<u128>().unwrap();
-    } else {
-        ms += split[0].parse::<u128>().unwrap() * 3600000;
-        ms += split[1].parse::<u128>().unwrap() * 60000;
+        ms += split2[0].parse::<u128>().unwrap_or(alert) * 1000;
+        ms += split2[1].parse::<u128>().unwrap_or(alert);
+    } else if split.len() == 3 {
+        ms += split[0].parse::<u128>().unwrap_or(alert) * 3600000;
+        ms += split[1].parse::<u128>().unwrap_or(alert) * 60000;
         let split2: Vec<&str> = split[2].split('.').collect();
-        ms += split2[0].parse::<u128>().unwrap() * 1000;
-        ms += split2[1].parse::<u128>().unwrap();
+        ms += split2[0].parse::<u128>().unwrap_or(alert) * 1000;
+        ms += split2[1].parse::<u128>().unwrap_or(alert);
     }
     return ms;
 }
@@ -94,8 +99,9 @@ fn main() {
         .with_size(510, 600)
         .center_screen()
         .with_label("mist split editor");
-    let mut table = table::Table::new(5, 50, 503, 550, "Split Editor");
-    table.set_rows(RUN.lock().unwrap().split_names().len().try_into().unwrap());
+    let mut table = table::Table::new(5, 50, 503, 550, "");
+    let og_len: u32 = RUN.lock().unwrap().split_names().len().try_into().unwrap();
+    table.set_rows(og_len);
     table.set_row_header(true);
     table.set_cols(3);
     table.set_col_header(true);
@@ -104,17 +110,36 @@ fn main() {
     table.set_col_width(2, 140);
     table.end();
     let mut save_button = button::Button::new(423, 25, 80, 25, "save file");
+    let mut add_button = button::Button::new(342, 25, 80, 25, "add split");
+    let mut sub_button = button::Button::new(261, 25, 80, 25, "remove split");
     win.make_resizable(false);
     win.end();
     win.show();
     save_button.set_callback(move || {
-        if save_path != "".to_string() {
-            RUN.lock().unwrap().save_msf(&save_path);
-        } else {
-            let name = get_save_as();
-            match name {
-                Some(p) => if p != "()" {RUN.lock().unwrap().save_msf(&p); save_path = p;},
-                None => {}
+        let mut vecs = VECS.lock().unwrap();
+        let mut run = RUN.lock().unwrap();
+        let mut times = run.get_times().clone();
+        let mut golds = run.get_golds().clone();
+        let mut splits = run.split_names().clone();
+        times.append(&mut vecs.0);
+        golds.append(&mut vecs.1);
+        splits.append(&mut vecs.2);
+        run.set_times(&times);
+        run.set_golds(&golds);
+        run.set_names(&splits);
+        unsafe {
+            if !ILLEGAL {
+                if save_path != "".to_string() {
+                    run.save_msf(&save_path);
+                } else {
+                    let name = get_save_as();
+                    match name {
+                        Some(p) => if p != "()" {run.save_msf(&p); save_path = p;},
+                        None => {}
+                    }
+                }
+            } else {
+	    	dialog::alert_default("invalid time(s) entered");
             }
         }
     });
@@ -137,37 +162,66 @@ fn main() {
             }
             table::TableContext::Cell => {
                 let mut inp = input::Input::new(x, y, w, h, "");
-                if col == 0 {
-                    inp.set_value(&RUN.lock().unwrap().split_names()[row as usize]);
-                    inp.set_callback2(move |input| {
-                        RUN.lock().unwrap().set_name(input.value(), row as usize);
-                    })
-                } else if col == 1 {
-                    inp.set_value(&ms_to_readable(
-                        RUN.lock().unwrap().get_times()[row as usize],
-                    ));
-                    inp.set_callback2(move |input| {
-                        RUN.lock()
-                            .unwrap()
-                            .set_time(str_to_ms(input.value()), row as usize);
-                    })
-                } else if col == 2 {
-                    inp.set_value(&ms_to_readable(
-                        RUN.lock().unwrap().get_golds()[row as usize],
-                    ));
-                    inp.set_callback2(move |input| {
-                        RUN.lock()
-                            .unwrap()
-                            .set_gold_time(row as usize, str_to_ms(input.value()));
-                    })
+                if row < (og_len as i32) {
+                    if col == 0 {
+                        inp.set_value(&RUN.lock().unwrap().split_names()[row as usize]);
+                        inp.set_callback2(move |input| {
+                            RUN.lock().unwrap().set_name(input.value(), row as usize);
+                        })
+                    } else if col == 1 {
+                        inp.set_value(&ms_to_readable(
+                            RUN.lock().unwrap().get_times()[row as usize],
+                        ));
+                        inp.set_callback2(move |input| {
+                            RUN.lock()
+                                .unwrap()
+                                .set_time(str_to_ms(input.value()), row as usize);
+                        })
+                    } else if col == 2 {
+                        inp.set_value(&ms_to_readable(
+                            RUN.lock().unwrap().get_golds()[row as usize],
+                        ));
+                        inp.set_callback2(move |input| {
+                            RUN.lock()
+                                .unwrap()
+                                .set_gold_time(row as usize, str_to_ms(input.value()));
+                        })
+                    }
+                } else {
+                    if col == 0 {
+                        inp.set_callback2(move |input| {
+                            if (row as usize) > VECS.lock().unwrap().2.len() {
+                                VECS.lock().unwrap().2.push(input.value())
+                            } else {
+				VECS.lock().unwrap().2.insert(row as usize, input.value());
+                            }
+                            //RUN.lock().unwrap().set_name(input.value(), row as usize);
+                        })
+                    } else if col == 1 {
+                        inp.set_callback2(move |input| {
+                            if (row as usize) > VECS.lock().unwrap().0.len() {
+                                VECS.lock().unwrap().0.push(str_to_ms(input.value()))
+                            } else {
+				VECS.lock().unwrap().0.insert(row as usize, str_to_ms(input.value()));
+                            }
+                        })
+                    } else if col == 2 {
+                        inp.set_callback2(move |input| {
+                            if (row as usize) > VECS.lock().unwrap().1.len() {
+                                VECS.lock().unwrap().1.push(str_to_ms(input.value()))
+                            } else {
+				VECS.lock().unwrap().1.insert(row as usize, str_to_ms(input.value()));
+                            }
+                        })
+                    }
                 }
                 t.add(&inp);
             }
             _ => {}
         }
     });
-    while table.children() == 0 {
-        app::wait();
-    }
+    let mut table1 = table.clone();
+    add_button.set_callback(move || {table.set_rows(table.rows() + 1); table.redraw();});
+    sub_button.set_callback(move || {table1.set_rows(table1.rows() - 1); table1.redraw();});
     app.run().unwrap();
 }
