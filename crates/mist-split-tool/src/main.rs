@@ -127,6 +127,7 @@ fn main() {
         run.set_times(&times);
         run.set_golds(&golds);
         run.set_names(&splits);
+        run.set_pb(times.iter().sum());
         unsafe {
             if !ILLEGAL {
                 if save_path != "".to_string() {
