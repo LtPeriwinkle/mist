@@ -1,6 +1,6 @@
 [package]
 name = "mist-split-tool"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/LtPeriwinkle/mist"
