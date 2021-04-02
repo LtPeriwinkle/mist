@@ -1,5 +1,9 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.8.0
+- background image finally added
+- added config field for whether to crop the center of the image or to scale the image to fit the window
+
 ### 1.7.0
 - implement large timer font rendering from a cache texture of all the characters to avoid recreating a new texture each frame
 - make millisecond display on large timer smaller so that longer times fit better on the screen and look nicer
