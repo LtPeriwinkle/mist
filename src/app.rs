@@ -1,9 +1,11 @@
 // app struct and its functions, one of which is the application mainloop
 use sdl2::event::{Event, WindowEvent};
+use sdl2::gfx::rotozoom::RotozoomSurface;
 use sdl2::image::LoadSurface;
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::Color;
-use sdl2::render::{Texture, WindowCanvas};
+use sdl2::pixels::{Color, PixelFormatEnum};
+use sdl2::rect::Rect;
+use sdl2::render::{Texture, TextureAccess, WindowCanvas};
 use sdl2::surface::Surface;
 use sdl2::ttf;
 
@@ -147,6 +149,70 @@ impl App {
         // make the texture creator used a lot later on
         let creator = self.canvas.texture_creator();
 
+        let bg: Option<Surface> = match self.config.img() {
+            Some(ref p) => Some(Surface::from_file(&p).unwrap()),
+            None => None,
+        };
+        let bg_tex: Texture;
+        let has_bg: bool;
+        if let Some(x) = bg {
+            has_bg = true;
+            let width = self.canvas.viewport().width();
+            let height = self.canvas.viewport().height();
+            if !self.config.img_scaled() {
+                let mut sur = Surface::new(width, height, PixelFormatEnum::RGB24).unwrap();
+                let cutoffx = {
+                    if x.width() > width {
+                        ((x.width() - width) / 2) as i32
+                    } else {
+                        0
+                    }
+                };
+                let cutoffy = {
+                    if x.height() > height {
+                        ((x.height() - height) / 2) as i32
+                    } else {
+                        0
+                    }
+                };
+                x.blit(Rect::new(cutoffx, cutoffy, width, height), &mut sur, None);
+                bg_tex = creator.create_texture_from_surface(&sur).unwrap();
+            } else {
+                let sur: Surface;
+                if x.width() > x.height() && width < x.width() {
+                    if width < x.width() {
+                        sur = x
+                            .rotozoom(0.0, width as f64 / x.width() as f64, true)
+                            .unwrap();
+                    } else {
+                        sur = x
+                            .rotozoom(0.0, x.width() as f64 / width as f64, true)
+                            .unwrap();
+                    }
+                } else {
+                    if height < x.height() {
+                        sur = x
+                            .rotozoom(0.0, height as f64 / x.height() as f64, true)
+                            .unwrap();
+                    } else {
+                        sur = x
+                            .rotozoom(0.0, x.height() as f64 / height as f64, true)
+                            .unwrap();
+                    }
+                }
+                bg_tex = creator.create_texture_from_surface(&sur).unwrap();
+            }
+        } else {
+            has_bg = false;
+            bg_tex = creator
+                .create_texture(None, TextureAccess::Static, 1, 1)
+                .unwrap();
+        }
+        let sdl2::render::TextureQuery {
+            width: bgw,
+            height: bgh,
+            ..
+        } = bg_tex.query();
         // get the heights of different font textures
         let splits_height = font
             .size_of("qwertyuiopasdfghjklzxcvbnm01234567890!@#$%^&*(){}[]|\\:;'\",.<>?/`~-_=+")
@@ -162,7 +228,7 @@ impl App {
                 ret.push(raw.iter().sum::<u32>());
             }
             ret.push(*raw.iter().max().unwrap());
-            
+
             ret
         };
         let font_y = timer_font.size_of("-0123456789:.").unwrap().1;
@@ -303,10 +369,13 @@ impl App {
             // remove stuff from the backbuffer and fill the space with black
             self.canvas.set_draw_color(Color::BLACK);
             self.canvas.clear();
-
+            if has_bg {
+                self.canvas
+                    .copy(&bg_tex, None, Rect::new(0, 0, bgw, bgh))
+                    .unwrap();
+            }
             // if the timer is doing an offset, make sure it should still be negative
             // if it shouldnt, convert to running state
-		println!("{:?}", self.state);
             if let TimerState::OffsetCountdown { amt } = self.state {
                 if amt <= total_time.elapsed().as_millis() {
                     elapsed = self.timer.elapsed().as_millis();
