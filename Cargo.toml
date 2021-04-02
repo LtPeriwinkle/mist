@@ -14,7 +14,7 @@ license = "MIT OR Apache-2.0"
 [dependencies.sdl2]
 version = "0.34.3"
 default-features = false
-features = ["ttf", "image"]
+features = ["ttf", "image", "gfx"]
 
 [dependencies.ron]
 version = "0.6.2"
