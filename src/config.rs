@@ -10,6 +10,7 @@ use std::io::Write;
 pub struct Config {
     def_file: Option<String>,
     img_file: Option<String>,
+    img_scaled: bool,
     colors: [(u8, u8, u8); 5],
     t_font: String,
     s_font: String,
@@ -34,6 +35,9 @@ impl Config {
     }
     pub fn img(&self) -> Option<&String> {
         self.img_file.as_ref()
+    }
+    pub fn img_scaled(&self) -> bool {
+	self.img_scaled
     }
     pub fn set_file(&mut self, file: &String) {
         self.def_file = Some(file.to_owned());
@@ -65,6 +69,7 @@ impl Default for Config {
         Config {
             def_file: None,
             img_file: None,
+            img_scaled: false,
             colors: [
                 (0, 255, 0),
                 (255, 0, 0),
