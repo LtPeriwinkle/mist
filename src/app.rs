@@ -175,7 +175,7 @@ impl App {
                         0
                     }
                 };
-                x.blit(Rect::new(cutoffx, cutoffy, width, height), &mut sur, None);
+                x.blit(Rect::new(cutoffx, cutoffy, width, height), &mut sur, None).unwrap();
                 bg_tex = creator.create_texture_from_surface(&sur).unwrap();
             } else {
                 let sur: Surface;

@@ -37,7 +37,7 @@ impl Config {
         self.img_file.as_ref()
     }
     pub fn img_scaled(&self) -> bool {
-	self.img_scaled
+        self.img_scaled
     }
     pub fn set_file(&mut self, file: &String) {
         self.def_file = Some(file.to_owned());

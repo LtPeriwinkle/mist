@@ -140,7 +140,11 @@ pub fn render_time(
                 x += coords[15];
             }
         }
-        src.set_x(if idx != 0 {(coords[idx] - 2) as i32 + (idx as u32 * space) as i32} else {(coords[idx]) as i32 + (idx as u32 * space) as i32});
+        src.set_x(if idx != 0 {
+            (coords[idx] - 2) as i32 + (idx as u32 * space) as i32
+        } else {
+            (coords[idx]) as i32 + (idx as u32 * space) as i32
+        });
         src.set_width(width);
         dst.set_x((w - x) as i32);
         if char_num < 4 {
