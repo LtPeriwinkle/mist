@@ -25,7 +25,7 @@ pub fn render_rows(
         if index == current {
             canvas.set_draw_color(Color::BLUE);
             canvas
-                .fill_rect(Rect::new(0, y - 1, window_width, height + 3))
+                .fill_rect(Rect::new(0, y - 1, window_width, height + 4))
                 .unwrap();
         }
         row = Rect::new(0, y, width, height);
