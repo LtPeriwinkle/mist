@@ -17,11 +17,11 @@ More will probably be added to this list in the future
 	* [X] custom fonts/font sizes
 	* [X] custom colors
 	* [ ] keybinds
-	* [ ] timer backgrounds (maybe)
-- [ ] split file creation tool
+	* [X] timer backgrounds
+- [X] split file creation tool
 	* [X] edit existing msf
 	* [X] convert lss to msf
-	* [ ] create new splits
+	* [X] create new splits
 - [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
 - [X] dynamic colors
 - [ ] different run comparisons
