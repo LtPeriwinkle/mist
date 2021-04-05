@@ -59,12 +59,12 @@ When you run mist, make sure it is in the same directory as the `assets` directo
 ### Linux
 Requirements are SDL2, SDL2\_Image and SDL2\_TTF shared libraries, as well as development libraries. On ubuntu:
 ```
-sudo apt-get install libsdl2-2.0.0 libsdl2-ttf-2.0.0 libsdl2-image-2.0.0 libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev
+sudo apt-get install libsdl2-2.0.0 libsdl2-ttf-2.0.0 libsdl2-image-2.0.0 libsdl2-gfx-2.0.0 libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-gfx-dev
 ```
 
 On arch:
 ```
-sudo pacman -S sdl2 sdl2_ttf sdl2_image
+sudo pacman -S sdl2 sdl2_ttf sdl2_image sdl2_gfx
 ```
 
 Clone this repo (`git clone https://github.com/LtPeriwinkle/mist`), enter the directory, and run `cargo build --release`. Move the
@@ -79,7 +79,7 @@ Compile with `cargo build --release` then move the exe as well as the sdl relate
 ### MacOS
 Install sdl2, sdl image and sdl ttf. Using homebrew:
 ```
-brew install sdl2 sdl2_image sdl2_ttf
+brew install sdl2 sdl2_image sdl2_ttf sdl2_gfx
 ```
 
 Then you should be able to run `cargo build --release`.
