@@ -117,7 +117,7 @@ impl App {
             }
         }
         // remove Option wrapper from filepath for later use since it now is guaranteed not to be None
-        let mut path = path.unwrap();
+        let path = path.unwrap();
         // set the config file's run path to the given path in case a new one was chosen
         app.config.set_file(&path);
         return app;
@@ -175,7 +175,8 @@ impl App {
                         0
                     }
                 };
-                x.blit(Rect::new(cutoffx, cutoffy, width, height), &mut sur, None).unwrap();
+                x.blit(Rect::new(cutoffx, cutoffy, width, height), &mut sur, None)
+                    .unwrap();
                 bg_tex = creator.create_texture_from_surface(&sur).unwrap();
             } else {
                 let sur: Surface;
@@ -213,6 +214,7 @@ impl App {
             height: bgh,
             ..
         } = bg_tex.query();
+        let bg_rect = Rect::new(0, 0, bgw, bgh);
         // get the heights of different font textures
         let splits_height = font
             .size_of("qwertyuiopasdfghjklzxcvbnm01234567890!@#$%^&*(){}[]|\\:;'\",.<>?/`~-_=+")
@@ -341,7 +343,7 @@ impl App {
         // color of text
         let mut color = Color::WHITE;
         // used to determine if timer font map should be rerendered
-        let mut old_color = color;
+        let mut old_color: Color;
         // sum of split times for display on rows
         let mut recreate_on_screen: Option<u8> = Some(0);
         // diff between max on screen and current, used when resizing window
@@ -371,7 +373,7 @@ impl App {
             self.canvas.clear();
             if has_bg {
                 self.canvas
-                    .copy(&bg_tex, None, Rect::new(0, 0, bgw, bgh))
+                    .copy(&bg_tex, None, bg_rect)
                     .unwrap();
             }
             // if the timer is doing an offset, make sure it should still be negative
