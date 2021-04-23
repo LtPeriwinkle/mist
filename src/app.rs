@@ -372,9 +372,7 @@ impl App {
             self.canvas.set_draw_color(Color::BLACK);
             self.canvas.clear();
             if has_bg {
-                self.canvas
-                    .copy(&bg_tex, None, bg_rect)
-                    .unwrap();
+                self.canvas.copy(&bg_tex, None, bg_rect).unwrap();
             }
             // if the timer is doing an offset, make sure it should still be negative
             // if it shouldnt, convert to running state
@@ -546,10 +544,6 @@ impl App {
                                 let sum = timing::split_time_sum(&active_run_times)[current_split];
                                 let diff = sum as i128 - summed_times[current_split] as i128;
                                 time_str = timing::diff_text(diff);
-                                text_surface = font.render(&time_str).blended(color).unwrap();
-                                texture =
-                                    creator.create_texture_from_surface(&text_surface).unwrap();
-                                splits[current_split].set_diff(diff, Some(texture));
                                 // set diff color to gold and replace split gold
                                 if active_run_times[current_split] < splits[current_split].gold() {
                                     save = true;
@@ -560,6 +554,10 @@ impl App {
                                     );
                                     splits[current_split].set_gold(active_run_times[current_split]);
                                 }
+                                text_surface = font.render(&time_str).blended(color).unwrap();
+                                texture =
+                                    creator.create_texture_from_surface(&text_surface).unwrap();
+                                splits[current_split].set_diff(diff, Some(texture));
                                 time_str = timing::split_time_text((elapsed - t) + before_pause);
                                 text_surface =
                                     font.render(&time_str).blended(Color::WHITE).unwrap();
