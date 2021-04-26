@@ -26,7 +26,7 @@ impl Config {
             .write(true)
             .create(true)
             .open("assets/mist.cfg")
-            .unwrap_or_else(|err| {error_dialog(format!("{}", err)); unreachable!();});
+            .unwrap_or_else(|err| {error_dialog(format!("couldn't open cfg: {}", err)); unreachable!();});
         let cfg: Self = from_reader(&file).unwrap_or(Config::default());
         return cfg;
     }
@@ -58,9 +58,9 @@ impl Config {
         let mut file = OpenOptions::new()
             .write(true)
             .open("assets/mist.cfg")
-            .unwrap_or_else(|err| {error_dialog(format!("{}", err)); unreachable!();});
+            .unwrap_or_else(|err| {error_dialog(format!("couldn't open cfg: {}", err)); unreachable!();});
         let string = to_string_pretty(self, PrettyConfig::new()).unwrap();
-        file.write(&string.as_bytes()).unwrap();
+        file.write(&string.as_bytes()).unwrap_or_else(|err| {error_dialog(format!("couldn't write cfg: {}", err)); unreachable!();});
     }
 }
 
