@@ -4,7 +4,7 @@ use ron::ser::{to_string_pretty, PrettyConfig};
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Write;
-
+use crate::components::error_dialog;
 // more will be added to this in the future
 #[derive(Serialize, Deserialize)]
 pub struct Config {
@@ -26,7 +26,7 @@ impl Config {
             .write(true)
             .create(true)
             .open("assets/mist.cfg")
-            .expect("file open failed");
+            .unwrap_or_else(|err| {error_dialog(format!("{}", err)); unreachable!();});
         let cfg: Self = from_reader(&file).unwrap_or(Config::default());
         return cfg;
     }
@@ -58,7 +58,7 @@ impl Config {
         let mut file = OpenOptions::new()
             .write(true)
             .open("assets/mist.cfg")
-            .expect("file open failed");
+            .unwrap_or_else(|err| {error_dialog(format!("{}", err)); unreachable!();});
         let string = to_string_pretty(self, PrettyConfig::new()).unwrap();
         file.write(&string.as_bytes()).unwrap();
     }
