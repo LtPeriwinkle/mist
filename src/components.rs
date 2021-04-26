@@ -64,9 +64,9 @@ pub fn bad_file_dialog(err: &str) -> bool {
     }
 }
 
-// wrapper function so the tfd stuff can all stay in this file
-pub fn info_dialog(title: &str, text: &str) {
-    tfd::message_box_ok(title, text, tfd::MessageBoxIcon::Info);
+pub fn error_dialog(err: String) {
+     tfd::message_box_ok("Error", &format!("mist had an error and couldn't continue. Error details : {}", err), tfd::MessageBoxIcon::Error);
+     std::process::exit(1);
 }
 
 // get a new split file path from the user and try to load a run from it, then return
