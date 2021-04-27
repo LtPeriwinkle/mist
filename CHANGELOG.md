@@ -1,5 +1,10 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.9.0
+- fixed some warnings that have been around forever
+- fixed an issue where diffs would never be set to gold
+- added dialog boxes that pop up when unwrap is called on an err
+
 ### 1.8.0
 - background image finally added
 - added config field for whether to crop the center of the image or to scale the image to fit the window
