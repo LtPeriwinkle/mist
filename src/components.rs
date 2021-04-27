@@ -65,8 +65,15 @@ pub fn bad_file_dialog(err: &str) -> bool {
 }
 
 pub fn error_dialog(err: String) {
-     tfd::message_box_ok("Error", &format!("mist had an error and couldn't continue. Error details : {}", err), tfd::MessageBoxIcon::Error);
-     std::process::exit(1);
+    tfd::message_box_ok(
+        "Error",
+        &format!(
+            "mist had an error and couldn't continue. Error details : {}",
+            err
+        ),
+        tfd::MessageBoxIcon::Error,
+    );
+    std::process::exit(1);
 }
 
 // get a new split file path from the user and try to load a run from it, then return

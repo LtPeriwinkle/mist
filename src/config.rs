@@ -1,10 +1,10 @@
 // handle configuration of color and font path
+use crate::components::error_dialog;
 use ron::de::from_reader;
 use ron::ser::{to_string_pretty, PrettyConfig};
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Write;
-use crate::components::error_dialog;
 // more will be added to this in the future
 #[derive(Serialize, Deserialize)]
 pub struct Config {
@@ -26,7 +26,10 @@ impl Config {
             .write(true)
             .create(true)
             .open("assets/mist.cfg")
-            .unwrap_or_else(|err| {error_dialog(format!("couldn't open cfg: {}", err)); unreachable!();});
+            .unwrap_or_else(|err| {
+                error_dialog(format!("couldn't open cfg: {}", err));
+                unreachable!();
+            });
         let cfg: Self = from_reader(&file).unwrap_or(Config::default());
         return cfg;
     }
@@ -58,9 +61,15 @@ impl Config {
         let mut file = OpenOptions::new()
             .write(true)
             .open("assets/mist.cfg")
-            .unwrap_or_else(|err| {error_dialog(format!("couldn't open cfg: {}", err)); unreachable!();});
+            .unwrap_or_else(|err| {
+                error_dialog(format!("couldn't open cfg: {}", err));
+                unreachable!();
+            });
         let string = to_string_pretty(self, PrettyConfig::new()).unwrap();
-        file.write(&string.as_bytes()).unwrap_or_else(|err| {error_dialog(format!("couldn't write cfg: {}", err)); unreachable!();});
+        file.write(&string.as_bytes()).unwrap_or_else(|err| {
+            error_dialog(format!("couldn't write cfg: {}", err));
+            unreachable!();
+        });
     }
 }
 

@@ -15,7 +15,10 @@ use app::App;
 use components::error_dialog;
 
 fn main() {
-    let context = sdl2::init().unwrap_or_else(|err| {error_dialog(err.to_string()); unreachable!();});
+    let context = sdl2::init().unwrap_or_else(|err| {
+        error_dialog(err.to_string());
+        unreachable!();
+    });
     let mut app = App::init(context);
     app.run();
 }
