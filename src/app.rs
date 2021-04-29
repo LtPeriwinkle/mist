@@ -34,12 +34,18 @@ pub struct App {
     config: config::Config,
 }
 
+macro_rules! error {
+     ( $x:expr, $y:expr ) => {
+         error_dialog(format!("{:?}: {:?}", $x, $y));
+         unreachable!();
+     }
+}
+
 impl App {
     pub fn init(context: sdl2::Sdl) -> Self {
         // sdl setup boilerplate
         let video = context.video().unwrap_or_else(|err| {
-            error_dialog(format!("video context failure: {}", err));
-            unreachable!();
+            error!("video context failure: {}", err);
         });
         let mut window = video
             .window("mist", 300, 500)
@@ -47,25 +53,20 @@ impl App {
             .resizable()
             .build()
             .unwrap_or_else(|err| {
-                error_dialog(format!("window build failure: {} ", err));
-                unreachable!();
+                error!("window build failure: {} ", err);
             });
         let icon = Surface::from_file("assets/MIST.png").unwrap_or_else(|err| {
-            error_dialog(format!("couldn't open icon: {}", err));
-            unreachable!();
+            error!("couldn't open icon: {}", err);
         });
         window.set_icon(icon);
         let canvas = window.into_canvas().build().unwrap_or_else(|err| {
-            error_dialog(format!("couldn't create canvas: {}", err));
-            unreachable!();
+            error!("couldn't create canvas: {}", err);
         });
         let ttf = ttf::init().unwrap_or_else(|err| {
-            error_dialog(format!("ttf init failure: {} ", err));
-            unreachable!();
+            error!("ttf init failure: {} ", err);
         });
         let ev_pump = context.event_pump().unwrap_or_else(|err| {
-            error_dialog(format!("couldn't create evpump: {}", err));
-            unreachable!();
+            error!("couldn't create evpump: {}", err);
         });
         // start the overarching application timer (kinda)
         let timer = Instant::now();
@@ -153,24 +154,21 @@ impl App {
             .ttf
             .load_font(self.config.tfont(), sizes.0)
             .unwrap_or_else(|err| {
-                error_dialog(format!("couldn't open tfont: {}", err));
-                unreachable!();
+                error!("tfont load failed", err);
             });
         timer_font.set_kerning(false);
         let font = self
             .ttf
             .load_font(self.config.sfont(), sizes.1)
             .unwrap_or_else(|err| {
-                error_dialog(format!("couldn't open sfont: {}", err));
-                unreachable!();
+                error!("couldn't open sfont: {}", err);
             });
         // make the texture creator used a lot later on
         let creator = self.canvas.texture_creator();
 
         let bg: Option<Surface> = match self.config.img() {
             Some(ref p) => Some(Surface::from_file(&p).unwrap_or_else(|err| {
-                error_dialog(format!("couldn't open bg image: {}", err));
-                unreachable!();
+                error!("couldn't open bg image: {}", err);
             })),
             None => None,
         };
@@ -183,8 +181,7 @@ impl App {
             if !self.config.img_scaled() {
                 let mut sur =
                     Surface::new(width, height, PixelFormatEnum::RGB24).unwrap_or_else(|err| {
-                        error_dialog(format!("couldn't create new surface: {}", err));
-                        unreachable!();
+                        error!("couldn't create new surface: {}", err);
                     });
                 let cutoffx = {
                     if x.width() > width {
@@ -202,14 +199,12 @@ impl App {
                 };
                 x.blit(Rect::new(cutoffx, cutoffy, width, height), &mut sur, None)
                     .unwrap_or_else(|err| {
-                        error_dialog(format!("couldn't blit cropped bg: {}", err));
-                        unreachable!();
+                        error!("couldn't blit cropped bg: {}", err);
                     });
                 bg_tex = creator
                     .create_texture_from_surface(&sur)
                     .unwrap_or_else(|err| {
-                        error_dialog(format!("couldn't create crop bg tex: {}", err));
-                        unreachable!();
+                        error!("couldn't create crop bg tex: {}", err);
                     });
             } else {
                 let sur: Surface;
@@ -218,15 +213,13 @@ impl App {
                         sur = x
                             .rotozoom(0.0, width as f64 / x.width() as f64, true)
                             .unwrap_or_else(|err| {
-                                error_dialog(format!("couldn't rotozoom: {}", err));
-                                unreachable!();
+                                error!("couldn't rotozoom: {}", err);
                             });
                     } else {
                         sur = x
                             .rotozoom(0.0, x.width() as f64 / width as f64, true)
                             .unwrap_or_else(|err| {
-                                error_dialog(format!("couldn't rotozoom: {}", err));
-                                unreachable!();
+                                error!("couldn't rotozoom: {}", err);
                             });
                     }
                 } else {
@@ -234,23 +227,20 @@ impl App {
                         sur = x
                             .rotozoom(0.0, height as f64 / x.height() as f64, true)
                             .unwrap_or_else(|err| {
-                                error_dialog(format!("couldn't rotozoom: {}", err));
-                                unreachable!();
+                                error!("couldn't rotozoom: {}", err);
                             });
                     } else {
                         sur = x
                             .rotozoom(0.0, x.height() as f64 / height as f64, true)
                             .unwrap_or_else(|err| {
-                                error_dialog(format!("couldn't rotozoom: {}", err));
-                                unreachable!();
+                                error!("couldn't rotozoom: {}", err);
                             });
                     }
                 }
                 bg_tex = creator
                     .create_texture_from_surface(&sur)
                     .unwrap_or_else(|err| {
-                        error_dialog(format!("couldn't create scale bx tex: {}", err));
-                        unreachable!();
+                        error!("couldn't create scale bx tex: {}", err);
                     });
             }
         } else {
@@ -258,8 +248,7 @@ impl App {
             bg_tex = creator
                 .create_texture(None, TextureAccess::Static, 1, 1)
                 .unwrap_or_else(|err| {
-                    error_dialog(format!("empty bg tex failed: {}", err));
-                    unreachable!();
+                    error!("empty bg tex failed: {}", err);
                 });
         }
         let sdl2::render::TextureQuery {
@@ -272,8 +261,7 @@ impl App {
         let splits_height = font
             .size_of("qwertyuiopasdfghjklzxcvbnm01234567890!@#$%^&*(){}[]|\\:;'\",.<>?/`~-_=+")
             .unwrap_or_else(|err| {
-                error_dialog(format!("split height failed: {}", err));
-                unreachable!();
+                error!("split height failed: {}", err);
             })
             .1;
         // get the x-coordinates of characters in the font spritemap
@@ -282,8 +270,7 @@ impl App {
             let mut ret: Vec<u32> = vec![0];
             for chr in "-0123456789:. ".chars() {
                 let size = timer_font.size_of(&chr.to_string()).unwrap_or_else(|err| {
-                    error_dialog(format!("tfont char size failed: {}", err));
-                    unreachable!();
+                    error!("tfont char size failed: {}", err);
                 });
                 raw.push(size.0);
                 ret.push(raw.iter().sum::<u32>());
@@ -295,8 +282,7 @@ impl App {
         let font_y = timer_font
             .size_of("-0123456789:.")
             .unwrap_or_else(|err| {
-                error_dialog(format!("tfont height failed: {}", err));
-                unreachable!();
+                error!("tfont height failed: {}", err);
             })
             .1;
         // render initial white font map. gets overwritten when color changes
@@ -304,14 +290,12 @@ impl App {
             .render("- 0 1 2 3 4 5 6 7 8 9 : .")
             .blended(Color::WHITE)
             .unwrap_or_else(|err| {
-                error_dialog(format!("map render failed: {}", err));
-                unreachable!();
+                error!("map render failed: {}", err);
             });
         let mut map_tex = creator
             .create_texture_from_surface(&map)
             .unwrap_or_else(|err| {
-                error_dialog(format!("map tex creation failed: {}", err));
-                unreachable!();
+                error!("map tex creation failed: {}", err);
             });
         // set the height where overlap with splits is checked when resizing window
         let timer_height = font_y + splits_height;
@@ -320,8 +304,7 @@ impl App {
             .window_mut()
             .set_minimum_size(0, timer_height + 20)
             .unwrap_or_else(|err| {
-                error_dialog(format!("win set size failed: {}", err));
-                unreachable!();
+                error!("win set size failed: {}", err);
             });
 
         // get first vec of split name textures from file
@@ -356,27 +339,23 @@ impl App {
                 .render(&split_names[index])
                 .blended(Color::WHITE)
                 .unwrap_or_else(|err| {
-                    error_dialog(format!("text sur failed: {}", err));
-                    unreachable!();
+                    error!("text sur failed: {}", err);
                 });
             let texture = creator
                 .create_texture_from_surface(&text_surface)
                 .unwrap_or_else(|err| {
-                    error_dialog(format!("text tex failed: {}", err));
-                    unreachable!();
+                    error!("text tex failed: {}", err);
                 });
             let comp = font
                 .render(&split_times_raw[index])
                 .blended(Color::WHITE)
                 .unwrap_or_else(|err| {
-                    error_dialog(format!("comparison sur failed: {}", err));
-                    unreachable!();
+                    error!("comparison sur failed: {}", err);
                 });
             let comp_texture = creator
                 .create_texture_from_surface(&comp)
                 .unwrap_or_else(|err| {
-                    error_dialog(format!("comparison tex failed: {}", err));
-                    unreachable!();
+                    error!("comparison tex failed: {}", err);
                 });
             // create split struct with its corresponding times and textures
             let split = Split::new(
@@ -463,8 +442,7 @@ impl App {
                 self.canvas
                     .copy(&bg_tex, None, bg_rect)
                     .unwrap_or_else(|err| {
-                        error_dialog(format!("bg copy failed: {}", err));
-                        unreachable!();
+                        error!("bg copy failed: {}", err);
                     });
             }
             // if the timer is doing an offset, make sure it should still be negative
@@ -649,14 +627,12 @@ impl App {
                                 }
                                 text_surface =
                                     font.render(&time_str).blended(color).unwrap_or_else(|err| {
-                                        error_dialog(format!("diff sur failed: {}", err));
-                                        unreachable!();
+                                        error!("diff sur failed: {}", err);
                                     });
                                 texture = creator
                                     .create_texture_from_surface(&text_surface)
                                     .unwrap_or_else(|err| {
-                                        error_dialog(format!("diff tex failed: {}", err));
-                                        unreachable!();
+                                        error!("diff tex failed: {}", err);
                                     });
                                 splits[current_split].set_diff(diff, Some(texture));
                                 time_str = timing::split_time_text((elapsed - t) + before_pause);
@@ -664,14 +640,12 @@ impl App {
                                     .render(&time_str)
                                     .blended(Color::WHITE)
                                     .unwrap_or_else(|err| {
-                                        error_dialog(format!("cur sur failed: {}", err));
-                                        unreachable!();
+                                        error!("cur sur failed: {}", err);
                                     });
                                 texture = creator
                                     .create_texture_from_surface(&text_surface)
                                     .unwrap_or_else(|err| {
-                                        error_dialog(format!("cur tex failed: {}", err));
-                                        unreachable!();
+                                        error!("cur tex failed: {}", err);
                                     });
                                 splits[current_split].set_cur(Some(texture));
                                 // if there are still splits left, continue the run and advance the current split
@@ -699,20 +673,18 @@ impl App {
                                                 .render(&split_times_raw[index])
                                                 .blended(Color::WHITE)
                                                 .unwrap_or_else(|err| {
-                                                    error_dialog(format!(
+                                                    error!(
                                                         "end comp sur failed: {}",
                                                         err
-                                                    ));
-                                                    unreachable!();
+                                                    );
                                                 });
                                             texture = creator
                                                 .create_texture_from_surface(text_surface)
                                                 .unwrap_or_else(|err| {
-                                                    error_dialog(format!(
+                                                    error!(
                                                         "end comp tex failed: {}",
                                                         err
-                                                    ));
-                                                    unreachable!();
+                                                    );
                                                 });
                                             splits[index].set_comp_tex(texture);
                                             splits[index].set_cur(None);
@@ -804,27 +776,23 @@ impl App {
                                     .render(&split_names[index])
                                     .blended(Color::WHITE)
                                     .unwrap_or_else(|err| {
-                                        error_dialog(format!("f1 text sur failed: {}", err));
-                                        unreachable!();
+                                        error!("f1 text sur failed: {}", err);
                                     });
                                 let texture = creator
                                     .create_texture_from_surface(&text_surface)
                                     .unwrap_or_else(|err| {
-                                        error_dialog(format!("f1 text tex failed: {}", err));
-                                        unreachable!();
+                                        error!("f1 text tex failed: {}", err);
                                     });
                                 let comp = font
                                     .render(&split_times_raw[index])
                                     .blended(Color::WHITE)
                                     .unwrap_or_else(|err| {
-                                        error_dialog(format!("f1 comp sur failed: {}", err));
-                                        unreachable!();
+                                        error!("f1 comp sur failed: {}", err);
                                     });
                                 let comp_texture = creator
                                     .create_texture_from_surface(&comp)
                                     .unwrap_or_else(|err| {
-                                        error_dialog(format!("f1 comp tex failed: {}", err));
-                                        unreachable!();
+                                        error!("f1 comp tex failed: {}", err);
                                     });
                                 let split = Split::new(
                                     split_times_ms[index],
@@ -866,14 +834,12 @@ impl App {
                             font.render("-  ")
                                 .blended(Color::WHITE)
                                 .unwrap_or_else(|err| {
-                                    error_dialog(format!("comp - sur failed: {}", err));
-                                    unreachable!();
+                                    error!("comp - sur failed: {}", err);
                                 });
                         let tex = creator
                             .create_texture_from_surface(&surface)
                             .unwrap_or_else(|err| {
-                                error_dialog(format!("comp - tex failed: {}", err));
-                                unreachable!();
+                                error!("comp - tex failed: {}", err);
                             });
                         splits[index].set_comp_tex(tex);
                         index += 1;
@@ -896,14 +862,12 @@ impl App {
                             .render(&split_times_raw[index])
                             .blended(Color::WHITE)
                             .unwrap_or_else(|err| {
-                                error_dialog(format!("comp swap sur failed: {}", err));
-                                unreachable!();
+                                error!("comp swap sur failed: {}", err);
                             });
                         let tex = creator
                             .create_texture_from_surface(&surface)
                             .unwrap_or_else(|err| {
-                                error_dialog(format!("comp swap tex failed: {}", err));
-                                unreachable!();
+                                error!("comp swap tex failed: {}", err);
                             });
                         splits[index].set_comp_tex(tex);
                         index += 1;
@@ -1000,14 +964,12 @@ impl App {
                     .render("- 0 1 2 3 4 5 6 7 8 9 : .")
                     .blended(color)
                     .unwrap_or_else(|err| {
-                        error_dialog(format!("map color sur failed: {}", err));
-                        unreachable!();
+                        error!("map color sur failed: {}", err);
                     });
                 map_tex = creator
                     .create_texture_from_surface(&map)
                     .unwrap_or_else(|err| {
-                        error_dialog(format!("map color tex failed: {}", err));
-                        unreachable!();
+                        error!("map color tex failed: {}", err);
                     });
             }
             // change top and bottom split indices based on flags set earlier in loop
