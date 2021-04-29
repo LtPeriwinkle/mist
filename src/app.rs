@@ -997,7 +997,7 @@ impl App {
                 // set on mouse scroll or on split if the next split is offscreen
                 // creates new slices based on the current top and bottom split
                 Some(2) => {
-                    top_split_index = bottom_split_index - max_splits;
+                    top_split_index = bottom_split_index.checked_sub(max_splits).unwrap_or(top_split_index);
                 }
                 // similar to Some(1) except set when window grows instead of shrinks
                 Some(3) => {
