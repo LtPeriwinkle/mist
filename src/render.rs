@@ -34,48 +34,36 @@ pub fn render_rows(
             .expect("split texture copy failed");
         // if the split has a texture from an active run, draw it to reflect the current time
         // otherwise draw the pb split time
-        match item.cur() {
+        let texinfo = match item.cur() {
             Some(x) => {
-                let TextureQuery { width, height, .. } = x.query();
-                row = Rect::new((window_width - width) as i32, y, width, height);
+                let tinfo = x.query();
+                row = Rect::new((window_width - tinfo.width) as i32, y, tinfo.width, tinfo.height);
                 canvas
                     .copy(&x, None, Some(row))
                     .expect("split time texture copy failed");
-                match item.diff_texture() {
-                    None => {}
-                    Some(x) => {
-                        let TextureQuery {
-                            width: dw,
-                            height: dh,
-                            ..
-                        } = x.query();
-                        row = Rect::new(((window_width - width - 25) - dw) as i32, y, dw, dh);
-                        canvas
-                            .copy(&x, None, Some(row))
-                            .expect("split time texture copy failed");
-                    }
-                }
+                tinfo
             }
             None => {
-                let TextureQuery { width, height, .. } = item.comp_texture().query();
-                row = Rect::new((window_width - width) as i32, y, width, height);
+                let tinfo = item.comp_texture().query();
+                row = Rect::new((window_width - tinfo.width) as i32, y, tinfo.width, tinfo.height);
                 canvas
                     .copy(&item.comp_texture(), None, Some(row))
                     .expect("split time texture copy failed");
-                match item.diff_texture() {
-                    None => {}
-                    Some(x) => {
-                        let TextureQuery {
-                            width: dw,
-                            height: dh,
-                            ..
-                        } = x.query();
-                        row = Rect::new(((window_width - width - 25) - dw) as i32, y, dw, dh);
-                        canvas
-                            .copy(&x, None, Some(row))
-                            .expect("split time texture copy failed");
-                    }
-                }
+                tinfo
+            }
+        };
+        match item.diff_texture() {
+            None => {}
+            Some(x) => {
+                let TextureQuery {
+                    width: dw,
+                    height: dh,
+                    ..
+                } = x.query();
+                row = Rect::new(((window_width - texinfo.width - 25) - dw) as i32, y, dw, dh);
+                canvas
+                    .copy(&x, None, Some(row))
+                    .expect("split time texture copy failed");
             }
         }
         canvas.set_draw_color(Color::GRAY);
