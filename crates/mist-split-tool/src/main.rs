@@ -32,12 +32,22 @@ fn get_save_as() -> Option<String> {
     let cwd = current_dir().unwrap();
     let mut dir = cwd.to_string_lossy();
     dir.to_mut().push('/');
-    return tfd::save_file_dialog_with_filter(
+    match tfd::save_file_dialog_with_filter(
         "Save to MSF file",
         &dir,
         &["*.msf"],
         "mist split files",
-    );
+    ) {
+        Some(mut p) => {
+            if p.ends_with(".msf") {
+                Some(p)
+            } else {
+                p.push_str(".msf");
+                Some(p)
+            }
+        }
+        None => None
+    }
 }
 
 fn ms_to_readable(mut ms: u128) -> String {
@@ -67,13 +77,13 @@ fn ms_to_readable(mut ms: u128) -> String {
 
 fn str_to_ms(tm: String) -> u128 {
     unsafe {
-        ILLEGAL = false
-    };
+        ILLEGAL = false;
+    }
     let mut ms: u128 = 0;
     let alert = {
         dialog::alert_default("invalid time entered");
         unsafe {
-            ILLEGAL = true
+            ILLEGAL = true;
         }
         0
     };
