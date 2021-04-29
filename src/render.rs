@@ -37,7 +37,12 @@ pub fn render_rows(
         let texinfo = match item.cur() {
             Some(x) => {
                 let tinfo = x.query();
-                row = Rect::new((window_width - tinfo.width) as i32, y, tinfo.width, tinfo.height);
+                row = Rect::new(
+                    (window_width - tinfo.width) as i32,
+                    y,
+                    tinfo.width,
+                    tinfo.height,
+                );
                 canvas
                     .copy(&x, None, Some(row))
                     .expect("split time texture copy failed");
@@ -45,7 +50,12 @@ pub fn render_rows(
             }
             None => {
                 let tinfo = item.comp_texture().query();
-                row = Rect::new((window_width - tinfo.width) as i32, y, tinfo.width, tinfo.height);
+                row = Rect::new(
+                    (window_width - tinfo.width) as i32,
+                    y,
+                    tinfo.width,
+                    tinfo.height,
+                );
                 canvas
                     .copy(&item.comp_texture(), None, Some(row))
                     .expect("split time texture copy failed");
