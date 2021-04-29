@@ -18,6 +18,7 @@ More will probably be added to this list in the future
 	* [X] custom colors
 	* [ ] keybinds
 	* [X] timer backgrounds
+	* [ ] panels (sum of best etc)
 - [X] split file creation tool
 	* [X] edit existing msf
 	* [X] convert lss to msf
