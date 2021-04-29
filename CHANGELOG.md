@@ -1,5 +1,9 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.9.1
+- custom error macro to reduce repeated code in unwraps
+- reduce duplicated render code
+- fix a crash when scrolling super fast
 ### 1.9.0
 - fixed some warnings that have been around forever
 - fixed an issue where diffs would never be set to gold
