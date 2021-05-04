@@ -1,5 +1,5 @@
 // handle configuration of color and font path
-use crate::components::error_dialog;
+use crate::error;
 use ron::de::from_reader;
 use ron::ser::{to_string_pretty, PrettyConfig};
 use serde::{Deserialize, Serialize};
@@ -27,8 +27,7 @@ impl Config {
             .create(true)
             .open("assets/mist.cfg")
             .unwrap_or_else(|err| {
-                error_dialog(format!("couldn't open cfg: {}", err));
-                unreachable!();
+                error!("couldn't open cfg", err);
             });
         let cfg: Self = from_reader(&file).unwrap_or(Config::default());
         return cfg;
@@ -62,13 +61,11 @@ impl Config {
             .write(true)
             .open("assets/mist.cfg")
             .unwrap_or_else(|err| {
-                error_dialog(format!("couldn't open cfg: {}", err));
-                unreachable!();
+                error!("couldn't open cfg", err);
             });
         let string = to_string_pretty(self, PrettyConfig::new()).unwrap();
         file.write(&string.as_bytes()).unwrap_or_else(|err| {
-            error_dialog(format!("couldn't write cfg: {}", err));
-            unreachable!();
+            error!("couldn't write cfg", err);
         });
     }
 }

@@ -63,7 +63,6 @@ pub fn bad_file_dialog(err: &str) -> bool {
         tfd::OkCancel::Cancel => false,
     }
 }
-
 pub fn error_dialog(err: String) {
     tfd::message_box_ok(
         "Error",
@@ -74,6 +73,13 @@ pub fn error_dialog(err: String) {
         tfd::MessageBoxIcon::Error,
     );
     std::process::exit(1);
+}
+#[macro_export]
+macro_rules! error {
+    ( $x:expr, $y:expr ) => {
+        crate::components::error_dialog(format!("{:?}: {:?}", $x, $y));
+        unreachable!();
+    };
 }
 
 // get a new split file path from the user and try to load a run from it, then return

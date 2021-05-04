@@ -1,5 +1,5 @@
 // Functions for putting stuff into the correct places on the sdl buffer
-
+use crate::error;
 use crate::splits::Split;
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
@@ -26,12 +26,16 @@ pub fn render_rows(
             canvas.set_draw_color(Color::BLUE);
             canvas
                 .fill_rect(Rect::new(0, y - 1, window_width, height + 4))
-                .unwrap();
+                .unwrap_or_else(|err| {
+                    error!("hl rect failed", err);
+                });
         }
         row = Rect::new(0, y, width, height);
         canvas
             .copy(&item.name(), None, Some(row))
-            .expect("split texture copy failed");
+            .unwrap_or_else(|err| {
+                error!("split texture copy failed", err);
+            });
         // if the split has a texture from an active run, draw it to reflect the current time
         // otherwise draw the pb split time
         let texinfo = match item.cur() {
@@ -43,9 +47,9 @@ pub fn render_rows(
                     tinfo.width,
                     tinfo.height,
                 );
-                canvas
-                    .copy(&x, None, Some(row))
-                    .expect("split time texture copy failed");
+                canvas.copy(&x, None, Some(row)).unwrap_or_else(|err| {
+                    error!("split time texture copy failed", err);
+                });
                 tinfo
             }
             None => {
@@ -58,7 +62,9 @@ pub fn render_rows(
                 );
                 canvas
                     .copy(&item.comp_texture(), None, Some(row))
-                    .expect("split time texture copy failed");
+                    .unwrap_or_else(|err| {
+                        error!("split time texture copy failed", err);
+                    });
                 tinfo
             }
         };
@@ -71,9 +77,9 @@ pub fn render_rows(
                     ..
                 } = x.query();
                 row = Rect::new(((window_width - texinfo.width - 25) - dw) as i32, y, dw, dh);
-                canvas
-                    .copy(&x, None, Some(row))
-                    .expect("split time texture copy failed");
+                canvas.copy(&x, None, Some(row)).unwrap_or_else(|err| {
+                    error!("split time texture copy failed", err);
+                });
             }
         }
         canvas.set_draw_color(Color::GRAY);
@@ -83,7 +89,9 @@ pub fn render_rows(
                 Point::new(0, y + height as i32 + 3),
                 Point::new(window_width as i32, y + height as i32 + 3),
             )
-            .expect("line draw failed");
+            .unwrap_or_else(|err| {
+                error!("line draw failed", err);
+            });
         y += height as i32 + 5;
         index += 1;
     }
@@ -152,7 +160,11 @@ pub fn render_time(
             dst.set_y((h - font_y) as i32);
             dst.set_height(font_y);
         }
-        canvas.copy(atlas, Some(src), Some(dst)).unwrap();
+        canvas
+            .copy(atlas, Some(src), Some(dst))
+            .unwrap_or_else(|err| {
+                error!("timer copy failed", err);
+            });
         char_num += 1;
     }
 }
