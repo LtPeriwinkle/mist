@@ -20,6 +20,7 @@ use crate::config::{self, Config};
 use crate::render;
 use crate::splits::Split;
 use crate::timing;
+use crate::error;
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
@@ -34,12 +35,6 @@ pub struct App {
     config: config::Config,
 }
 
-macro_rules! error {
-    ( $x:expr, $y:expr ) => {
-        error_dialog(format!("{:?}: {:?}", $x, $y));
-        unreachable!();
-    };
-}
 
 impl App {
     pub fn init(context: sdl2::Sdl) -> Self {
