@@ -17,10 +17,10 @@ use mist_run_utils::run::Run;
 use crate::comparison::Comparison;
 use crate::components::*;
 use crate::config::{self, Config};
+use crate::error;
 use crate::render;
 use crate::splits::Split;
 use crate::timing;
-use crate::error;
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
@@ -34,7 +34,6 @@ pub struct App {
     run: Run,
     config: config::Config,
 }
-
 
 impl App {
     pub fn init(context: sdl2::Sdl) -> Self {
@@ -366,19 +365,19 @@ impl App {
             index += 1;
         }
 
-        let mut max_splits: usize;
         let mut bottom_split_index: usize;
         let mut top_split_index = 0;
+        let mut max_splits: usize;
 
         // if there are too few splits then set the max splits to the number of splits rather than
         // the max allowed amount
         let max_initial_splits: usize = ((500 - timer_height) / splits_height) as usize;
-        if max_initial_splits > split_names.len() {
-            bottom_split_index = split_names.len();
-            max_splits = split_names.len();
+        if max_initial_splits > splits.len() {
+            bottom_split_index = splits.len() - 1;
+            max_splits = splits.len();
         } else {
             max_splits = max_initial_splits;
-            bottom_split_index = max_initial_splits;
+            bottom_split_index = max_initial_splits - 1;
         }
         // drop stuff that isnt needed after initializing
         drop(split_times_ms);
@@ -406,10 +405,8 @@ impl App {
         let mut color = Color::WHITE;
         // used to determine if timer font map should be rerendered
         let mut old_color: Color;
-        // sum of split times for display on rows
-        let mut recreate_on_screen: Option<u8> = Some(0);
         // diff between max on screen and current, used when resizing window
-        let mut diff: u32 = 0;
+        let mut diff: usize;
         // number of splits
         let mut len: usize = splits.len();
         // current split in the slice of splits sent to render_time()
@@ -467,9 +464,9 @@ impl App {
 
                     // if scroll down and there are enough splits, scroll splits down
                     Event::MouseWheel { y: -1, .. } => {
-                        if bottom_split_index < splits.len() {
+                        if bottom_split_index < len - 1 {
                             bottom_split_index += 1;
-                            recreate_on_screen = Some(2);
+                            top_split_index += 1;
                         }
                     }
 
@@ -477,7 +474,7 @@ impl App {
                     Event::MouseWheel { y: 1, .. } => {
                         if top_split_index != 0 {
                             bottom_split_index -= 1;
-                            recreate_on_screen = Some(2);
+                            top_split_index -= 1;
                         }
                     }
 
@@ -524,7 +521,7 @@ impl App {
                         // reset stuff specific to the active run and return splits to the top of the list
                         active_run_times = vec![];
                         top_split_index = 0;
-                        bottom_split_index = max_splits;
+                        bottom_split_index = max_splits - 1;
                         before_pause = 0;
                         before_pause_split = 0;
                         current_split = 0;
@@ -564,14 +561,37 @@ impl App {
                         // if there are too many splits, calculate how many and set flag to make a new list to display
                         // otherwise if there are too few and there are enough to display more, set recreate flag
                         if height - timer_height < rows_height {
-                            diff = (rows_height - (height - timer_height)) / splits_height;
-                            recreate_on_screen = Some(1);
+                            diff =
+                                ((rows_height - (height - timer_height)) / splits_height) as usize;
+                            if max_splits > diff {
+                                max_splits -= diff;
+                            } else {
+                                max_splits = 0;
+                            }
+                            if current_split > bottom_split_index - diff {
+                                top_split_index += diff;
+                                bottom_split_index = current_split;
+                            } else if bottom_split_index > diff {
+                                bottom_split_index -= diff;
+                            } else {
+                                bottom_split_index = 0;
+                            }
                         } else if rows_height < height - timer_height {
-                            diff = ((height - timer_height) - rows_height) / splits_height;
-                            if !(max_splits + diff as usize > max_initial_splits
-                                || max_splits + diff as usize > len)
+                            diff =
+                                (((height - timer_height) - rows_height) / splits_height) as usize;
+                            if current_split == bottom_split_index
+                                && current_split != len - 1
+                                && top_split_index >= diff
                             {
-                                recreate_on_screen = Some(3);
+                                top_split_index -= diff;
+                                max_splits += diff;
+                            } else if bottom_split_index + diff > len - 1 || max_splits + diff > len
+                            {
+                                bottom_split_index = len - 1;
+                                max_splits = len;
+                            } else {
+                                max_splits += diff;
+                                bottom_split_index = max_splits - 1;
                             }
                         }
                     }
@@ -644,8 +664,15 @@ impl App {
                                     });
                                 splits[current_split].set_cur(Some(texture));
                                 // if there are still splits left, continue the run and advance the current split
-                                if current_split < splits.len() - 1 {
+                                if current_split < len - 1 {
                                     current_split += 1;
+                                    // if the next split is offscreen set recreate_on_screen flag to change the current split slice
+                                    if current_split + 1 > bottom_split_index
+                                        && bottom_split_index + 1 < len
+                                    {
+                                        bottom_split_index += 1;
+                                        top_split_index += 1;
+                                    }
                                 // otherwise end the run
                                 } else {
                                     // set the state of the timer to finished, round string to 30fps
@@ -685,11 +712,6 @@ impl App {
                                         self.run.set_times(&active_run_times);
                                         active_run_times = vec![];
                                     }
-                                }
-                                // if the next split is offscreen set recreate_on_screen flag to change the current split slice
-                                if current_split + 1 > bottom_split_index {
-                                    bottom_split_index += 1;
-                                    recreate_on_screen = Some(2);
                                 }
                             // finish the run if there are no splits
                             } else {
@@ -806,7 +828,7 @@ impl App {
                                 max_splits = len;
                             }
                             top_split_index = 0;
-                            bottom_split_index = max_splits;
+                            bottom_split_index = max_splits - 1;
                         }
                     }
                     _ => {}
@@ -961,60 +983,19 @@ impl App {
                         error!("map color tex failed: {}", err);
                     });
             }
-            // change top and bottom split indices based on flags set earlier in loop
-            match recreate_on_screen.take() {
-                // set at the start, creates the initial set of splits
-                Some(0) => {
-                    top_split_index = 0;
-                }
-                // set on window resize, creates new slices based on diff and number of splits
-                Some(1) => {
-                    if max_splits > diff as usize {
-                        max_splits -= diff as usize;
-                        if current_split + max_splits > len {
-                            bottom_split_index = len;
-                            top_split_index = len - max_splits;
-                        } else if current_split < max_splits {
-                            bottom_split_index = max_splits;
-                            top_split_index = 0;
-                        } else if current_split >= max_splits {
-                            bottom_split_index = current_split + max_splits;
-                            top_split_index = current_split;
-                        }
-                    }
-                }
-                // set on mouse scroll or on split if the next split is offscreen
-                // creates new slices based on the current top and bottom split
-                Some(2) => {
-                    top_split_index = bottom_split_index
-                        .checked_sub(max_splits)
-                        .unwrap_or(top_split_index);
-                }
-                // similar to Some(1) except set when window grows instead of shrinks
-                Some(3) => {
-                    max_splits += diff as usize;
-                    if current_split + max_splits > len {
-                        bottom_split_index = len;
-                        top_split_index = len - max_splits;
-                    } else if current_split < max_splits {
-                        bottom_split_index = max_splits;
-                        top_split_index = 0;
-                    } else if current_split >= max_splits {
-                        bottom_split_index = current_split + max_splits;
-                        top_split_index = current_split;
-                    }
-                }
-                _ => {}
-            }
             // copy the name, diff, and time textures to the canvas
             // and highlight the split relative to the top of the list marked by cur
             // function places the rows and ensures that they don't go offscreen
-            render::render_rows(
-                &splits[top_split_index..bottom_split_index],
-                &mut self.canvas,
-                window_width,
-                cur,
-            );
+            if max_splits == 0 {
+                render::render_rows(&[], &mut self.canvas, window_width, cur);
+            } else {
+                render::render_rows(
+                    &splits[top_split_index..=bottom_split_index],
+                    &mut self.canvas,
+                    window_width,
+                    cur,
+                );
+            }
             // update the time based on the current timer state
             time_str = self.update_time(before_pause, total_time);
             // copy the time texture to the canvas, place individual characters from map
