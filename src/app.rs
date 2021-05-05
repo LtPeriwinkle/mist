@@ -987,12 +987,13 @@ impl App {
             // and highlight the split relative to the top of the list marked by cur
             // function places the rows and ensures that they don't go offscreen
             if max_splits == 0 {
-                render::render_rows(&[], &mut self.canvas, window_width, cur);
+                render::render_rows(&[], &mut self.canvas, window_width, splits_height, cur);
             } else {
                 render::render_rows(
                     &splits[top_split_index..=bottom_split_index],
                     &mut self.canvas,
                     window_width,
+                    splits_height,
                     cur,
                 );
             }

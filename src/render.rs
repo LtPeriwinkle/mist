@@ -13,6 +13,7 @@ pub fn render_rows(
     on_screen: &[Split],
     canvas: &mut Canvas<Window>,
     window_width: u32,
+    split_height: u32,
     current: usize,
 ) {
     let mut y = 0;
@@ -86,13 +87,13 @@ pub fn render_rows(
         // draw a line to separate between the rows
         canvas
             .draw_line(
-                Point::new(0, y + height as i32 + 3),
-                Point::new(window_width as i32, y + height as i32 + 3),
+                Point::new(0, y + split_height as i32 + 3),
+                Point::new(window_width as i32, y + split_height as i32 + 3),
             )
             .unwrap_or_else(|err| {
                 error!("line draw failed", err);
             });
-        y += height as i32 + 5;
+        y += split_height as i32 + 5;
         index += 1;
     }
 }
