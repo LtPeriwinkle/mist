@@ -859,9 +859,7 @@ impl App {
                     let split_times = match self.comparison {
                         Comparison::PersonalBest => self.run.get_times().to_vec(),
                         Comparison::Golds => self.run.get_golds().to_vec(),
-                        _ => {
-                            vec![]
-                        }
+                        _ => unreachable!(),
                     };
                     // rerender comparisons to either personal best or golds
                     let split_times_raw: Vec<String> = timing::split_time_sum(&split_times)
