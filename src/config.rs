@@ -11,7 +11,7 @@ pub struct Config {
     def_file: Option<String>,
     img_file: Option<String>,
     img_scaled: bool,
-    colors: [(u8, u8, u8); 5],
+    colors: [(u8, u8, u8); 6],
     t_font: String,
     s_font: String,
     font_size: (u16, u16),
@@ -53,7 +53,7 @@ impl Config {
     pub fn fsize(&self) -> (u16, u16) {
         self.font_size
     }
-    pub fn color_list(&self) -> [(u8, u8, u8); 5] {
+    pub fn color_list(&self) -> [(u8, u8, u8); 6] {
         self.colors
     }
     pub fn save(&self) {
@@ -82,6 +82,7 @@ impl Default for Config {
                 (255, 90, 90),
                 (135, 255, 125),
                 (255, 255, 0),
+                (0, 0, 0),
             ],
             t_font: "assets/segoe-ui-bold.ttf".to_owned(),
             s_font: "assets/segoe-ui-bold.ttf".to_owned(),

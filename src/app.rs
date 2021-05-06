@@ -141,6 +141,7 @@ impl App {
         let making_up_time = Color::from(colors[2]);
         let losing_time = Color::from(colors[3]);
         let gold = Color::from(colors[4]);
+        let bg_color = Color::from(colors[5]);
 
         // grab font sizes from config file and load the fonts
         let sizes = self.config.fsize();
@@ -428,7 +429,7 @@ impl App {
             // start measuring the time this loop pass took
             frame_time = Instant::now();
             // remove stuff from the backbuffer and fill the space with black
-            self.canvas.set_draw_color(Color::BLACK);
+            self.canvas.set_draw_color(bg_color);
             self.canvas.clear();
             if has_bg {
                 self.canvas
