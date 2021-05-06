@@ -1,5 +1,10 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.9.2
+- fix (read: completely rebuild) the old, esoteric scrolling system to make slightly more sense and crash slightly less
+- make all split rows the same height so that the lines don't move when scrolling
+- move error macro to components, replace some errors i missed in 1.9.1
+- add configurable bg color which i meant to add ages ago
 ### 1.9.1
 - custom error macro to reduce repeated code in unwraps
 - reduce duplicated render code
