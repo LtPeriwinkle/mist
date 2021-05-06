@@ -667,7 +667,7 @@ impl App {
                                 if current_split < len - 1 {
                                     current_split += 1;
                                     // if the next split is offscreen set recreate_on_screen flag to change the current split slice
-                                    if current_split + 1 > bottom_split_index
+                                    if current_split > bottom_split_index
                                         && bottom_split_index + 1 < len
                                     {
                                         bottom_split_index += 1;
