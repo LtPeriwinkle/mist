@@ -17,10 +17,7 @@ pub enum TimerState {
         split: u128,
         time_str: String,
     },
-    NotStarted {
-        time_str: String,
-    },
-    Finished {
+    NotRunning {
         time_str: String,
     },
 }

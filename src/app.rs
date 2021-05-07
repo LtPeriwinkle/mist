@@ -71,7 +71,7 @@ impl App {
             timer,
             canvas,
             ttf,
-            state: TimerState::NotStarted {
+            state: TimerState::NotRunning {
                 time_str: "0.000".to_string(),
             },
             comparison: Comparison::PersonalBest,
@@ -308,7 +308,7 @@ impl App {
         // if there is an offset, display it properly
         match offset {
             Some(x) => {
-                self.state = TimerState::NotStarted {
+                self.state = TimerState::NotRunning {
                     time_str: format!("-{}", timing::ms_to_readable(x, false)),
                 };
             }
@@ -530,12 +530,12 @@ impl App {
                         // if there is an offset, reset the timer to that, if not, reset timer to 0
                         match offset {
                             Some(x) => {
-                                self.state = TimerState::NotStarted {
+                                self.state = TimerState::NotRunning {
                                     time_str: format!("-{}", timing::ms_to_readable(x, false)),
                                 };
                             }
                             None => {
-                                self.state = TimerState::NotStarted {
+                                self.state = TimerState::NotRunning {
                                     time_str: "0.000".to_owned(),
                                 };
                             }
@@ -604,7 +604,7 @@ impl App {
                         ..
                     } => match self.state {
                         // if timer isnt started, start it.
-                        TimerState::NotStarted { .. } => {
+                        TimerState::NotRunning { .. } => {
                             elapsed = self.timer.elapsed().as_millis();
                             split_time_ticks = elapsed;
                             total_time = Instant::now();
@@ -677,7 +677,7 @@ impl App {
                                 // otherwise end the run
                                 } else {
                                     // set the state of the timer to finished, round string to 30fps
-                                    self.state = TimerState::Finished {
+                                    self.state = TimerState::NotRunning {
                                         time_str: timing::ms_to_readable(
                                             (elapsed - t) + before_pause,
                                             true,
@@ -717,7 +717,7 @@ impl App {
                             // finish the run if there are no splits
                             } else {
                                 elapsed = self.timer.elapsed().as_millis();
-                                self.state = TimerState::Finished {
+                                self.state = TimerState::NotRunning {
                                     time_str: timing::ms_to_readable(
                                         (elapsed - t) + before_pause,
                                         true,
@@ -748,7 +748,7 @@ impl App {
                         ..
                     } => {
                         // only allow opening a new file if the timer is not running
-                        if let TimerState::NotStarted { .. } = self.state {
+                        if let TimerState::NotRunning { .. } = self.state {
                             // save the previous run if it was updated
                             if save && save_check() {
                                 self.run.save_msf(&path);
@@ -766,7 +766,7 @@ impl App {
                             // if there is an offset, display it properly
                             match offset {
                                 Some(x) => {
-                                    self.state = TimerState::NotStarted {
+                                    self.state = TimerState::NotRunning {
                                         time_str: format!("-{}", timing::ms_to_readable(x, false)),
                                     };
                                 }
@@ -1023,8 +1023,7 @@ impl App {
                 time =
                     timing::ms_to_readable(total_time.elapsed().as_millis() + before_pause, false);
             }
-            TimerState::Finished { time_str: string }
-            | TimerState::NotStarted { time_str: string }
+            TimerState::NotRunning { time_str: string }
             | TimerState::Paused {
                 time_str: string, ..
             } => {
