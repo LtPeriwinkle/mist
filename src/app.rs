@@ -522,7 +522,11 @@ impl App {
                         // reset stuff specific to the active run and return splits to the top of the list
                         active_run_times = vec![];
                         top_split_index = 0;
-                        bottom_split_index = max_splits - 1;
+                        if max_splits != 0 {
+                            bottom_split_index = max_splits - 1;
+                        } else {
+                            bottom_split_index = 0;
+                        }
                         before_pause = 0;
                         before_pause_split = 0;
                         current_split = 0;
@@ -829,7 +833,11 @@ impl App {
                                 max_splits = len;
                             }
                             top_split_index = 0;
-                            bottom_split_index = max_splits - 1;
+                            if max_splits != 0 {
+                                bottom_split_index = max_splits - 1;
+                            } else {
+                                bottom_split_index = 0;
+                            }
                         }
                     }
                     _ => {}
