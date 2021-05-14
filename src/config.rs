@@ -7,10 +7,21 @@ use std::fs::OpenOptions;
 use std::io::Write;
 // more will be added to this in the future
 #[derive(Serialize, Deserialize)]
+#[cfg(feature = "bg")]
 pub struct Config {
     def_file: Option<String>,
     img_file: Option<String>,
     img_scaled: bool,
+    colors: [(u8, u8, u8); 6],
+    t_font: String,
+    s_font: String,
+    font_size: (u16, u16),
+}
+
+#[derive(Serialize, Deserialize)]
+#[cfg(not(feature = "bg"))]
+pub struct Config {
+    def_file: Option<String>,
     colors: [(u8, u8, u8); 6],
     t_font: String,
     s_font: String,
@@ -35,9 +46,11 @@ impl Config {
     pub fn file(&self) -> Option<&String> {
         self.def_file.as_ref()
     }
+    #[cfg(feature = "bg")]
     pub fn img(&self) -> Option<&String> {
         self.img_file.as_ref()
     }
+    #[cfg(feature = "bg")]
     pub fn img_scaled(&self) -> bool {
         self.img_scaled
     }
@@ -70,12 +83,32 @@ impl Config {
     }
 }
 
+#[cfg(feature = "bg")]
 impl Default for Config {
     fn default() -> Config {
         Config {
             def_file: None,
             img_file: None,
             img_scaled: false,
+            colors: [
+                (0, 255, 0),
+                (255, 0, 0),
+                (255, 90, 90),
+                (135, 255, 125),
+                (255, 255, 0),
+                (0, 0, 0),
+            ],
+            t_font: "assets/segoe-ui-bold.ttf".to_owned(),
+            s_font: "assets/segoe-ui-bold.ttf".to_owned(),
+            font_size: (60, 25),
+        }
+    }
+}
+#[cfg(not(feature = "bg"))]
+impl Default for Config {
+    fn default() -> Config {
+        Config {
+            def_file: None,
             colors: [
                 (0, 255, 0),
                 (255, 0, 0),

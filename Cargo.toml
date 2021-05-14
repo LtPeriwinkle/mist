@@ -11,10 +11,15 @@ license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["bg", "icon"]
+bg = ["sdl2/gfx", "sdl2/image"]
+icon = ["sdl2/image"]
+
 [dependencies.sdl2]
 version = "0.34"
 default-features = false
-features = ["ttf", "image", "gfx"]
+features = ["ttf"]
 
 [dependencies.ron]
 version = "0.6"

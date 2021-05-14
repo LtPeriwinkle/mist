@@ -1,11 +1,18 @@
 // app struct and its functions, one of which is the application mainloop
 use sdl2::event::{Event, WindowEvent};
+#[cfg(feature = "bg")]
 use sdl2::gfx::rotozoom::RotozoomSurface;
+#[cfg(feature = "bg")]
+use sdl2::rect::Rect;
+#[cfg(feature = "bg")]
+use sdl2::pixels::PixelFormatEnum;
+#[cfg(feature = "bg")]
+use sdl2::render::TextureAccess;
+#[cfg(any(feature = "icon", feature = "bg"))]
 use sdl2::image::LoadSurface;
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::{Color, PixelFormatEnum};
-use sdl2::rect::Rect;
-use sdl2::render::{Texture, TextureAccess, WindowCanvas};
+use sdl2::pixels::Color;
+use sdl2::render::{Texture, WindowCanvas};
 use sdl2::surface::Surface;
 use sdl2::ttf;
 
@@ -34,7 +41,6 @@ pub struct App {
     run: Run,
     config: config::Config,
 }
-
 impl App {
     pub fn init(context: sdl2::Sdl) -> Self {
         // sdl setup boilerplate
@@ -49,10 +55,13 @@ impl App {
             .unwrap_or_else(|err| {
                 error!("window build failure: {} ", err);
             });
+        #[cfg(feature = "icon")]
+        {
         let icon = Surface::from_file("assets/MIST.png").unwrap_or_else(|err| {
             error!("couldn't open icon: {}", err);
         });
         window.set_icon(icon);
+        }
         let canvas = window.into_canvas().build().unwrap_or_else(|err| {
             error!("couldn't create canvas: {}", err);
         });
@@ -161,97 +170,104 @@ impl App {
         // make the texture creator used a lot later on
         let creator = self.canvas.texture_creator();
 
-        let bg: Option<Surface> = match self.config.img() {
-            Some(ref p) => Some(Surface::from_file(&p).unwrap_or_else(|err| {
-                error!("couldn't open bg image: {}", err);
-            })),
-            None => None,
-        };
-        let bg_tex: Texture;
+        #[cfg(feature = "bg")]
         let has_bg: bool;
-        if let Some(x) = bg {
-            has_bg = true;
-            let width = self.canvas.viewport().width();
-            let height = self.canvas.viewport().height();
-            if !self.config.img_scaled() {
-                let mut sur =
-                    Surface::new(width, height, PixelFormatEnum::RGB24).unwrap_or_else(|err| {
-                        error!("couldn't create new surface: {}", err);
-                    });
-                let cutoffx = {
-                    if x.width() > width {
-                        ((x.width() - width) / 2) as i32
-                    } else {
-                        0
-                    }
-                };
-                let cutoffy = {
-                    if x.height() > height {
-                        ((x.height() - height) / 2) as i32
-                    } else {
-                        0
-                    }
-                };
-                x.blit(Rect::new(cutoffx, cutoffy, width, height), &mut sur, None)
-                    .unwrap_or_else(|err| {
-                        error!("couldn't blit cropped bg: {}", err);
-                    });
-                bg_tex = creator
-                    .create_texture_from_surface(&sur)
-                    .unwrap_or_else(|err| {
-                        error!("couldn't create crop bg tex: {}", err);
-                    });
-            } else {
-                let sur: Surface;
-                if x.width() > x.height() && width < x.width() {
-                    if width < x.width() {
-                        sur = x
-                            .rotozoom(0.0, width as f64 / x.width() as f64, true)
-                            .unwrap_or_else(|err| {
-                                error!("couldn't rotozoom: {}", err);
-                            });
-                    } else {
-                        sur = x
-                            .rotozoom(0.0, x.width() as f64 / width as f64, true)
-                            .unwrap_or_else(|err| {
-                                error!("couldn't rotozoom: {}", err);
-                            });
-                    }
+        #[cfg(feature = "bg")]
+        let bg_tex: Texture;
+        #[cfg(feature = "bg")]
+        let bg_rect: Rect;
+        #[cfg(feature = "bg")]
+         {
+            let bg: Option<Surface> = match self.config.img() {
+                Some(ref p) => Some(Surface::from_file(&p).unwrap_or_else(|err| {
+                    error!("couldn't open bg image: {}", err);
+                })),
+                None => None,
+            };
+            if let Some(x) = bg {
+                has_bg = true;
+                let width = self.canvas.viewport().width();
+                let height = self.canvas.viewport().height();
+                if !self.config.img_scaled() {
+                    let mut sur = Surface::new(width, height, PixelFormatEnum::RGB24)
+                        .unwrap_or_else(|err| {
+                            error!("couldn't create new surface: {}", err);
+                        });
+                    let cutoffx = {
+                        if x.width() > width {
+                            ((x.width() - width) / 2) as i32
+                        } else {
+                            0
+                        }
+                    };
+                    let cutoffy = {
+                        if x.height() > height {
+                            ((x.height() - height) / 2) as i32
+                        } else {
+                            0
+                        }
+                    };
+                    x.blit(Rect::new(cutoffx, cutoffy, width, height), &mut sur, None)
+                        .unwrap_or_else(|err| {
+                            error!("couldn't blit cropped bg: {}", err);
+                        });
+                    bg_tex = creator
+                        .create_texture_from_surface(&sur)
+                        .unwrap_or_else(|err| {
+                            error!("couldn't create crop bg tex: {}", err);
+                        });
                 } else {
-                    if height < x.height() {
-                        sur = x
-                            .rotozoom(0.0, height as f64 / x.height() as f64, true)
-                            .unwrap_or_else(|err| {
-                                error!("couldn't rotozoom: {}", err);
-                            });
+                    let sur: Surface;
+                    if x.width() > x.height() && width < x.width() {
+                        if width < x.width() {
+                            sur = x
+                                .rotozoom(0.0, width as f64 / x.width() as f64, true)
+                                .unwrap_or_else(|err| {
+                                    error!("couldn't rotozoom: {}", err);
+                                });
+                        } else {
+                            sur = x
+                                .rotozoom(0.0, x.width() as f64 / width as f64, true)
+                                .unwrap_or_else(|err| {
+                                    error!("couldn't rotozoom: {}", err);
+                                });
+                        }
                     } else {
-                        sur = x
-                            .rotozoom(0.0, x.height() as f64 / height as f64, true)
-                            .unwrap_or_else(|err| {
-                                error!("couldn't rotozoom: {}", err);
-                            });
+                        if height < x.height() {
+                            sur = x
+                                .rotozoom(0.0, height as f64 / x.height() as f64, true)
+                                .unwrap_or_else(|err| {
+                                    error!("couldn't rotozoom: {}", err);
+                                });
+                        } else {
+                            sur = x
+                                .rotozoom(0.0, x.height() as f64 / height as f64, true)
+                                .unwrap_or_else(|err| {
+                                    error!("couldn't rotozoom: {}", err);
+                                });
+                        }
                     }
+                    bg_tex = creator
+                        .create_texture_from_surface(&sur)
+                        .unwrap_or_else(|err| {
+                            error!("couldn't create scale bx tex: {}", err);
+                        });
                 }
+            } else {
+                has_bg = false;
                 bg_tex = creator
-                    .create_texture_from_surface(&sur)
+                    .create_texture(None, TextureAccess::Static, 1, 1)
                     .unwrap_or_else(|err| {
-                        error!("couldn't create scale bx tex: {}", err);
+                        error!("empty bg tex failed: {}", err);
                     });
             }
-        } else {
-            has_bg = false;
-            bg_tex = creator
-                .create_texture(None, TextureAccess::Static, 1, 1)
-                .unwrap_or_else(|err| {
-                    error!("empty bg tex failed: {}", err);
-                });
+            let sdl2::render::TextureQuery {
+                width: bgw,
+                height: bgh,
+                ..
+            } = bg_tex.query();
+            bg_rect = Rect::new(0, 0, bgw, bgh);
         }
-        let sdl2::render::TextureQuery {
-            width: bgw,
-            height: bgh,
-            ..
-        } = bg_tex.query();
-        let bg_rect = Rect::new(0, 0, bgw, bgh);
         // get the heights of different font textures
         let splits_height = font
             .size_of("qwertyuiopasdfghjklzxcvbnm01234567890!@#$%^&*(){}[]|\\:;'\",.<>?/`~-_=+")
@@ -431,6 +447,8 @@ impl App {
             // remove stuff from the backbuffer and fill the space with black
             self.canvas.set_draw_color(bg_color);
             self.canvas.clear();
+
+            #[cfg(feature = "bg")]
             if has_bg {
                 self.canvas
                     .copy(&bg_tex, None, bg_rect)
@@ -916,19 +934,12 @@ impl App {
                     } else {
                         // get the amount of time that the runner could spend on the split without being behind comparison
                         let allowed: i128;
-                        match self.comparison {
-                            Comparison::PersonalBest => {
-                                allowed = splits[current_split].time() as i128
-                                    - splits[current_split - 1].diff();
-                            }
-                            Comparison::Golds => {
-                                allowed = splits[current_split].gold() as i128
-                                    - splits[current_split - 1].diff();
-                            }
-                            _ => {
-                                allowed = 0;
-                            }
-                        }
+                        allowed = (match self.comparison {
+                            Comparison::PersonalBest => splits[current_split].time(),
+                            Comparison::Golds => splits[current_split].gold(),
+                            _ => unreachable!(),
+                        }) as i128
+                            - splits[current_split - 1].diff();
                         let buffer = splits[current_split - 1].diff();
                         // get amount of time that has passed in the current split
                         let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
