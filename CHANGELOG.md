@@ -1,5 +1,9 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.9.3
+- remove redundant TimerState variant
+- fix crashes with 0 splits (again)
+- add features to disable gfx/image necessity
 ### 1.9.2
 - fix (read: completely rebuild) the old, esoteric scrolling system to make slightly more sense and crash slightly less
 - make all split rows the same height so that the lines don't move when scrolling
