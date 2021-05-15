@@ -2,16 +2,16 @@
 use sdl2::event::{Event, WindowEvent};
 #[cfg(feature = "bg")]
 use sdl2::gfx::rotozoom::RotozoomSurface;
-#[cfg(feature = "bg")]
-use sdl2::rect::Rect;
-#[cfg(feature = "bg")]
-use sdl2::pixels::PixelFormatEnum;
-#[cfg(feature = "bg")]
-use sdl2::render::TextureAccess;
 #[cfg(any(feature = "icon", feature = "bg"))]
 use sdl2::image::LoadSurface;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
+#[cfg(feature = "bg")]
+use sdl2::pixels::PixelFormatEnum;
+#[cfg(feature = "bg")]
+use sdl2::rect::Rect;
+#[cfg(feature = "bg")]
+use sdl2::render::TextureAccess;
 use sdl2::render::{Texture, WindowCanvas};
 use sdl2::surface::Surface;
 use sdl2::ttf;
@@ -57,10 +57,10 @@ impl App {
             });
         #[cfg(feature = "icon")]
         {
-        let icon = Surface::from_file("assets/MIST.png").unwrap_or_else(|err| {
-            error!("couldn't open icon: {}", err);
-        });
-        window.set_icon(icon);
+            let icon = Surface::from_file("assets/MIST.png").unwrap_or_else(|err| {
+                error!("couldn't open icon: {}", err);
+            });
+            window.set_icon(icon);
         }
         let canvas = window.into_canvas().build().unwrap_or_else(|err| {
             error!("couldn't create canvas: {}", err);
@@ -177,7 +177,7 @@ impl App {
         #[cfg(feature = "bg")]
         let bg_rect: Rect;
         #[cfg(feature = "bg")]
-         {
+        {
             let bg: Option<Surface> = match self.config.img() {
                 Some(ref p) => Some(Surface::from_file(&p).unwrap_or_else(|err| {
                     error!("couldn't open bg image: {}", err);
