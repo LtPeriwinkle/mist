@@ -109,3 +109,34 @@ pub fn split_time_sum(ms_vec: &Vec<u128>) -> Vec<u128> {
     }
     vec
 }
+
+mod tests {
+    use super::*;
+    #[test]
+    // 3,611,111 ms should be 1 hour, 1 minute, 1 second, 111 ms
+    fn test_readable() {
+        assert_eq!(ms_to_readable(3_661_111, false), "1:01:01.111");
+    }
+    #[test]
+    fn test_rounding_30() {
+        assert_eq!(round_ms_30(500), 500);
+        assert_eq!(round_ms_30(710), 700);
+        assert_eq!(round_ms_30(645), 633);
+        assert_eq!(round_ms_30(384), 367);
+        assert_eq!(round_ms_30(399), 367);
+    }
+    #[test]
+    fn test_sum() {
+        assert_eq!(split_time_sum(&vec![6, 7, 8]), vec![6, 13, 21]);
+        assert_eq!(split_time_sum(&vec![0]), vec![0]);
+    }
+    #[test]
+    fn test_diff() {
+        assert_eq!(diff_text(3_661_111), "+1:01:01.1");
+        assert_eq!(diff_text(-3_661_111), "-1:01:01.1");
+    }
+    #[test]
+    fn test_split() {
+        assert_eq!(split_time_text(3_661_111), "1:01:01.1");
+    }
+}
