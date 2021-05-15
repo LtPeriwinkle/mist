@@ -10,3 +10,6 @@
 
 # split files
 *.msf
+
+# core lockfile
+crates/mist-core/Cargo.lock
