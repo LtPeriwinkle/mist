@@ -29,38 +29,29 @@ pub fn ms_to_readable(mut ms: u128, round: bool) -> String {
 }
 
 pub fn diff_text(mut ms: i128) -> String {
-    let negative = if ms < 0 {
-        ms *= -1;
-        true
-    } else {
-        false
-    };
     let pre: char;
-    if negative {
+    if ms < 0 {
+        ms *= -1;
         pre = '-';
     } else {
         pre = '+';
     }
     let mut tenths = ms / 100;
     let mut full_s: i128;
-    if tenths > 10 {
-        full_s = tenths / 10;
-        tenths -= full_s * 10;
-        if full_s >= 60 {
-            let mut min = full_s / 60;
-            full_s -= min * 60;
-            if min >= 60 {
-                let hr = min / 60;
-                min -= hr * 60;
-                return format!("{}{}:{:02}:{:02}.{}", pre, hr, min, full_s, tenths);
-            } else {
-                return format!("{}{}:{:02}.{}", pre, min, full_s, tenths);
-            }
+    full_s = tenths / 10;
+    tenths -= full_s * 10;
+    if full_s >= 60 {
+        let mut min = full_s / 60;
+        full_s -= min * 60;
+        if min >= 60 {
+            let hr = min / 60;
+            min -= hr * 60;
+            return format!("{}{}:{:02}:{:02}.{}", pre, hr, min, full_s, tenths);
         } else {
-            return format!("{}{}.{}", pre, full_s, tenths);
+            return format!("{}{}:{:02}.{}", pre, min, full_s, tenths);
         }
     } else {
-        return format!("{}0.{}", pre, tenths);
+        return format!("{}{}.{}", pre, full_s, tenths);
     }
 }
 
@@ -109,7 +100,7 @@ pub fn split_time_sum(ms_vec: &Vec<u128>) -> Vec<u128> {
     }
     vec
 }
-
+#[cfg(test)]
 mod tests {
     use super::*;
     #[test]
