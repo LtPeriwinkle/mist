@@ -16,4 +16,3 @@ features = ["serde_derive"]
 
 [dependencies.quick-xml]
 version = "0.22"
-optional = true
