@@ -1,5 +1,13 @@
-// Functions used for formatting of times
+//! Functions used for formatting of times
 
+/// Convert milliseconds into a readable time in the form HH:MM:SS.mmm
+///
+/// Optionally rounds to a possible 30hz value, i.e. 33ms, 67ms, etc.
+///
+/// # Arguments
+///
+/// * `ms` - the value to convert to string.
+/// * `round` - whether to round to 30hz or not
 pub fn ms_to_readable(mut ms: u128, round: bool) -> String {
     if round {
         ms = round_ms_30(ms);
@@ -28,6 +36,13 @@ pub fn ms_to_readable(mut ms: u128, round: bool) -> String {
     return format!("0.{:03}", ms);
 }
 
+/// Create the readable time for a time differences.
+///
+/// Prefixes with `+` for lost time and `-` for gained time.
+/// 
+/// Passing a negative value of `ms` specifies gained time and returns a `-` prefixed string.
+///
+/// Truncates decimals at the tenths place.
 pub fn diff_text(mut ms: i128) -> String {
     let pre: char;
     if ms < 0 {
@@ -55,6 +70,9 @@ pub fn diff_text(mut ms: i128) -> String {
     }
 }
 
+/// Creates the text for times of splits.
+///
+/// Essentially the same as [ms_to_readable] but truncates at tenths place.
 pub fn split_time_text(ms: u128) -> String {
     let mut tenths = ms / 100;
     let mut full_s: u128;
@@ -79,6 +97,21 @@ pub fn split_time_text(ms: u128) -> String {
     }
 }
 
+/// Gets the sums of elements in a vec
+///
+/// Returns a Vec with the sums of every element up to that point in it.
+///
+/// For example, input of [6, 7, 8] returns [6, 13, 21].
+pub fn split_time_sum(ms_vec: &Vec<u128>) -> Vec<u128> {
+    let mut total = 0;
+    let mut vec = vec![];
+    for num in ms_vec {
+        total += num;
+        vec.push(total);
+    }
+    vec
+}
+
 fn round_ms_30(ms: u128) -> u128 {
     let hundreds = ms / 100;
     let mut rounded = ms % 100;
@@ -91,15 +124,6 @@ fn round_ms_30(ms: u128) -> u128 {
     rounded + (hundreds * 100)
 }
 
-pub fn split_time_sum(ms_vec: &Vec<u128>) -> Vec<u128> {
-    let mut total = 0;
-    let mut vec = vec![];
-    for num in ms_vec {
-        total += num;
-        vec.push(total);
-    }
-    vec
-}
 #[cfg(test)]
 mod tests {
     use super::*;

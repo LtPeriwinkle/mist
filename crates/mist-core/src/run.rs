@@ -57,6 +57,7 @@ impl Run {
     }
     /// Returns tuples of attempt count and total number of milliseconds spent for each split.
     /// First element is attempt count and second is the total time.
+    ///
     /// Useful for calculating averages.
     pub fn sum_times(&self) -> &Vec<(u128, u128)> {
         &self.sum_times
