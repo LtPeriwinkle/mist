@@ -1,4 +1,6 @@
-#[derive(Debug)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Run {
     game_title: String,
     category: String,
@@ -67,6 +69,9 @@ impl Run {
     }
     pub fn set_splits(&mut self, new: &Vec<String>) {
         self.splits = new.to_owned();
+    }
+    pub fn set_pb_times(&mut self, new: &Vec<u128>) {
+        self.pb_times = new.to_owned();
     }
     pub fn set_gold_times(&mut self, new: &Vec<u128>) {
         self.gold_times = new.to_owned();
