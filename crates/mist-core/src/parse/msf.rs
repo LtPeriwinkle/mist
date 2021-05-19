@@ -34,8 +34,8 @@ impl MsfParser {
         from_bytes(&mut data).map_err(|e| {e.to_string()})
     }
     /// Write the given run to the given writer.
-    pub fn write<W: Write>(&self, run: Run, mut writer: W) -> Result<(), String> {
-        to_writer_pretty(&mut writer, &run, PrettyConfig::new()).map_err(|e| {e.to_string()})?;
+    pub fn write<W: Write>(&self, run: &Run, mut writer: W) -> Result<(), String> {
+        to_writer_pretty(&mut writer, run, PrettyConfig::new()).map_err(|e| {e.to_string()})?;
         Ok(())
     }
 }
