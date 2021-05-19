@@ -1,7 +1,7 @@
 use crate::run::Run;
 use ron::de::from_bytes;
 use std::io::BufRead;
-use std::io::Error;
+use std::io::{Error, ErrorKind};
 
 pub struct MsfParser<R: BufRead> {
     reader: R,
@@ -28,10 +28,13 @@ impl<R: BufRead> MsfParser<R> {
             false
         }
     }
-    pub fn parse(&mut self) -> Result<Run, ron::Error> {
+    pub fn parse(&mut self) -> Result<Run, Error> {
+        if self.needs_converting() {
+            return Err(Error::new(ErrorKind::Other, "legacy parsing not yet implemented"));
+        }
         let mut data: Vec<u8> = vec![];
         // TODO: better error handling
-        let _ = self.reader.read_to_end(&mut data).unwrap();
-        from_bytes(&data[..])
+        let _ = self.reader.read_to_end(&mut data)?;
+        from_bytes(&mut data).map_err(|e| {Error::new(ErrorKind::InvalidData, format!("{}", e))})
     }
 }
