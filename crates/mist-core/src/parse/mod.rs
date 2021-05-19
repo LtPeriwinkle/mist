@@ -1,6 +1,6 @@
 //! Parse [Run](crate::run::Run)s from their file representations.
 mod msf;
-pub use msf::{MsfParser, MsfWriter};
+pub use msf::MsfParser;
 
 #[cfg(feature = "lss")]
 mod lss;
