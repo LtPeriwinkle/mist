@@ -3,6 +3,7 @@ use ron::de::from_bytes;
 use std::io::BufRead;
 use std::io::{Error, ErrorKind};
 
+/// Parses the version and [Run] from a mist split file (msf)
 pub struct MsfParser<R: BufRead> {
     reader: R,
     version: u32,
@@ -10,6 +11,11 @@ pub struct MsfParser<R: BufRead> {
 
 impl<R: BufRead> MsfParser<R> {
     const LEGACY: u32 = 0xBA5ED;
+    /// Create a new MsfParser with the given reader. Reader must implement [BufRead].
+    ///
+    /// # Errors
+    ///
+    /// * If a line cannot be read from the reader.
     pub fn new(mut reader: R) -> Result<Self, Error> {
         let mut ver_info = String::new();
         while ver_info.is_empty() {
@@ -21,6 +27,7 @@ impl<R: BufRead> MsfParser<R> {
         };
         Ok(MsfParser { reader, version })
     }
+    /// Determine whether the Run will need converting to the current version, i.e. it is legacy or just outdated.
     pub fn needs_converting(&self) -> bool {
         if self.version == Self::LEGACY {
             true
@@ -28,6 +35,12 @@ impl<R: BufRead> MsfParser<R> {
             false
         }
     }
+    /// Try to get the Run from the reader. Currently, updating runs is not yet supported.
+    ///
+    /// # Errors
+    ///
+    /// * If the Run will require converting from an older version (temporary, will be removed eventually)
+    /// * If a Run cannot be parsed from the data in the reader
     pub fn parse(&mut self) -> Result<Run, Error> {
         if self.needs_converting() {
             return Err(Error::new(ErrorKind::Other, "legacy parsing not yet implemented"));
