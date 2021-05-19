@@ -19,6 +19,6 @@ fn main() {
         error_dialog(err.to_string());
         unreachable!();
     });
-    let mut app = App::init(context);
-    app.run();
+    let mut app = App::init(context).unwrap_or_else(|err| {error!("", err);});
+    app.run().unwrap_or_else(|err| {error!("", err);});
 }
