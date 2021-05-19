@@ -1,5 +1,4 @@
 // handle configuration of color and font path
-use crate::error;
 use ron::de::from_reader;
 use ron::ser::{to_string_pretty, PrettyConfig};
 use serde::{Deserialize, Serialize};
@@ -31,17 +30,15 @@ pub struct Config {
 impl Config {
     // open the configuration file in the assets directory
     // if the file does not exist, then creates it and if any error occurs then returns the default configuration
-    pub fn open() -> Self {
+    pub fn open() -> Result<Self, String> {
         let file = OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
             .open("assets/mist.cfg")
-            .unwrap_or_else(|err| {
-                error!("couldn't open cfg", err);
-            });
+            .map_err(|e| {e.to_string()})?;
         let cfg: Self = from_reader(&file).unwrap_or(Config::default());
-        return cfg;
+        return Ok(cfg);
     }
     pub fn file(&self) -> Option<&String> {
         self.def_file.as_ref()
@@ -69,17 +66,14 @@ impl Config {
     pub fn color_list(&self) -> [(u8, u8, u8); 6] {
         self.colors
     }
-    pub fn save(&self) {
+    pub fn save(&self) -> Result<(), String> {
         let mut file = OpenOptions::new()
             .write(true)
             .open("assets/mist.cfg")
-            .unwrap_or_else(|err| {
-                error!("couldn't open cfg", err);
-            });
+            .map_err(|e| {e.to_string()})?;
         let string = to_string_pretty(self, PrettyConfig::new()).unwrap();
-        file.write(&string.as_bytes()).unwrap_or_else(|err| {
-            error!("couldn't write cfg", err);
-        });
+        file.write(&string.as_bytes()).map_err(|e| {e.to_string()})?;
+        Ok(())
     }
 }
 

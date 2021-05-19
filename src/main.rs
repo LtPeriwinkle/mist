@@ -6,19 +6,17 @@ extern crate sdl2;
 
 mod app;
 mod comparison;
-mod components;
+mod state;
 mod config;
 mod render;
 mod splits;
-mod timing;
 use app::App;
-use components::error_dialog;
+use mist_core::dialogs::error;
 
 fn main() {
     let context = sdl2::init().unwrap_or_else(|err| {
-        error_dialog(err.to_string());
-        unreachable!();
+        error(&err);
     });
-    let mut app = App::init(context).unwrap_or_else(|err| {error!("", err);});
-    app.run().unwrap_or_else(|err| {error!("", err);});
+    let mut app = App::init(context).unwrap_or_else(|err| {error(&err);});
+    app.run().unwrap_or_else(|err| {error(&err);});
 }

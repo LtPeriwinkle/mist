@@ -19,16 +19,16 @@ use sdl2::get_error;
 
 use std::thread;
 use std::time::{Duration, Instant};
+use std::fs::File;
+use std::io::BufReader;
 
-use mist_run_utils::run::Run;
+use mist_core::{timing, Run, dialogs, parse::MsfParser};
 
 use crate::comparison::Comparison;
-use crate::components::*;
+use crate::state::TimerState;
 use crate::config::{self, Config};
-use crate::error;
 use crate::render;
 use crate::splits::Split;
-use crate::timing;
 // struct that holds information about the running app and its state
 #[allow(dead_code)]
 pub struct App {
@@ -41,6 +41,7 @@ pub struct App {
     comparison: Comparison,
     run: Run,
     config: config::Config,
+    msf: MsfParser
 }
 impl App {
     pub fn init(context: sdl2::Sdl) -> Result<Self, String> {
@@ -74,58 +75,29 @@ impl App {
                 time_str: "0.000".to_string(),
             },
             comparison: Comparison::PersonalBest,
-            run: Run::default(),
-            config: Config::open(),
+            run: Run::empty(),
+            config: Config::open()?,
+            msf: MsfParser::new()
         };
-        let mut path: Option<String> = None;
-        let retry: bool;
         // try to use the filepath specified in the config file
         // if it doesnt exist then set retry to true
         // if the specified file is invalid also set retry
         if let Some(x) = app.config.file() {
-            path = Some(x.to_owned());
-            match Run::from_msf_file(&x) {
-                Some(r) => {
-                    app.run = r;
-                    retry = false;
-                }
-                None => retry = true,
-            }
+            let f = File::open(x).map_err(|e| {e.to_string()})?;
+            let reader = BufReader::new(f);
+            app.run = app.msf.parse(reader).map_err(|e| {e.to_string()})?;
         } else {
-            retry = true;
-        }
-        // if retry was set earlier then enter the loop of picking a file
-        if retry {
-            loop {
-                // open a a file choosing dialog box
-                path = open_file("Open split file", "*.msf");
-                // if the user didn't pick a file and hit cancel, then exit this function (which currently will exit the program)
-                match path {
-                    None => {
-                        std::process::exit(0);
+            match dialogs::open_run() {
+                Ok(r) => match r {
+                    Some((run, path)) => {
+                        app.run = run;
+                        app.config.set_file(&path);
                     }
-                    // if the user did choose a file, try to parse a Run from it.
-                    // if the run is valid, break the file loop and continue on
-                    Some(ref p) => match Run::from_msf_file(&p) {
-                        Some(x) => {
-                            app.run = x;
-                            break;
-                        }
-                        None => {
-                            // if it is invalid, ask the user whether they want to try another file
-                            // if they don't then exit the program
-                            if !bad_file_dialog("Split file parse failed. Try another file?") {
-                                std::process::exit(0)
-                            }
-                        }
-                    },
+                    None => return Err("No split file specified".to_owned())
                 }
+                Err(e) => return Err(e.to_string())
             }
         }
-        // remove Option wrapper from filepath for later use since it now is guaranteed not to be None
-        let path = path.unwrap();
-        // set the config file's run path to the given path in case a new one was chosen
-        app.config.set_file(&path);
         return Ok(app);
     }
 
@@ -273,7 +245,7 @@ impl App {
             .map_err(|_| {get_error()})?;
 
         // get first vec of split name textures from file
-        let split_names = self.run.split_names();
+        let split_names = self.run.splits();
         let mut offset = self.run.offset();
         // if there is an offset, display it properly
         match offset {
@@ -285,7 +257,7 @@ impl App {
             _ => {}
         }
         // get ms split times then convert them to pretty, summed times
-        let split_times_ms: Vec<u128> = self.run.get_times().iter().cloned().collect();
+        let split_times_ms: Vec<u128> = self.run.pb_times().iter().cloned().collect();
         let mut summed_times = timing::split_time_sum(&split_times_ms);
         let split_times_raw: Vec<String> = summed_times
             .iter()
@@ -317,7 +289,7 @@ impl App {
             // create split struct with its corresponding times and textures
             let split = Split::new(
                 split_times_ms[index],
-                self.run.gold_time(index),
+                self.run.gold_times()[index],
                 0,
                 None,
                 texture,
@@ -602,8 +574,8 @@ impl App {
                                     save = true;
                                     color = gold;
                                     self.run.set_gold_time(
-                                        current_split,
                                         active_run_times[current_split],
+                                        current_split,
                                     );
                                     splits[current_split].set_gold(active_run_times[current_split]);
                                 }
@@ -664,7 +636,7 @@ impl App {
                                         }
                                         save = true;
                                         self.run.set_pb((elapsed - t) + before_pause);
-                                        self.run.set_times(&active_run_times);
+                                        self.run.set_pb_times(&active_run_times);
                                         active_run_times = vec![];
                                     }
                                 }
@@ -704,17 +676,21 @@ impl App {
                         // only allow opening a new file if the timer is not running
                         if let TimerState::NotRunning { .. } = self.state {
                             // save the previous run if it was updated
-                            if save && save_check() {
-                                self.run.save_msf(&path);
+                            if save && dialogs::save_check() {
+                                let mut f = File::open(&path).map_err(|e| {e.to_string()})?;
+                                self.msf.write(&self.run, &mut f)?;
                             }
                             // open a file dialog to get a new split file + run
                             // if the user cancelled, do nothing
-                            match reload_splits() {
-                                Some((r, p)) => {
-                                    self.run = r;
-                                    path = p;
+                            match dialogs::open_run() {
+                                Ok(s) => match s {
+                                    Some((r, p)) => {
+                                        self.run = r;
+                                        path = p;
+                                    }
+                                    _ => {}
                                 }
-                                _ => {}
+                                Err(e) => return Err(e.to_string())
                             }
                             offset = self.run.offset();
                             // if there is an offset, display it properly
@@ -727,9 +703,9 @@ impl App {
                                 _ => {}
                             }
                             // recreate split names, times, textures, etc
-                            let split_names = self.run.split_names();
+                            let split_names = self.run.splits();
                             let split_times_ms: Vec<u128> =
-                                self.run.get_times().iter().cloned().collect();
+                                self.run.pb_times().iter().cloned().collect();
                             summed_times = timing::split_time_sum(&split_times_ms);
                             let split_times_raw: Vec<String> = summed_times
                                 .iter()
@@ -754,7 +730,7 @@ impl App {
                                     .map_err(|_| {get_error()})?;
                                 let split = Split::new(
                                     split_times_ms[index],
-                                    self.run.gold_time(index),
+                                    self.run.gold_times()[index],
                                     0,
                                     None,
                                     texture,
@@ -804,8 +780,8 @@ impl App {
                     }
                 } else {
                     let split_times = match self.comparison {
-                        Comparison::PersonalBest => self.run.get_times().to_vec(),
-                        Comparison::Golds => self.run.get_golds().to_vec(),
+                        Comparison::PersonalBest => self.run.pb_times().to_vec(),
+                        Comparison::Golds => self.run.gold_times().to_vec(),
                         _ => unreachable!(),
                     };
                     // rerender comparisons to either personal best or golds
@@ -940,10 +916,11 @@ impl App {
             }
         }
         // after the loop is exited then save the config file
-        self.config.save();
+        self.config.save()?;
         // if splits were updated, prompt user to save the split file
-        if save && save_check() {
-            self.run.save_msf(&path);
+        if save && dialogs::save_check() {
+            let mut f = File::open(&path).map_err(|e| {e.to_string()})?;
+            self.msf.write(&self.run, &mut f)?;
         }
         Ok(())
     }
