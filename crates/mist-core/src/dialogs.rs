@@ -1,6 +1,6 @@
-use tinyfiledialogs::{OkCancel, YesNo, message_box_ok_cancel, message_box_yes_no, message_box_ok, MessageBoxIcon, open_file_dialog};
+use tinyfiledialogs::{YesNo, message_box_yes_no, message_box_ok, MessageBoxIcon, open_file_dialog};
 use std::fs::File;
-use std::io::{Error, ErrorKind, BufReader};
+use std::io::{Error, BufReader};
 use crate::run::Run;
 use crate::parse::MsfParser;
 
@@ -43,5 +43,10 @@ pub fn open_run() -> Result<Option<(Run, String)>, Error> {
             None => return Ok(None)
         }
     }
+}
+
+pub fn error(err: &str) -> ! {
+    message_box_ok("Error", err, MessageBoxIcon::Error);
+    std::process::exit(1)
 }
 
