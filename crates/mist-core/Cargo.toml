@@ -16,3 +16,7 @@ features = ["serde_derive"]
 
 [dependencies.quick-xml]
 version = "0.22"
+
+[dependencies.tinyfiledialogs]
+version = "3.3"
+
