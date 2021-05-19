@@ -28,8 +28,8 @@ pub fn open_run() -> Result<Option<(Run, String)>, Error> {
             Some(ref p) => {
                 let f = File::open(p)?;
                 let reader = BufReader::new(f);
-                let mut parser = MsfParser::new(reader)?;
-                match parser.parse() {
+                let parser = MsfParser::new();
+                match parser.parse(reader) {
                     Ok(r) => {
                         return Ok(Some((r, p.to_owned())));
                     }
