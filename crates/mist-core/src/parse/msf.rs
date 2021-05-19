@@ -35,6 +35,7 @@ impl MsfParser {
     }
     /// Write the given run to the given writer.
     pub fn write<W: Write>(&self, run: &Run, mut writer: W) -> Result<(), String> {
+        writer.write(b"version 1").map_err(|e| {e.to_string()})?;
         to_writer_pretty(&mut writer, run, PrettyConfig::new()).map_err(|e| {e.to_string()})?;
         Ok(())
     }
