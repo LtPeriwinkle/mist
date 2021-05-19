@@ -32,8 +32,6 @@ features = ["serde_derive"]
 [dependencies.tinyfiledialogs]
 version = "3.3"
 
-[dependencies.mist-run-utils]
-path = "crates/mist-run-utils/"
-version = "0.5"
-default-features = false
-features = ["msf"]
+[dependencies.mist-core]
+path = "./crates/mist-core/"
+version = "0.1"
