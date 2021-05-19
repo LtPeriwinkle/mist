@@ -96,6 +96,9 @@ impl Run {
     pub fn set_gold_times(&mut self, new: &Vec<u128>) {
         self.gold_times = new.to_owned();
     }
+    pub fn set_gold_time(&mut self, new: u128, idx: usize) {
+        self.gold_times[idx] = new;
+    }
     /// Set the attempt count and total time for all splits.
     /// First element is number of attempts of that split and second is the total time.
     pub fn set_sum_times(&mut self, new: &Vec<(u128, u128)>) {
