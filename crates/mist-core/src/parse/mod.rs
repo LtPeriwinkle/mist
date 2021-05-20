@@ -1,4 +1,4 @@
-//! Parse [Run](crate::run::Run)s from their file representations.
+//! Parse [Run](crate::run::Run)s and configurations from their file representations.
 mod msf;
 pub use msf::MsfParser;
 
@@ -6,3 +6,8 @@ pub use msf::MsfParser;
 mod lss;
 #[cfg(feature = "lss")]
 pub use lss::LssParser;
+
+#[cfg(feature = "config")]
+mod config;
+#[cfg(feature = "config")]
+pub use config::Config;

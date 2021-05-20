@@ -7,10 +7,12 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["timing", "dialogs"]
+default = ["timing", "dialogs", "config"]
 lss = ["quick-xml"]
 timing = []
 dialogs = ["tinyfiledialogs"]
+config = []
+bg = ["config"]
 
 [dependencies.ron]
 version = "0.6"
