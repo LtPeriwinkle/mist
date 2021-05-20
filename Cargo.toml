@@ -13,7 +13,7 @@ license = "MIT OR Apache-2.0"
 
 [features]
 default = ["bg", "icon"]
-bg = ["sdl2/gfx", "sdl2/image"]
+bg = ["sdl2/gfx", "sdl2/image", "mist-core/bg"]
 icon = ["sdl2/image"]
 
 [dependencies.sdl2]

@@ -7,7 +7,6 @@ extern crate sdl2;
 mod app;
 mod comparison;
 mod state;
-mod config;
 mod render;
 mod splits;
 use app::App;

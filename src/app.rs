@@ -22,11 +22,10 @@ use std::time::{Duration, Instant};
 use std::fs::File;
 use std::io::BufReader;
 
-use mist_core::{timing, Run, dialogs, parse::MsfParser};
+use mist_core::{timing, Run, dialogs, parse::{Config, MsfParser}};
 
 use crate::comparison::Comparison;
 use crate::state::TimerState;
-use crate::config::{self, Config};
 use crate::render;
 use crate::splits::Split;
 // struct that holds information about the running app and its state
@@ -40,7 +39,7 @@ pub struct App {
     state: TimerState,
     comparison: Comparison,
     run: Run,
-    config: config::Config,
+    config: Config,
     msf: MsfParser
 }
 impl App {
