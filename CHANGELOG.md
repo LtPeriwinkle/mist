@@ -1,5 +1,10 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.10.0
+- mist-core is a thing now
+- components, timing, config, moved from mainline to mist-core.
+- run parsing moved from the terrible run utils to mist-core
+- also made the error handling a billion times better
 ### 1.9.3
 - remove redundant TimerState variant
 - fix crashes with 0 splits (again)
