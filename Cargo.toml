@@ -21,17 +21,8 @@ version = "0.34"
 default-features = false
 features = ["ttf"]
 
-[dependencies.ron]
-version = "0.6"
-
-[dependencies.serde]
-version = "1.0"
-default-features = false
-features = ["serde_derive"]
-
 [dependencies.tinyfiledialogs]
 version = "3.3"
 
 [dependencies.mist-core]
-path = "./crates/mist-core/"
 version = "0.1"

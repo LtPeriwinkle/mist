@@ -47,15 +47,15 @@ name = "mist"
 version = "1.9.3"
 dependencies = [
  "mist-core",
- "ron",
  "sdl2",
- "serde",
  "tinyfiledialogs",
 ]
 
 [[package]]
 name = "mist-core"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9caeaa9dd0d5704cbfe959af86b9003c5813040ca4a526747d5ff84dca8eac2"
 dependencies = [
  "ron",
  "serde",
