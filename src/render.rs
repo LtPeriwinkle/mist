@@ -14,7 +14,7 @@ pub fn render_rows(
     window_width: u32,
     split_height: u32,
     current: usize,
-) {
+) -> Result<(), String> {
     let mut y = 0;
     let mut row: Rect;
     let mut index = 0;
@@ -25,13 +25,11 @@ pub fn render_rows(
         if index == current {
             canvas.set_draw_color(Color::BLUE);
             canvas
-                .fill_rect(Rect::new(0, y - 1, window_width, height + 4))
-                .unwrap();
+                .fill_rect(Rect::new(0, y - 1, window_width, height + 4))?;
         }
         row = Rect::new(0, y, width, height);
         canvas
-            .copy(&item.name(), None, Some(row))
-            .unwrap();
+            .copy(&item.name(), None, Some(row))?;
         // if the split has a texture from an active run, draw it to reflect the current time
         // otherwise draw the pb split time
         let texinfo = match item.cur() {
@@ -43,7 +41,7 @@ pub fn render_rows(
                     tinfo.width,
                     tinfo.height,
                 );
-                canvas.copy(&x, None, Some(row)).unwrap();
+                canvas.copy(&x, None, Some(row))?;
                 tinfo
             }
             None => {
@@ -55,8 +53,7 @@ pub fn render_rows(
                     tinfo.height,
                 );
                 canvas
-                    .copy(&item.comp_texture(), None, Some(row))
-                    .unwrap();
+                    .copy(&item.comp_texture(), None, Some(row))?;
                 tinfo
             }
         };
@@ -69,7 +66,7 @@ pub fn render_rows(
                     ..
                 } = x.query();
                 row = Rect::new(((window_width - texinfo.width - 25) - dw) as i32, y, dw, dh);
-                canvas.copy(&x, None, Some(row)).unwrap();
+                canvas.copy(&x, None, Some(row))?;
             }
         }
         canvas.set_draw_color(Color::GRAY);
@@ -78,11 +75,11 @@ pub fn render_rows(
             .draw_line(
                 Point::new(0, y + split_height as i32 + 3),
                 Point::new(window_width as i32, y + split_height as i32 + 3),
-            )
-            .unwrap();
+            )?;
         y += split_height as i32 + 5;
         index += 1;
     }
+    Ok(())
 }
 
 // Puts the big display timer at the bottom into the SDL backbuffer
@@ -94,7 +91,7 @@ pub fn render_time(
     coords: &[u32],
     font_y: u32,
     canvas: &mut Canvas<Window>,
-) {
+) -> Result<(), String> {
     let mut x = 0;
     let vp = canvas.viewport();
     let h = vp.height();
@@ -149,8 +146,8 @@ pub fn render_time(
             dst.set_height(font_y);
         }
         canvas
-            .copy(atlas, Some(src), Some(dst))
-            .unwrap();
+            .copy(atlas, Some(src), Some(dst))?;
         char_num += 1;
     }
+    Ok(())
 }

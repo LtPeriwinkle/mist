@@ -893,7 +893,7 @@ impl App {
             // and highlight the split relative to the top of the list marked by cur
             // function places the rows and ensures that they don't go offscreen
             if max_splits == 0 {
-                render::render_rows(&[], &mut self.canvas, window_width, splits_height, cur);
+                render::render_rows(&[], &mut self.canvas, window_width, splits_height, cur)?;
             } else {
                 render::render_rows(
                     &splits[top_split_index..=bottom_split_index],
@@ -901,12 +901,12 @@ impl App {
                     window_width,
                     splits_height,
                     cur,
-                );
+                )?;
             }
             // update the time based on the current timer state
             time_str = self.update_time(before_pause, total_time);
             // copy the time texture to the canvas, place individual characters from map
-            render::render_time(time_str, &map_tex, &coords, font_y, &mut self.canvas);
+            render::render_time(time_str, &map_tex, &coords, font_y, &mut self.canvas)?;
             self.canvas.present();
             if Instant::now().duration_since(frame_time) <= one_sixtieth {
                 thread::sleep(
