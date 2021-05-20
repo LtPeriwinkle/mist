@@ -1,5 +1,7 @@
 # mist-core
 
+![Crates.io](https://img.shields.io/crates/v/mist-core)
+
 The heart of functionality of [mist](https://github.com/LtPeriwinkle/mist). Could also be used to create another speedrun
 timer, although this is inadvisable.
 
