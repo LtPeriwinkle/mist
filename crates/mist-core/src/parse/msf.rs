@@ -1,37 +1,61 @@
 use crate::run::Run;
-use ron::de::from_bytes;
+use ron::de::from_str;
 use ron::ser::{to_writer_pretty, PrettyConfig};
 use std::io::{BufRead, Write};
+use std::str::FromStr;
+use serde::Deserialize;
 
-/// Parses the version and [Run] from a mist split file (msf)
+#[derive(Deserialize)]
+struct LegacyRun {
+    game_title: String,
+    category: String,
+    offset: Option<u128>,
+    pb: u128,
+    splits: Vec<String>,
+    pb_times: Vec<u128>,
+    gold_times: Vec<u128>,
+}
+
+impl Into<Run> for LegacyRun {
+    fn into(self) -> Run {
+        let sums = self.splits.iter().map(|_| (0u128, 0u128)).collect();
+        Run::new(self.category, self.game_title, self.offset, self.pb, &self.splits, &self.pb_times, &self.gold_times, &sums)
+    }
+}
+
+/// Parses the version and [`Run`] from a mist split file (msf)
 pub struct MsfParser {}
 
 impl MsfParser {
+    pub const VERSION: u8 = 1;
     /// Create a new MsfParser.
     pub fn new() -> Self {
         MsfParser {}
     }
-    /// Attempt to parse a [Run] from the given reader. Reader must implement [BufRead].
+    /// Attempt to parse a [`Run`] from the given reader. Reader must implement [`BufRead`].
     ///
+    /// If the file does not specify version in the first line, it is assumed to be a legacy (i.e. not up to date) run
+    /// and is treated as such. Runs converted from legacy runs will have the new field(s) filled but zeroed.
+    /// 
     /// # Errors
     ///
     /// * If the reader cannot be read from.
-    /// * If the run found is a legacy run (for now).
-    /// * If a Run cannot be parsed from the reader.
-    pub fn parse<R: BufRead>(&self, mut reader: R) -> Result<Run, String> {
-        let mut ver_info = String::new();
-        while ver_info.is_empty() {
-            reader.read_line(&mut ver_info).map_err(|e| {e.to_string()})?;
-        }
-        let _version: u32 = match ver_info.rsplit_once(' ') {
-            Some(num) => num.1.parse::<u32>().unwrap_or(0),
-            None => return Err("legacy parsing not yet implemented".to_owned()),
-        };
-            
-        let mut data: Vec<u8> = vec![];
+    /// * If a Run (legacy or otherwise) cannot be parsed from the reader.
+    /// * If the reader is empty.
+    pub fn parse<R: BufRead>(&self, reader: R) -> Result<Run, String> {
+        let mut lines = reader.lines().map(|l| l.unwrap());
         // TODO: better error handling
-        let _ = reader.read_to_end(&mut data).map_err(|e| {e.to_string()})?;
-        from_bytes(&mut data).map_err(|e| {e.to_string()})
+        let ver_info = String::from_str(&lines.next().ok_or("Input was empty.")?).unwrap();
+        let version: u32 = match ver_info.rsplit_once(' ') {
+            Some(num) => num.1.parse::<u32>().unwrap_or(0),
+            None => 0,
+        };
+        let mut data = {let mut s = String::new(); for line in lines {s.push_str(&line);} s};
+        if version == 0 {
+            let legacy: LegacyRun = from_str(&mut data).map_err(|e| {e.to_string()})?;
+            return Ok(legacy.into());
+        }
+        from_str(&mut data).map_err(|e| {e.to_string()})
     }
     /// Write the given run to the given writer.
     pub fn write<W: Write>(&self, run: &Run, mut writer: W) -> Result<(), String> {
