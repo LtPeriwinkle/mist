@@ -24,12 +24,10 @@ pub fn render_rows(
         // draw the blue highlight box before drawing the text for the split with index current
         if index == current {
             canvas.set_draw_color(Color::BLUE);
-            canvas
-                .fill_rect(Rect::new(0, y - 1, window_width, height + 4))?;
+            canvas.fill_rect(Rect::new(0, y - 1, window_width, height + 4))?;
         }
         row = Rect::new(0, y, width, height);
-        canvas
-            .copy(&item.name(), None, Some(row))?;
+        canvas.copy(&item.name(), None, Some(row))?;
         // if the split has a texture from an active run, draw it to reflect the current time
         // otherwise draw the pb split time
         let texinfo = match item.cur() {
@@ -52,8 +50,7 @@ pub fn render_rows(
                     tinfo.width,
                     tinfo.height,
                 );
-                canvas
-                    .copy(&item.comp_texture(), None, Some(row))?;
+                canvas.copy(&item.comp_texture(), None, Some(row))?;
                 tinfo
             }
         };
@@ -71,11 +68,10 @@ pub fn render_rows(
         }
         canvas.set_draw_color(Color::GRAY);
         // draw a line to separate between the rows
-        canvas
-            .draw_line(
-                Point::new(0, y + split_height as i32 + 3),
-                Point::new(window_width as i32, y + split_height as i32 + 3),
-            )?;
+        canvas.draw_line(
+            Point::new(0, y + split_height as i32 + 3),
+            Point::new(window_width as i32, y + split_height as i32 + 3),
+        )?;
         y += split_height as i32 + 5;
         index += 1;
     }
@@ -145,8 +141,7 @@ pub fn render_time(
             dst.set_y((h - font_y) as i32);
             dst.set_height(font_y);
         }
-        canvas
-            .copy(atlas, Some(src), Some(dst))?;
+        canvas.copy(atlas, Some(src), Some(dst))?;
         char_num += 1;
     }
     Ok(())
