@@ -27,6 +27,12 @@ impl Run {
             sum_times: vec![],
         }
     }
+    pub fn new<S>(game_title: S, category: S, offset: Option<u128>, pb: u128, splits: Vec<String>, pb_times: &Vec<u128>, gold_times: &Vec<u128>, sum_times: &Vec<(u128, u128)>) -> Self
+    where S: ToString, {
+       Run {
+           game_title: game_title.to_string(), category: category.to_string(), offset, pb, splits, pb_times: pb_times.to_owned(), gold_times: gold_times.to_owned(), sum_times: sum_times.to_owned()
+       } 
+    }
     /// Get the game title.
     pub fn game_title(&self) -> &str {
         &self.game_title
