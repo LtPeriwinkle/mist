@@ -31,6 +31,6 @@ version = "0.22"
 optional = true
 
 [dependencies.tinyfiledialogs]
-version = "3.3"
+version = "3.8"
 optional = true
 
