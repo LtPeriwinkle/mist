@@ -1,9 +1,9 @@
 use crate::run::Run;
 use ron::de::from_str;
 use ron::ser::{to_writer_pretty, PrettyConfig};
+use serde::Deserialize;
 use std::io::{BufRead, Write};
 use std::str::FromStr;
-use serde::Deserialize;
 
 #[derive(Deserialize)]
 struct LegacyRun {
@@ -19,7 +19,16 @@ struct LegacyRun {
 impl Into<Run> for LegacyRun {
     fn into(self) -> Run {
         let sums = self.splits.iter().map(|_| (0u128, 0u128)).collect();
-        Run::new(self.category, self.game_title, self.offset, self.pb, &self.splits, &self.pb_times, &self.gold_times, &sums)
+        Run::new(
+            self.category,
+            self.game_title,
+            self.offset,
+            self.pb,
+            &self.splits,
+            &self.pb_times,
+            &self.gold_times,
+            &sums,
+        )
     }
 }
 
@@ -36,7 +45,7 @@ impl MsfParser {
     ///
     /// If the file does not specify version in the first line, it is assumed to be a legacy (i.e. not up to date) run
     /// and is treated as such. Runs converted from legacy runs will have the new field(s) filled but zeroed.
-    /// 
+    ///
     /// # Errors
     ///
     /// * If the reader cannot be read from.
@@ -50,17 +59,68 @@ impl MsfParser {
             Some(num) => num.1.parse::<u32>().unwrap_or(0),
             None => 0,
         };
-        let mut data = {let mut s = String::new(); for line in lines {s.push_str(&line);} s};
+        let mut data = {
+            let mut s = String::new();
+            if version == 0 {
+                s.push_str(&ver_info);
+            }
+            for line in lines {
+                s.push_str(&line);
+            }
+            s
+        };
         if version == 0 {
-            let legacy: LegacyRun = from_str(&mut data).map_err(|e| {e.to_string()})?;
+            let legacy: LegacyRun = from_str(&mut data).map_err(|e| e.to_string())?;
             return Ok(legacy.into());
         }
-        from_str(&mut data).map_err(|e| {e.to_string()})
+        from_str(&mut data).map_err(|e| e.to_string())
     }
     /// Write the given run to the given writer.
     pub fn write<W: Write>(&self, run: &Run, mut writer: W) -> Result<(), String> {
-        writer.write(b"version 1").map_err(|e| {e.to_string()})?;
-        to_writer_pretty(&mut writer, run, PrettyConfig::new()).map_err(|e| {e.to_string()})?;
+        writer.write(b"version 1").map_err(|e| e.to_string())?;
+        to_writer_pretty(&mut writer, run, PrettyConfig::new()).map_err(|e| e.to_string())?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    const V1RUN: &[u8] = b"version 1\n
+        (
+            game_title: \"test\",
+            category: \"test\",
+            offset: Some(200),
+            pb: 1234,
+            splits: [\"test\"],
+            pb_times: [1234],
+            gold_times: [1234],
+            sum_times: [(2, 2480)],
+        )";
+    #[test]
+    fn test_parse() {
+        let reader = std::io::BufReader::new(V1RUN);
+        let parser = MsfParser::new();
+        let run = parser.parse(reader);
+        println!("{:?}", run);
+        assert!(run.is_ok());
+    }
+
+    const LEGACYRUN: &[u8] = b"(
+        game_title: \"test\",
+        category: \"test\",
+        offset: Some(200),
+        pb: 1234,
+        splits: [\"test\"],
+        pb_times: [1234],
+        gold_times: [1234],
+    )";
+
+    #[test]
+    fn test_parse_legacy() {
+        let reader = std::io::BufReader::new(LEGACYRUN);
+        let parser = MsfParser::new();
+        let run = parser.parse(reader);
+        assert!(run.is_ok());
     }
 }
