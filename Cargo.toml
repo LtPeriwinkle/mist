@@ -25,4 +25,4 @@ features = ["ttf"]
 version = "3.3"
 
 [dependencies.mist-core]
-version = "0.1"
+version = "0.2"
