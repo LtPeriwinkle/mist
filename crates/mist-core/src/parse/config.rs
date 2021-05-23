@@ -40,7 +40,7 @@ impl Config {
             .write(true)
             .create(true)
             .open("assets/mist.cfg")
-            .map_err(|e| {e.to_string()})?;
+            .map_err(|e| e.to_string())?;
         let cfg: Self = from_reader(&file).unwrap_or(Config::default());
         return Ok(cfg);
     }
@@ -88,9 +88,9 @@ impl Config {
         let mut file = OpenOptions::new()
             .write(true)
             .open("assets/mist.cfg")
-            .map_err(|e| {e.to_string()})?;
-        let string = to_string_pretty(self, PrettyConfig::new()).map_err(|e| {e.to_string()})?;
-        file.write(&string.as_bytes()).map_err(|e| {e.to_string()})?;
+            .map_err(|e| e.to_string())?;
+        let string = to_string_pretty(self, PrettyConfig::new()).map_err(|e| e.to_string())?;
+        file.write(&string.as_bytes()).map_err(|e| e.to_string())?;
         Ok(())
     }
 }

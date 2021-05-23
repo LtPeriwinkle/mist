@@ -39,7 +39,7 @@ pub fn ms_to_readable(mut ms: u128, round: bool) -> String {
 /// Create the readable time for a time differences.
 ///
 /// Prefixes with `+` for lost time and `-` for gained time.
-/// 
+///
 /// Passing a negative value of `ms` specifies gained time and returns a `-` prefixed string.
 ///
 /// Truncates decimals at the tenths place.
