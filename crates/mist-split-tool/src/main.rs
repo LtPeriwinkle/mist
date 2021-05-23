@@ -23,6 +23,7 @@ fn open_split_file() -> Option<String> {
         Some((&["*.msf", "*.lss"], "")),
     )
 }
+
 fn get_save_as() -> Option<String> {
     match tfd::save_file_dialog_with_filter("Save to MSF file", "", &["*.msf"], "mist split files")
     {
@@ -68,7 +69,7 @@ fn str_to_ms(tm: String) -> u128 {
         ILLEGAL = false;
     }
     let mut ms: u128 = 0;
-    fn alert(_: std::num::ParseIntError) -> u128  {
+    fn alert(_: std::num::ParseIntError) -> u128 {
         dialog::alert_default("invalid time entered");
         unsafe {
             ILLEGAL = true;
@@ -215,99 +216,93 @@ fn main() {
             }
         }
     });
-    table.draw_cell2(move |t, ctx, row, col, x, y, w, h| {
-        match ctx {
-            table::TableContext::StartPage => draw::set_font(Font::Helvetica, 14),
-            table::TableContext::ColHeader => {
-                draw::push_clip(x, y, w, h);
-                draw::draw_box(FrameType::ThinUpBox, x, y, w, h, Color::FrameDefault);
-                draw::set_draw_color(Color::Black);
-                draw::draw_text2(HEADERS[col as usize], x, y, w, h, Align::Center);
-                draw::pop_clip();
-            }
-            table::TableContext::RowHeader => {
-                draw::push_clip(x, y, w, h);
-                draw::draw_box(FrameType::ThinUpBox, x, y, w, h, Color::FrameDefault);
-                draw::set_draw_color(Color::Black);
-                draw::draw_text2(&format!("{}", row + 1), x, y, w, h, Align::Center);
-                draw::pop_clip();
-            }
-            table::TableContext::Cell => {
-                let mut inp = input::Input::new(x, y, w, h, "");
-                if row < ((VECS.lock().unwrap().2.len()) as i32) {
-                    if col == 0 {
-                        inp.set_value(&VECS.lock().unwrap().2[row as usize]);
-                        inp.set_callback2(move |input| {
-                            if (row as usize) >= VECS.lock().unwrap().2.len() {
-                                VECS.lock().unwrap().2.push(input.value())
-                            } else {
-                                VECS.lock().unwrap().2[row as usize] = input.value();
-                            }
-                        })
-                    } else if col == 1 {
-                        if (row as usize) < VECS.lock().unwrap().0.len() {
-                            inp.set_value(&ms_to_readable(
-                                VECS.lock().unwrap().0[row as usize],
-                            ));
-                        }
-                        inp.set_callback2(move |input| {
-                            if (row as usize) >= VECS.lock().unwrap().0.len() {
-                                VECS.lock().unwrap().0.push(str_to_ms(input.value()))
-                            } else {
-                                VECS.lock().unwrap().0[row as usize] = str_to_ms(input.value());
-                            }
-                        })
-                    } else if col == 2 {
-                        if (row as usize) < VECS.lock().unwrap().1.len() {
-                            inp.set_value(&ms_to_readable(
-                                VECS.lock().unwrap().1[row as usize],
-                            ));
-                        }
-                        inp.set_callback2(move |input| {
-                            if (row as usize) >= VECS.lock().unwrap().1.len() {
-                                VECS.lock().unwrap().1.push(str_to_ms(input.value()))
-                            } else {
-                                VECS.lock().unwrap().1[row as usize] = str_to_ms(input.value());
-                            }
-                        })
-                    }
-                } else {
-                    if col == 0 {
-                        inp.set_callback2(move |input| {
-                            if (row as usize) > VECS.lock().unwrap().2.len() {
-                                VECS.lock().unwrap().2.push(input.value())
-                            } else {
-                                VECS.lock().unwrap().2.insert(row as usize, input.value());
-                            }
-                        })
-                    } else if col == 1 {
-                        inp.set_callback2(move |input| {
-                            if (row as usize) > VECS.lock().unwrap().0.len() {
-                                VECS.lock().unwrap().0.push(str_to_ms(input.value()))
-                            } else {
-                                VECS.lock()
-                                    .unwrap()
-                                    .0
-                                    .insert(row as usize, str_to_ms(input.value()));
-                            }
-                        })
-                    } else if col == 2 {
-                        inp.set_callback2(move |input| {
-                            if (row as usize) > VECS.lock().unwrap().1.len() {
-                                VECS.lock().unwrap().1.push(str_to_ms(input.value()))
-                            } else {
-                                VECS.lock()
-                                    .unwrap()
-                                    .1
-                                    .insert(row as usize, str_to_ms(input.value()));
-                            }
-                        })
-                    }
-                }
-                t.add(&inp);
-            }
-            _ => {}
+    table.draw_cell2(move |t, ctx, row, col, x, y, w, h| match ctx {
+        table::TableContext::StartPage => draw::set_font(Font::Helvetica, 14),
+        table::TableContext::ColHeader => {
+            draw::push_clip(x, y, w, h);
+            draw::draw_box(FrameType::ThinUpBox, x, y, w, h, Color::FrameDefault);
+            draw::set_draw_color(Color::Black);
+            draw::draw_text2(HEADERS[col as usize], x, y, w, h, Align::Center);
+            draw::pop_clip();
         }
+        table::TableContext::RowHeader => {
+            draw::push_clip(x, y, w, h);
+            draw::draw_box(FrameType::ThinUpBox, x, y, w, h, Color::FrameDefault);
+            draw::set_draw_color(Color::Black);
+            draw::draw_text2(&format!("{}", row + 1), x, y, w, h, Align::Center);
+            draw::pop_clip();
+        }
+        table::TableContext::Cell => {
+            let mut inp = input::Input::new(x, y, w, h, "");
+            if row < ((VECS.lock().unwrap().2.len()) as i32) {
+                if col == 0 {
+                    inp.set_value(&VECS.lock().unwrap().2[row as usize]);
+                    inp.set_callback2(move |input| {
+                        if (row as usize) >= VECS.lock().unwrap().2.len() {
+                            VECS.lock().unwrap().2.push(input.value())
+                        } else {
+                            VECS.lock().unwrap().2[row as usize] = input.value();
+                        }
+                    })
+                } else if col == 1 {
+                    if (row as usize) < VECS.lock().unwrap().0.len() {
+                        inp.set_value(&ms_to_readable(VECS.lock().unwrap().0[row as usize]));
+                    }
+                    inp.set_callback2(move |input| {
+                        if (row as usize) >= VECS.lock().unwrap().0.len() {
+                            VECS.lock().unwrap().0.push(str_to_ms(input.value()))
+                        } else {
+                            VECS.lock().unwrap().0[row as usize] = str_to_ms(input.value());
+                        }
+                    })
+                } else if col == 2 {
+                    if (row as usize) < VECS.lock().unwrap().1.len() {
+                        inp.set_value(&ms_to_readable(VECS.lock().unwrap().1[row as usize]));
+                    }
+                    inp.set_callback2(move |input| {
+                        if (row as usize) >= VECS.lock().unwrap().1.len() {
+                            VECS.lock().unwrap().1.push(str_to_ms(input.value()))
+                        } else {
+                            VECS.lock().unwrap().1[row as usize] = str_to_ms(input.value());
+                        }
+                    })
+                }
+            } else {
+                if col == 0 {
+                    inp.set_callback2(move |input| {
+                        if (row as usize) > VECS.lock().unwrap().2.len() {
+                            VECS.lock().unwrap().2.push(input.value())
+                        } else {
+                            VECS.lock().unwrap().2.insert(row as usize, input.value());
+                        }
+                    })
+                } else if col == 1 {
+                    inp.set_callback2(move |input| {
+                        if (row as usize) > VECS.lock().unwrap().0.len() {
+                            VECS.lock().unwrap().0.push(str_to_ms(input.value()))
+                        } else {
+                            VECS.lock()
+                                .unwrap()
+                                .0
+                                .insert(row as usize, str_to_ms(input.value()));
+                        }
+                    })
+                } else if col == 2 {
+                    inp.set_callback2(move |input| {
+                        if (row as usize) > VECS.lock().unwrap().1.len() {
+                            VECS.lock().unwrap().1.push(str_to_ms(input.value()))
+                        } else {
+                            VECS.lock()
+                                .unwrap()
+                                .1
+                                .insert(row as usize, str_to_ms(input.value()));
+                        }
+                    })
+                }
+            }
+            t.add(&inp);
+        }
+        _ => {}
     });
     let mut table1 = table.clone();
     add_button.set_callback(move || {
