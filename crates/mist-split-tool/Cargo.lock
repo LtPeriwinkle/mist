@@ -89,12 +89,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
 
 [[package]]
-name = "mist-run-utils"
-version = "2.1.2"
+name = "mist-core"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3245048325df9cb4ec3946242d6085966b49c1432a27dd88b585598fe9ffba68"
 dependencies = [
  "quick-xml",
  "ron",
  "serde",
+ "tinyfiledialogs",
 ]
 
 [[package]]
@@ -103,7 +106,7 @@ version = "0.3.2"
 dependencies = [
  "fltk",
  "lazy_static",
- "mist-run-utils",
+ "mist-core",
  "tinyfiledialogs",
 ]
 
@@ -127,9 +130,9 @@ dependencies = [
 
 [[package]]
 name = "quick-xml"
-version = "0.20.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26aab6b48e2590e4a64d1ed808749ba06257882b461d01ca71baeb747074a6dd"
+checksum = "8533f14c8382aaad0d592c812ac3b826162128b65662331e1127b45c3d18536b"
 dependencies = [
  "memchr",
 ]

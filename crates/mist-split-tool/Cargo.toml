@@ -14,11 +14,10 @@ version = "0.16"
 [dependencies.tinyfiledialogs]
 version = "3.3"
 
-[dependencies.mist-run-utils]
-path = "../mist-run-utils/"
-version = "2.1"
+[dependencies.mist-core]
+version = "0.2"
 default-features = false
-features = ["msf", "lss"]
+features = ["dialogs", "lss"]
 
 [dependencies.lazy_static]
 version = "1.4"
