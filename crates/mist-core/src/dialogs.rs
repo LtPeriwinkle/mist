@@ -3,7 +3,7 @@ use crate::run::Run;
 use std::fs::File;
 use std::io::{BufReader, Error};
 use tinyfiledialogs::{
-    message_box_ok, message_box_yes_no, open_file_dialog, MessageBoxIcon, YesNo,
+    message_box_ok, message_box_yes_no, open_file_dialog, MessageBoxIcon, YesNo, save_file_dialog_with_filter
 };
 
 pub fn save_check() -> bool {
@@ -20,6 +20,10 @@ pub fn save_check() -> bool {
 
 pub fn get_file(title: &str, filter: &str) -> Option<String> {
     open_file_dialog(title, "", Some((&[filter], "")))
+}
+
+pub fn get_save_as() -> Option<String> {
+    save_file_dialog_with_filter("Save as:", "", &["*.msf"], "mist split files")
 }
 
 fn try_again() -> bool {
