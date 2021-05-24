@@ -33,9 +33,8 @@ use crate::render;
 use crate::splits::Split;
 use crate::state::TimerState;
 // struct that holds information about the running app and its state
-#[allow(dead_code)]
 pub struct App {
-    context: sdl2::Sdl,
+    _context: sdl2::Sdl,
     ev_pump: sdl2::EventPump,
     timer: Instant,
     canvas: WindowCanvas,
@@ -68,7 +67,7 @@ impl App {
         let timer = Instant::now();
         // return an App that hasn't started and has an empty run
         let mut app = App {
-            context,
+            _context: context,
             ev_pump,
             timer,
             canvas,
