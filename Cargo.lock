@@ -48,7 +48,6 @@ version = "1.10.0"
 dependencies = [
  "mist-core",
  "sdl2",
- "tinyfiledialogs",
 ]
 
 [[package]]
