@@ -18,7 +18,7 @@ pub fn save_check() -> bool {
     }
 }
 
-fn get_file(title: &str, filter: &str) -> Option<String> {
+pub fn get_file(title: &str, filter: &str) -> Option<String> {
     open_file_dialog(title, "", Some((&[filter], "")))
 }
 
