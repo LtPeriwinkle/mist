@@ -246,9 +246,17 @@ impl App {
             .window_mut()
             .set_minimum_size(0, timer_height + 20)
             .map_err(|_| get_error())?;
+        self.canvas
+            .window_mut()
+            .set_title(&format!(
+                "mist: {} ({})",
+                self.run.game_title(),
+                self.run.category(),
+            ))
+            .map_err(|_| get_error())?;
 
         // get first vec of split name textures from file
-        let split_names = self.run.splits();
+        let mut split_names = self.run.splits();
         let mut offset = self.run.offset();
         // if there is an offset, display it properly
         match offset {
@@ -320,7 +328,7 @@ impl App {
         // drop stuff that isnt needed after initializing
         drop(split_times_ms);
         drop(split_times_raw);
-        drop(split_names);
+        //drop(split_names);
         drop(map);
 
         // set up variables used in the mainloop
@@ -429,6 +437,20 @@ impl App {
                             TimerState::Paused {
                                 time: t, split: s, ..
                             } => {
+                                self.canvas
+                                    .window_mut()
+                                    .set_title(&format!(
+                                        "mist: {} ({}) [{}: {}]",
+                                        self.run.game_title(),
+                                        self.run.category(),
+                                        current_split + 1,
+                                        if self.run.splits().len() != 0 {
+                                            &self.run.splits()[current_split]
+                                        } else {
+                                            ""
+                                        }
+                                    ))
+                                    .map_err(|_| get_error())?;
                                 total_time = Instant::now();
                                 split_time_ticks = elapsed;
                                 before_pause = t;
@@ -437,6 +459,20 @@ impl App {
                             }
                             // if the timer is already running, set it to paused.
                             TimerState::Running { .. } => {
+                                self.canvas
+                                    .window_mut()
+                                    .set_title(&format!(
+                                        "mist: {} ({}) [{}: {}] (paused)",
+                                        self.run.game_title(),
+                                        self.run.category(),
+                                        current_split + 1,
+                                        if self.run.splits().len() != 0 {
+                                            &self.run.splits()[current_split]
+                                        } else {
+                                            ""
+                                        }
+                                    ))
+                                    .map_err(|_| get_error())?;
                                 self.state = TimerState::Paused {
                                     time: total_time.elapsed().as_millis() + before_pause,
                                     split: (elapsed - split_time_ticks) + before_pause_split,
@@ -456,6 +492,14 @@ impl App {
                         repeat: false,
                         ..
                     } => {
+                        self.canvas
+                            .window_mut()
+                            .set_title(&format!(
+                                "mist: {} ({})",
+                                self.run.game_title(),
+                                self.run.category(),
+                            ))
+                            .map_err(|_| get_error())?;
                         // reset stuff specific to the active run and return splits to the top of the list
                         active_run_times = vec![];
                         top_split_index = 0;
@@ -546,6 +590,20 @@ impl App {
                     } => match self.state {
                         // if timer isnt started, start it.
                         TimerState::NotRunning { .. } => {
+                            self.canvas
+                                .window_mut()
+                                .set_title(&format!(
+                                    "mist: {} ({}) [{}: {}]",
+                                    self.run.game_title(),
+                                    self.run.category(),
+                                    current_split + 1,
+                                    if self.run.splits().len() != 0 {
+                                        &self.run.splits()[current_split]
+                                    } else {
+                                        ""
+                                    }
+                                ))
+                                .map_err(|_| get_error())?;
                             elapsed = self.timer.elapsed().as_millis();
                             split_time_ticks = elapsed;
                             total_time = Instant::now();
@@ -602,6 +660,20 @@ impl App {
                                 // if there are still splits left, continue the run and advance the current split
                                 if current_split < len - 1 {
                                     current_split += 1;
+                                    self.canvas
+                                        .window_mut()
+                                        .set_title(&format!(
+                                            "mist: {} ({}) [{}: {}]",
+                                            self.run.game_title(),
+                                            self.run.category(),
+                                            current_split + 1,
+                                            if self.run.splits().len() != 0 {
+                                                &self.run.splits()[current_split]
+                                            } else {
+                                                ""
+                                            }
+                                        ))
+                                        .map_err(|_| get_error())?;
                                     // if the next split is offscreen set recreate_on_screen flag to change the current split slice
                                     if current_split > bottom_split_index
                                         && bottom_split_index + 1 < len
@@ -611,6 +683,14 @@ impl App {
                                     }
                                 // otherwise end the run
                                 } else {
+                                    self.canvas
+                                        .window_mut()
+                                        .set_title(&format!(
+                                            "mist: {} ({})",
+                                            self.run.game_title(),
+                                            self.run.category(),
+                                        ))
+                                        .map_err(|_| get_error())?;
                                     // set the state of the timer to finished, round string to 30fps
                                     self.state = TimerState::NotRunning {
                                         time_str: timing::ms_to_readable(
@@ -708,7 +788,7 @@ impl App {
                                 _ => {}
                             }
                             // recreate split names, times, textures, etc
-                            let split_names = self.run.splits();
+                            split_names = self.run.splits();
                             let split_times_ms: Vec<u128> =
                                 self.run.pb_times().iter().cloned().collect();
                             summed_times = timing::split_time_sum(&split_times_ms);
