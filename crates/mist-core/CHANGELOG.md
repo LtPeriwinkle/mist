@@ -1,4 +1,7 @@
 ## mist-core changelog
+### 0.3.1
+- add missing newline to version writer
+
 ### 0.3.0
 - make dialogs::get_file public
 - add dialogs::get\_save\_as
