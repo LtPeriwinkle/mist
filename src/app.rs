@@ -94,7 +94,7 @@ impl App {
                         app.run = run;
                         app.config.set_file(&path);
                     }
-                    None => return Err("No split file specified".to_owned()),
+                    None => app.run = Run::empty(),
                 },
                 Err(e) => return Err(e.to_string()),
             }
@@ -103,7 +103,11 @@ impl App {
     }
 
     pub fn run(&mut self) -> Result<(), String> {
-        let mut path = self.config.file().unwrap().to_owned();
+        let mut no_file: bool;
+        let mut path = match self.config.file() {
+            Some(p) => {no_file = false; p.to_owned()},
+            None => {no_file = true; "".to_owned()}
+        };
 
         self.canvas.clear();
 
@@ -700,6 +704,7 @@ impl App {
                                     };
                                     // if this run was a pb then set the Run struct's pb and splits
                                     if (elapsed - t) + before_pause < self.run.pb() {
+                                        no_file = false;
                                         index = 0;
                                         summed_times = timing::split_time_sum(&active_run_times);
                                         let split_times_raw: Vec<String> = summed_times
@@ -728,6 +733,12 @@ impl App {
                             // finish the run if there are no splits
                             } else {
                                 elapsed = self.timer.elapsed().as_millis();
+                                if no_file {
+                                    no_file = false;
+                                    save = true;
+                                    self.run.set_pb((elapsed - t) + before_pause);
+                                    self.run.set_pb_times(&active_run_times);
+                                }
                                 self.state = TimerState::NotRunning {
                                     time_str: timing::ms_to_readable(
                                         (elapsed - t) + before_pause,
@@ -762,8 +773,20 @@ impl App {
                         if let TimerState::NotRunning { .. } = self.state {
                             // save the previous run if it was updated
                             if save && dialogs::save_check() {
-                                let mut f = File::open(&path).map_err(|e| e.to_string())?;
-                                self.msf.write(&self.run, &mut f)?;
+                                if path == "".to_owned() {
+                                    let p = dialogs::get_save_as();
+                                    match p {
+                                        Some(s) => {
+                                            path = s;
+                                            let mut f = File::create(&path).map_err(|e| e.to_string())?;
+                                            self.msf.write(&self.run, &mut f)?;
+                                        }
+                                        None => {}
+                                    }
+                                } else {
+                                    let mut f = File::open(&path).map_err(|e| e.to_string())?;
+                                    self.msf.write(&self.run, &mut f)?;
+                                }
                             }
                             // open a file dialog to get a new split file + run
                             // if the user cancelled, do nothing
@@ -1004,8 +1027,20 @@ impl App {
         self.config.save()?;
         // if splits were updated, prompt user to save the split file
         if save && dialogs::save_check() {
-            let mut f = File::open(&path).map_err(|e| e.to_string())?;
-            self.msf.write(&self.run, &mut f)?;
+            if path == "".to_owned() {
+                let p = dialogs::get_save_as();
+                match p {
+                    Some(s) => {
+                        path = s;
+                        let mut f = File::create(&path).map_err(|e| e.to_string())?;
+                        self.msf.write(&self.run, &mut f)?;
+                    }
+                    None => {}
+                }
+            } else {
+                let mut f = File::open(&path).map_err(|e| e.to_string())?;
+                self.msf.write(&self.run, &mut f)?;
+            }
         }
         Ok(())
     }
