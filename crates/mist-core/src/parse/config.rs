@@ -4,6 +4,7 @@ use ron::ser::{to_string_pretty, PrettyConfig};
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Write;
+use crate::KeybindsRaw;
 // more will be added to this in the future
 #[derive(Serialize, Deserialize)]
 #[cfg(feature = "bg")]
@@ -16,6 +17,7 @@ pub struct Config {
     t_font: String,
     s_font: String,
     font_size: (u16, u16),
+    binds: KeybindsRaw,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -27,6 +29,7 @@ pub struct Config {
     t_font: String,
     s_font: String,
     font_size: (u16, u16),
+    binds: KeybindsRaw,
 }
 
 impl Config {
@@ -93,6 +96,9 @@ impl Config {
         file.write(&string.as_bytes()).map_err(|e| e.to_string())?;
         Ok(())
     }
+    pub fn binds(&self) -> &KeybindsRaw {
+        &self.binds
+    }
 }
 
 #[cfg(feature = "bg")]
@@ -113,6 +119,7 @@ impl Default for Config {
             t_font: "assets/segoe-ui-bold.ttf".to_owned(),
             s_font: "assets/segoe-ui-bold.ttf".to_owned(),
             font_size: (60, 25),
+            binds: KeybindsRaw::default(),
         }
     }
 }
@@ -132,6 +139,7 @@ impl Default for Config {
             t_font: "assets/segoe-ui-bold.ttf".to_owned(),
             s_font: "assets/segoe-ui-bold.ttf".to_owned(),
             font_size: (60, 25),
+            binds: KeybindsRaw::default(),
         }
     }
 }
