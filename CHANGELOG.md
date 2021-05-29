@@ -1,23 +1,32 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.10.1
+- change the window title to be descriptive
+- use an empty run if opened with no split file
+- fix yet more crashes with 0-split files
+
 ### 1.10.0
 - mist-core is a thing now
 - components, timing, config, moved from mainline to mist-core.
 - run parsing moved from the terrible run utils to mist-core
 - also made the error handling a billion times better
+
 ### 1.9.3
 - remove redundant TimerState variant
 - fix crashes with 0 splits (again)
 - add features to disable gfx/image necessity
+
 ### 1.9.2
 - fix (read: completely rebuild) the old, esoteric scrolling system to make slightly more sense and crash slightly less
 - make all split rows the same height so that the lines don't move when scrolling
 - move error macro to components, replace some errors i missed in 1.9.1
 - add configurable bg color which i meant to add ages ago
+
 ### 1.9.1
 - custom error macro to reduce repeated code in unwraps
 - reduce duplicated render code
 - fix a crash when scrolling super fast
+
 ### 1.9.0
 - fixed some warnings that have been around forever
 - fixed an issue where diffs would never be set to gold
