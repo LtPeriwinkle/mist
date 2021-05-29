@@ -1,4 +1,7 @@
 ## mist-core changelog
+### 0.4.0
+- add keybinds to config struct
+
 ### 0.3.1
 - add missing newline to version writer
 
