@@ -322,7 +322,10 @@ impl App {
         // if there are too few splits then set the max splits to the number of splits rather than
         // the max allowed amount
         let max_initial_splits: usize = ((500 - timer_height) / splits_height) as usize;
-        if max_initial_splits > splits.len() {
+        if splits.len() == 0 {
+           max_splits = 0;
+           bottom_split_index = 0;
+        } else if max_initial_splits > splits.len() {
             bottom_split_index = splits.len() - 1;
             max_splits = splits.len();
         } else {
@@ -414,7 +417,7 @@ impl App {
 
                     // if scroll down and there are enough splits, scroll splits down
                     Event::MouseWheel { y: -1, .. } => {
-                        if bottom_split_index < len - 1 {
+                        if len != 0 && bottom_split_index < len - 1 {
                             bottom_split_index += 1;
                             top_split_index += 1;
                         }
