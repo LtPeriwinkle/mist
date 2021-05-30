@@ -18,7 +18,7 @@ struct LegacyRun {
 
 impl Into<Run> for LegacyRun {
     fn into(self) -> Run {
-        let sums = self.splits.iter().map(|_| (0u128, 0u128)).collect();
+        let sums = self.pb_times.iter().map(|val| (1u128, *val)).collect();
         Run::new(
             self.category,
             self.game_title,
