@@ -735,6 +735,14 @@ impl App {
                                 }
                             // finish the run if there are no splits
                             } else {
+                                self.canvas
+                                    .window_mut()
+                                    .set_title(&format!(
+                                        "mist: {} ({})",
+                                        self.run.game_title(),
+                                        self.run.category(),
+                                    ))
+                                    .map_err(|_| get_error())?;
                                 elapsed = self.timer.elapsed().as_millis();
                                 if no_file {
                                     no_file = false;
