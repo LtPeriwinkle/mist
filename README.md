@@ -17,7 +17,7 @@ Once all planned features are complete, I will likely stop developing this and o
 - [ ] (limited) customizability 
 	* [X] custom fonts/font sizes
 	* [X] custom colors
-	* [ ] keybinds
+	* [X] keybinds
 	* [X] timer backgrounds
 	* [ ] panels (sum of best etc)
 	* [ ] time rounding (30/60/off)
@@ -102,14 +102,14 @@ brew install sdl2 sdl2_image sdl2_ttf sdl2_gfx
 Then you should be able to run `cargo build --release`.
 
 # Usage
-The current default keybinds are: \
-F1: Open new split file \
-Space: Start/split/stop \
-Enter: Pause \
-R: Reset \
-Left Arrow: Previous comparison \
-Right Arrow: Next comparison \
-Mousewheel: Scroll splits up/down (if there are more than fit in the window) \
+The default keybinds are: \
+<kbd>F1</kbd>: Open new split file \
+<kbd>Space</kbd>: Start/split/stop \
+<kbd>Enter</kbd>: Pause \
+<kbd>R</kbd>: Reset \
+<kbd>&leftarrow;</kbd>: Previous comparison \
+<kbd>&rightarrow;</kbd>: Next comparison \
+Mousewheel: Scroll splits up/down (if there are more than fit in the window)
 
 Mist reads configuration info from assets/mist.cfg in the directory where its executable is located.
 
