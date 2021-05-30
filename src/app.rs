@@ -484,6 +484,16 @@ impl App {
                                         active_run_times.push(
                                             (elapsed - split_time_ticks) + before_pause_split,
                                         );
+                                        let sum = self.run.sum_times()[current_split];
+                                        self.run.set_sum_time(
+                                            (
+                                                sum.0 + 1,
+                                                sum.1
+                                                    + ((elapsed - split_time_ticks)
+                                                        + before_pause_split),
+                                            ),
+                                            current_split,
+                                        );
                                         split_time_ticks = elapsed;
                                         before_pause_split = 0;
                                         // create the difference time shown after a split
@@ -523,6 +533,20 @@ impl App {
                                             .create_texture_from_surface(&text_surface)
                                             .map_err(|_| get_error())?;
                                         splits[current_split].set_cur(Some(texture));
+                                        // update the comparison texture if we are looking at average, because the average
+                                        // will have changed
+                                        if let Comparison::Average = self.comparison {
+                                            let sum = self.run.sum_times()[current_split];
+                                            let tm = sum.1 / sum.0;
+                                            text_surface = font
+                                                .render(&timing::split_time_text(tm))
+                                                .blended(Color::WHITE)
+                                                .map_err(|_| get_error())?;
+                                            texture = creator
+                                                .create_texture_from_surface(&text_surface)
+                                                .map_err(|_| get_error())?;
+                                            splits[current_split].set_comp_tex(texture);
+                                        }
                                         // if there are still splits left, continue the run and advance the current split
                                         if current_split < len - 1 {
                                             current_split += 1;
@@ -727,7 +751,7 @@ impl App {
                             if let TimerState::NotRunning { .. } = self.state {
                                 // save the previous run if it was updated
                                 if save && dialogs::save_check() {
-                                    if path == "".to_owned() {
+                                    if path == "" {
                                         let p = dialogs::get_save_as();
                                         match p {
                                             Some(s) => {
@@ -892,6 +916,44 @@ impl App {
                         splits[index].set_comp_tex(tex);
                         index += 1;
                     }
+                } else if let Comparison::Average = self.comparison {
+                    let (attempts, mut times) = {
+                        let sums = self.run.sum_times();
+                        let mut att = vec![];
+                        let mut tm = vec![];
+                        for sum in sums {
+                            att.push(sum.0);
+                            tm.push(sum.1);
+                        }
+                        (att, tm)
+                    };
+                    index = 0;
+                    while index < attempts.len() {
+                        times[index] = times[index] / {
+                            if attempts[index] == 0 {
+                                1
+                            } else {
+                                attempts[index]
+                            }
+                        };
+                        index += 1;
+                    }
+                    let split_times_raw: Vec<String> = timing::split_time_sum(&times)
+                        .iter()
+                        .map(|val| timing::split_time_text(*val))
+                        .collect();
+                    index = 0;
+                    while index < len {
+                        let surface = font
+                            .render(&split_times_raw[index])
+                            .blended(Color::WHITE)
+                            .map_err(|_| get_error())?;
+                        let tex = creator
+                            .create_texture_from_surface(&surface)
+                            .map_err(|_| get_error())?;
+                        splits[index].set_comp_tex(tex);
+                        index += 1;
+                    }
                 } else {
                     let split_times = match self.comparison {
                         Comparison::PersonalBest => self.run.pb_times().to_vec(),
@@ -903,6 +965,7 @@ impl App {
                         .iter()
                         .map(|val| timing::split_time_text(*val))
                         .collect();
+                    index = 0;
                     while index < len {
                         let surface = font
                             .render(&split_times_raw[index])
@@ -943,6 +1006,16 @@ impl App {
                         allowed = (match self.comparison {
                             Comparison::PersonalBest => splits[current_split].time(),
                             Comparison::Golds => splits[current_split].gold(),
+                            Comparison::Average => {
+                                let sum = self.run.sum_times()[current_split];
+                                sum.1 / {
+                                    if sum.0 == 0 {
+                                        1
+                                    } else {
+                                        sum.0
+                                    }
+                                }
+                            }
                             _ => unreachable!(),
                         }) as i128
                             - splits[current_split - 1].diff();
@@ -1033,7 +1106,7 @@ impl App {
         self.config.save()?;
         // if splits were updated, prompt user to save the split file
         if save && dialogs::save_check() {
-            if path == "".to_owned() {
+            if path == "" {
                 let p = dialogs::get_save_as();
                 match p {
                     Some(s) => {
