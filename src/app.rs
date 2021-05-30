@@ -29,6 +29,7 @@ use mist_core::{
 };
 
 use crate::comparison::Comparison;
+use crate::keybinds::Keybinds;
 use crate::render;
 use crate::splits::Split;
 use crate::state::TimerState;
@@ -42,6 +43,7 @@ pub struct App {
     state: TimerState,
     comparison: Comparison,
     run: Run,
+    binds: Keybinds,
     config: Config,
     msf: MsfParser,
 }
@@ -63,6 +65,7 @@ impl App {
         let canvas = window.into_canvas().build().map_err(|_| get_error())?;
         let ttf = ttf::init().map_err(|_| get_error())?;
         let ev_pump = context.event_pump().map_err(|_| get_error())?;
+        let config = Config::open()?;
         // start the overarching application timer (kinda)
         let timer = Instant::now();
         // return an App that hasn't started and has an empty run
@@ -77,7 +80,8 @@ impl App {
             },
             comparison: Comparison::PersonalBest,
             run: Run::empty(),
-            config: Config::open()?,
+            binds: Keybinds::from_raw(config.binds())?,
+            config: config,
             msf: MsfParser::new(),
         };
         // try to use the filepath specified in the config file
