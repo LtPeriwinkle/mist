@@ -1,4 +1,10 @@
 ## mist-core changelog
+### 0.4.2
+- fix conversion 
+
+### 0.4.1
+- make fields of keybinds pubilc
+
 ### 0.4.0
 - add keybinds to config struct
 
