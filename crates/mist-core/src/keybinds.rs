@@ -2,12 +2,12 @@ use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize, Debug)]
 /// The raw representation of mist keybinds as [`String`]s.
 pub struct KeybindsRaw {
-    pause: String,
-    reset: String,
-    start_split: String,
-    prev_comp: String,
-    next_comp: String,
-    load_splits: String,
+    pub pause: String,
+    pub reset: String,
+    pub start_split: String,
+    pub prev_comp: String,
+    pub next_comp: String,
+    pub load_splits: String,
 }
 
 impl Default for KeybindsRaw {
