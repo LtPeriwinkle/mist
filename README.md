@@ -7,49 +7,52 @@ a minimal, improved speedrun timer
 [Latest Release](https://github.com/LtPeriwinkle/mist/releases/latest)
 
 ## Planned features
-More will probably be added to this list in the future
+Once all planned features are complete, I will likely stop developing this and only squash bugs etc. More *might* still be added to this list.
 - [X] Cross platform
 	* [X] Linux
 	* [X] Windows
 	* [X] MacOS (compiled & tested in macOS catalina VM)
 - [X] Human-readable split file (using [ron](https://github.com/ron-rs/ron))
-- [X] LiveSplit split file transposing
+- [X] LiveSplit split file transposing (split tool)
 - [ ] (limited) customizability 
 	* [X] custom fonts/font sizes
 	* [X] custom colors
 	* [ ] keybinds
 	* [X] timer backgrounds
 	* [ ] panels (sum of best etc)
-- [X] split file creation tool
+	* [ ] time rounding (30/60/off)
+	* [ ] *very limited* timer layout (i.e. use two rows for splits like option available in LiveSplit)
+- [ ] split file creation tool
 	* [X] edit existing msf
 	* [X] convert lss to msf
 	* [X] create new splits
+	* [ ] actually good and usable (hardest part)
 - [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
 - [X] dynamic colors
 - [ ] different run comparisons
 	* [X] sum of best
 	* [X] pb
 	* [X] none
-	* [ ] average overall
-	* [ ] last x runs average
+	* [ ] average
 - [ ] hot reloading
 	* [X] split file reloading
 	* [ ] config reloading
-
-## Requested features
-Features that people have asked for but i'm not sure if i can implement go here
-* Gif split icons
-* Gif timer background
-* Subsplits
-* Plugins (for notes/maps/other resources etc)
+- [ ] plugins
+	* [ ] autoloading from plugins directory (probably run as some kind of child process thing?)
+	* [ ] communicate with plugins through ipc (i.e. unix socket, windows named pipe)
+	* [ ] plugins that are shipped with this repo (a discord presence, some kind of notes plugin, maybe more)
+- [ ] search for config/assets in standard os-specific dirs rather than hard-coded one (allows for packaging, installation, etc)
+- [ ] better way to find fonts than paths in config file
 
 ## Unplanned features
-These features are *highly unlikely* be implemented, in the spirit of minimalism. This does not always mean they will *never* happen.
+These features are will not be implemented, in the spirit of minimalism.
 * Autosplitters
-* horizontal timer layout
+* Horizontal timer layout
 * Ingame time
 * Internet time sync
 * SRC/SRL/splits.io/racetime.gg integration
+* GIFs
+* Split icons
 
 # Installation
 
