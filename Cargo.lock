@@ -52,9 +52,9 @@ dependencies = [
 
 [[package]]
 name = "mist-core"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0267f12412323ea95490ec3673013d53c4751ce65259b3d92c8b465ae2253fac"
+checksum = "4dd0eba89be3488463c6e5733b92e7899ed08d6a6741c10054c606f4bc3a6d5c"
 dependencies = [
  "ron",
  "serde",
