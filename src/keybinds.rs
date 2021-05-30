@@ -1,6 +1,7 @@
 use mist_core::KeybindsRaw;
 use sdl2::keyboard::Keycode;
 
+#[derive(Debug)]
 pub struct Keybinds {
     pub pause: Keycode,
     pub reset: Keycode,
@@ -12,13 +13,17 @@ pub struct Keybinds {
 
 impl Keybinds {
     pub fn from_raw(raw: &KeybindsRaw) -> Result<Self, String> {
-       Ok(Keybinds {
-           pause: Keycode::from_name(&raw.pause).ok_or("Pause keybind couldn't be parsed.")?,
-           reset: Keycode::from_name(&raw.reset).ok_or("Reset keybind couldn't be parsed.")?,
-           start_split: Keycode::from_name(&raw.start_split).ok_or("start/split keybind couldn't be parsed.")?,
-           prev_comp: Keycode::from_name(&raw.prev_comp).ok_or("Prev comparison keybind couldn't be parsed")?,
-           next_comp: Keycode::from_name(&raw.next_comp).ok_or("Next comparison keybind couldn't be parsed")?,
-           load_splits: Keycode::from_name(&raw.next_comp).ok_or("Load splits keybind couldn't be parsed")?,
-       })
+        Ok(Keybinds {
+            pause: Keycode::from_name(&raw.pause).ok_or("Pause keybind could not be parsed.")?,
+            reset: Keycode::from_name(&raw.reset).ok_or("Reset keybind could not be parsed.")?,
+            start_split: Keycode::from_name(&raw.start_split)
+                .ok_or("start/split keybind could not be parsed.")?,
+            prev_comp: Keycode::from_name(&raw.prev_comp)
+                .ok_or("Prev comparison keybind could not be parsed")?,
+            next_comp: Keycode::from_name(&raw.next_comp)
+                .ok_or("Next comparison keybind could not be parsed")?,
+            load_splits: Keycode::from_name(&raw.next_comp)
+                .ok_or("Load splits keybind could not be parsed")?,
+        })
     }
 }
