@@ -1,5 +1,12 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.11.0
+- fix crash on resize with no splits (#4, fixed in #5)
+- add in a title set that was missing
+- add comparison to average splits
+- require you to press R to restart the timer
+- customizeable keybinds
+
 ### 1.10.1
 - change the window title to be descriptive
 - use an empty run if opened with no split file

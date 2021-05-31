@@ -44,7 +44,7 @@ checksum = "789da6d93f1b866ffe175afc5322a4d76c038605a1c3319bb57b06967ca98a36"
 
 [[package]]
 name = "mist"
-version = "1.10.1"
+version = "1.11.0"
 dependencies = [
  "mist-core",
  "sdl2",
