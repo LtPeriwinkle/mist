@@ -859,40 +859,43 @@ impl App {
                         let rows_height = ((bottom_split_index - top_split_index) as u32
                             * (splits_height + 2))
                             + splits_height;
-                        // if there are too many splits, calculate how many and set flag to make a new list to display
-                        // otherwise if there are too few and there are enough to display more, set recreate flag
-                        if height - timer_height < rows_height {
-                            diff =
-                                ((rows_height - (height - timer_height)) / splits_height) as usize;
-                            if max_splits > diff {
-                                max_splits -= diff;
-                            } else {
-                                max_splits = 0;
-                            }
-                            if current_split > bottom_split_index - diff {
-                                top_split_index += diff;
-                                bottom_split_index = current_split;
-                            } else if bottom_split_index > diff {
-                                bottom_split_index -= diff;
-                            } else {
-                                bottom_split_index = 0;
-                            }
-                        } else if rows_height < height - timer_height {
-                            diff =
-                                (((height - timer_height) - rows_height) / splits_height) as usize;
-                            if current_split == bottom_split_index
-                                && current_split != len - 1
-                                && top_split_index >= diff
-                            {
-                                top_split_index -= diff;
-                                max_splits += diff;
-                            } else if bottom_split_index + diff > len - 1 || max_splits + diff > len
-                            {
-                                bottom_split_index = len - 1;
-                                max_splits = len;
-                            } else {
-                                max_splits += diff;
-                                bottom_split_index = max_splits - 1;
+                        // if there aren't any splits, we don't need to worry about changing the number of splits
+                        if len != 0 {
+                            // if there are too many splits, calculate how many and set flag to make a new list to display
+                            // otherwise if there are too few and there are enough to display more, set recreate flag
+                            if height - timer_height < rows_height {
+                                diff =
+                                    ((rows_height - (height - timer_height)) / splits_height) as usize;
+                                if max_splits > diff {
+                                    max_splits -= diff;
+                                } else {
+                                    max_splits = 0;
+                                }
+                                if current_split > bottom_split_index - diff {
+                                    top_split_index += diff;
+                                    bottom_split_index = current_split;
+                                } else if bottom_split_index > diff {
+                                    bottom_split_index -= diff;
+                                } else {
+                                    bottom_split_index = 0;
+                                }
+                            } else if rows_height < height - timer_height {
+                                diff =
+                                    (((height - timer_height) - rows_height) / splits_height) as usize;
+                                if current_split == bottom_split_index
+                                    && current_split != len - 1
+                                    && top_split_index >= diff
+                                {
+                                    top_split_index -= diff;
+                                    max_splits += diff;
+                                } else if bottom_split_index + diff > len - 1 || max_splits + diff > len
+                                {
+                                    bottom_split_index = len - 1;
+                                    max_splits = len;
+                                } else {
+                                    max_splits += diff;
+                                    bottom_split_index = max_splits - 1;
+                                }
                             }
                         }
                     }
