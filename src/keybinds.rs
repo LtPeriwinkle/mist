@@ -22,7 +22,7 @@ impl Keybinds {
                 .ok_or("Prev comparison keybind could not be parsed")?,
             next_comp: Keycode::from_name(&raw.next_comp)
                 .ok_or("Next comparison keybind could not be parsed")?,
-            load_splits: Keycode::from_name(&raw.next_comp)
+            load_splits: Keycode::from_name(&raw.load_splits)
                 .ok_or("Load splits keybind could not be parsed")?,
         })
     }
