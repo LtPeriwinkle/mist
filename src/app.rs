@@ -449,6 +449,8 @@ impl App {
                             match self.state {
                                 // if timer isnt started, start it.
                                 TimerState::NotRunning { .. } if current_split == 0 => {
+                                    elapsed = self.timer.elapsed().as_millis();
+                                    total_time = Instant::now();
                                     self.canvas
                                         .window_mut()
                                         .set_title(&format!(
@@ -463,9 +465,7 @@ impl App {
                                             }
                                         ))
                                         .map_err(|_| get_error())?;
-                                    elapsed = self.timer.elapsed().as_millis();
                                     split_time_ticks = elapsed;
-                                    total_time = Instant::now();
                                     match offset {
                                         // if we are in the start offset, tell it to offset
                                         Some(x) => {
@@ -504,7 +504,7 @@ impl App {
                                         time_str = timing::diff_text(diff);
                                         // set diff color to gold and replace split gold
                                         if active_run_times[current_split]
-                                            < splits[current_split].gold()
+                                            < splits[current_split].gold() || splits[current_split].gold() == 0
                                         {
                                             save = true;
                                             color = gold;
@@ -589,7 +589,7 @@ impl App {
                                                 ),
                                             };
                                             // if this run was a pb then set the Run struct's pb and splits
-                                            if (elapsed - t) + before_pause < self.run.pb() {
+                                            if (elapsed - t) + before_pause < self.run.pb() || self.run.pb() == 0 {
                                                 no_file = false;
                                                 index = 0;
                                                 summed_times =
@@ -633,6 +633,7 @@ impl App {
                                             save = true;
                                             self.run.set_pb((elapsed - t) + before_pause);
                                             self.run.set_pb_times(&active_run_times);
+                                            self.run.set_gold_times(&active_run_times);
                                         }
                                         self.state = TimerState::NotRunning {
                                             time_str: timing::ms_to_readable(
