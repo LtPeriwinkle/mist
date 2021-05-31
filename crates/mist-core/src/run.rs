@@ -128,4 +128,8 @@ impl Run {
     pub fn set_sum_times(&mut self, new: &Vec<(u128, u128)>) {
         self.sum_times = new.to_owned();
     }
+    /// Set the attempt count and total for one split, specified by `idx`.
+    pub fn set_sum_time(&mut self, new: (u128, u128), idx: usize) {
+        self.sum_times[idx] = new
+    }
 }

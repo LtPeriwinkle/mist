@@ -1,5 +1,6 @@
 // timer comparison types
 pub enum Comparison {
+    Average,
     PersonalBest,
     Golds,
     None,
@@ -8,6 +9,9 @@ pub enum Comparison {
 impl Comparison {
     pub fn next(&mut self) {
         match self {
+            Comparison::Average => {
+                *self = Comparison::PersonalBest;
+            }
             Comparison::PersonalBest => {
                 *self = Comparison::Golds;
             }
@@ -15,14 +19,17 @@ impl Comparison {
                 *self = Comparison::None;
             }
             Comparison::None => {
-                *self = Comparison::PersonalBest;
+                *self = Comparison::Average;
             }
         }
     }
     pub fn prev(&mut self) {
         match self {
-            Comparison::PersonalBest => {
+            Comparison::Average => {
                 *self = Comparison::None;
+            }
+            Comparison::PersonalBest => {
+                *self = Comparison::Average;
             }
             Comparison::Golds => {
                 *self = Comparison::PersonalBest;

@@ -1,4 +1,7 @@
 ## mist-core changelog
+### 0.4.3
+- add setter for individual sum times that i forgot before
+
 ### 0.4.2
 - fix conversion 
 
