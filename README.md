@@ -33,7 +33,7 @@ Once all planned features are complete, I will likely stop developing this and o
 	* [X] sum of best
 	* [X] pb
 	* [X] none
-	* [ ] average
+	* [X] average
 - [ ] hot reloading
 	* [X] split file reloading
 	* [ ] config reloading
