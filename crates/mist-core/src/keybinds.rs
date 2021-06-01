@@ -5,9 +5,12 @@ pub struct KeybindsRaw {
     pub pause: String,
     pub reset: String,
     pub start_split: String,
+    pub skip_split: String,
+    pub un_split: String,
     pub prev_comp: String,
     pub next_comp: String,
     pub load_splits: String,
+    pub load_config: String,
 }
 
 impl Default for KeybindsRaw {
@@ -16,9 +19,12 @@ impl Default for KeybindsRaw {
             pause: "Return".to_owned(),
             reset: "R".to_owned(),
             start_split: "Space".to_owned(),
+            skip_split: "RShift".to_owned(),
+            un_split: "Backspace".to_owned(),
             prev_comp: "Left".to_owned(),
             next_comp: "Right".to_owned(),
             load_splits: "F1".to_owned(),
+            load_config: "F2".to_owned()
         }
     }
 }
