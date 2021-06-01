@@ -6,6 +6,8 @@ use tinyfiledialogs::{
     message_box_ok, message_box_yes_no, open_file_dialog, MessageBoxIcon, YesNo, save_file_dialog_with_filter
 };
 
+/// Open a dialog box to check if the user wants to save their modified split file.
+/// If they click yes, return true. No returns false.
 pub fn save_check() -> bool {
     match message_box_yes_no(
         "Save run?",
@@ -17,11 +19,14 @@ pub fn save_check() -> bool {
         YesNo::No => false,
     }
 }
-
+/// Open a selectfile dialog box.
+/// Box title will be `title`. `filter` should be formatted like `*.msf` to filter for msf file extensions etc.
 pub fn get_file(title: &str, filter: &str) -> Option<String> {
     open_file_dialog(title, "", Some((&[filter], "")))
 }
 
+/// Open a save as file dialog box.
+/// `None` if the user closes/cancels without choosing a file path to save to.
 pub fn get_save_as() -> Option<String> {
     save_file_dialog_with_filter("Save as:", "", &["*.msf"], "mist split files")
 }
@@ -38,6 +43,16 @@ fn try_again() -> bool {
     }
 }
 
+/// One-and-done function to both select a file but also parse it to a Run.
+///
+/// # Errors
+///
+/// * If the file cannot be read or there is another fs error
+///
+/// # Nones
+///
+/// * If the user does not select a file
+/// * If the file selected cannot be parsed into a run
 pub fn open_run() -> Result<Option<(Run, String)>, Error> {
     loop {
         match get_file("Open split file", "*.msf") {
@@ -61,6 +76,8 @@ pub fn open_run() -> Result<Option<(Run, String)>, Error> {
     }
 }
 
+/// Create a dialog box informing the user of an error, then exit the program.
+/// Only used at the top level of the call stack in mist. Do not go using this in places.
 pub fn error(err: &str) -> ! {
     message_box_ok("Error", err, MessageBoxIcon::Error);
     std::process::exit(1)
