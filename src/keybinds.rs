@@ -21,15 +21,18 @@ impl Keybinds {
             reset: Keycode::from_name(&raw.reset).ok_or("Reset keybind could not be parsed.")?,
             start_split: Keycode::from_name(&raw.start_split)
                 .ok_or("start/split keybind could not be parsed.")?,
-            skip_split: Keycode::from_name(&raw.skip_split).ok_or("Skip split keybind could not be parsed")?,
-            un_split: Keycode::from_name(&raw.un_split).ok_or("Unsplit keybind could not be parsed")?,
+            skip_split: Keycode::from_name(&raw.skip_split)
+                .ok_or("Skip split keybind could not be parsed")?,
+            un_split: Keycode::from_name(&raw.un_split)
+                .ok_or("Unsplit keybind could not be parsed")?,
             prev_comp: Keycode::from_name(&raw.prev_comp)
                 .ok_or("Prev comparison keybind could not be parsed")?,
             next_comp: Keycode::from_name(&raw.next_comp)
                 .ok_or("Next comparison keybind could not be parsed")?,
             load_splits: Keycode::from_name(&raw.load_splits)
                 .ok_or("Load splits keybind could not be parsed")?,
-            load_config: Keycode::from_name(&raw.load_config).ok_or("Load config keybind could not be parsed")?,
+            load_config: Keycode::from_name(&raw.load_config)
+                .ok_or("Load config keybind could not be parsed")?,
         })
     }
 }
