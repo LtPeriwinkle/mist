@@ -85,8 +85,6 @@ impl App {
             msf: MsfParser::new(),
         };
         // try to use the filepath specified in the config file
-        // if it doesnt exist then set retry to true
-        // if the specified file is invalid also set retry
         if let Some(x) = app.config.file() {
             let f = File::open(x).map_err(|e| e.to_string())?;
             let reader = BufReader::new(f);
@@ -121,34 +119,28 @@ impl App {
 
         self.canvas.clear();
 
-        let colors = self.config.color_list();
-        let ahead = Color::from(colors[0]);
-        let behind = Color::from(colors[1]);
-        let making_up_time = Color::from(colors[2]);
-        let losing_time = Color::from(colors[3]);
-        let gold = Color::from(colors[4]);
-        let bg_color = Color::from(colors[5]);
+        let mut colors = self.config.color_list();
+        let mut ahead = Color::from(colors[0]);
+        let mut behind = Color::from(colors[1]);
+        let mut making_up_time = Color::from(colors[2]);
+        let mut losing_time = Color::from(colors[3]);
+        let mut gold = Color::from(colors[4]);
+        let mut bg_color = Color::from(colors[5]);
 
         // grab font sizes from config file and load the fonts
         let sizes = self.config.fsize();
-        let mut timer_font = self
-            .ttf
-            .load_font(self.config.tfont(), sizes.0)
-            .map_err(|_| get_error())?;
+        let mut timer_font = self.ttf.load_font(self.config.tfont(), sizes.0)?;
         timer_font.set_kerning(false);
-        let font = self
-            .ttf
-            .load_font(self.config.sfont(), sizes.1)
-            .map_err(|_| get_error())?;
+        let mut font = self.ttf.load_font(self.config.sfont(), sizes.1)?;
         // make the texture creator used a lot later on
         let creator = self.canvas.texture_creator();
 
         #[cfg(feature = "bg")]
-        let has_bg: bool;
+        let mut has_bg: bool;
         #[cfg(feature = "bg")]
-        let bg_tex: Texture;
+        let mut bg_tex: Texture;
         #[cfg(feature = "bg")]
-        let bg_rect: Rect;
+        let mut bg_rect: Rect;
         #[cfg(feature = "bg")]
         {
             let bg: Option<Surface> = match self.config.img() {
@@ -222,12 +214,12 @@ impl App {
             bg_rect = Rect::new(0, 0, bgw, bgh);
         }
         // get the heights of different font textures
-        let splits_height = font
+        let mut splits_height = font
             .size_of("qwertyuiopasdfghjklzxcvbnm01234567890!@#$%^&*(){}[]|\\:;'\",.<>?/`~-_=+")
             .map_err(|_| get_error())?
             .1;
         // get the x-coordinates of characters in the font spritemap
-        let coords: Vec<u32> = {
+        let mut coords: Vec<u32> = {
             let mut raw: Vec<u32> = vec![];
             let mut ret: Vec<u32> = vec![0];
             for chr in "-0123456789:. ".chars() {
@@ -241,7 +233,7 @@ impl App {
 
             ret
         };
-        let font_y = timer_font
+        let mut font_y = timer_font
             .size_of("-0123456789:.")
             .map_err(|_| get_error())?
             .1;
@@ -254,7 +246,7 @@ impl App {
             .create_texture_from_surface(&map)
             .map_err(|_| get_error())?;
         // set the height where overlap with splits is checked when resizing window
-        let timer_height = font_y + splits_height;
+        let mut timer_height = font_y + splits_height;
         // set the minimum height of the window to the size of the time texture
         self.canvas
             .window_mut()
@@ -504,7 +496,8 @@ impl App {
                                         time_str = timing::diff_text(diff);
                                         // set diff color to gold and replace split gold
                                         if active_run_times[current_split]
-                                            < splits[current_split].gold() || splits[current_split].gold() == 0
+                                            < splits[current_split].gold()
+                                            || splits[current_split].gold() == 0
                                         {
                                             save = true;
                                             color = gold;
@@ -589,7 +582,9 @@ impl App {
                                                 ),
                                             };
                                             // if this run was a pb then set the Run struct's pb and splits
-                                            if (elapsed - t) + before_pause < self.run.pb() || self.run.pb() == 0 {
+                                            if (elapsed - t) + before_pause < self.run.pb()
+                                                || self.run.pb() == 0
+                                            {
                                                 no_file = false;
                                                 index = 0;
                                                 summed_times =
@@ -848,6 +843,157 @@ impl App {
                                     bottom_split_index = 0;
                                 }
                             }
+                        } else if k == self.binds.load_config {
+                            match dialogs::open_config() {
+                                Ok(c) => match c {
+                                    Some(conf) => {
+                                        self.config = conf;
+                                        colors = self.config.color_list();
+                                        ahead = Color::from(colors[0]);
+                                        behind = Color::from(colors[1]);
+                                        making_up_time = Color::from(colors[2]);
+                                        losing_time = Color::from(colors[3]);
+                                        gold = Color::from(colors[4]);
+                                        bg_color = Color::from(colors[5]);
+                                        timer_font = self.ttf.load_font(
+                                            self.config.tfont(),
+                                            self.config.fsize().0,
+                                        )?;
+                                        font = self.ttf.load_font(
+                                            self.config.sfont(),
+                                            self.config.fsize().1,
+                                        )?;
+                                        splits_height = font.size_of("qwertyuiopasdfghjklzxcvbnm01234567890!@#$%^&*(){}[]|\\:;'\",.<>?/`~-_=+").map_err(|_| get_error())?.1;
+                                        coords = {
+                                            let mut raw: Vec<u32> = vec![];
+                                            let mut ret: Vec<u32> = vec![0];
+                                            for chr in "-0123456789:. ".chars() {
+                                                let size = timer_font
+                                                    .size_of(&chr.to_string())
+                                                    .map_err(|_| get_error())?;
+                                                raw.push(size.0);
+                                                ret.push(raw.iter().sum::<u32>());
+                                            }
+                                            ret.push(*raw.iter().max().unwrap());
+
+                                            ret
+                                        };
+                                        font_y = timer_font
+                                            .size_of("-0123456789:.")
+                                            .map_err(|_| get_error())?
+                                            .1;
+                                        let map = timer_font
+                                            .render("- 0 1 2 3 4 5 6 7 8 9 : .")
+                                            .blended(Color::WHITE)
+                                            .map_err(|_| get_error())?;
+                                        map_tex = creator
+                                            .create_texture_from_surface(&map)
+                                            .map_err(|_| get_error())?;
+                                        timer_height = font_y + splits_height;
+                                        self.canvas
+                                            .window_mut()
+                                            .set_minimum_size(0, timer_height + 20)
+                                            .map_err(|_| get_error())?;
+                                        #[cfg(feature = "bg")]
+                                        {
+                                            let bg: Option<Surface> = match self.config.img() {
+                                                Some(ref p) => Some(
+                                                    Surface::from_file(&p)
+                                                        .map_err(|_| get_error())?,
+                                                ),
+                                                None => None,
+                                            };
+                                            if let Some(x) = bg {
+                                                has_bg = true;
+                                                let width = self.canvas.viewport().width();
+                                                let height = self.canvas.viewport().height();
+                                                if !self.config.img_scaled() {
+                                                    let mut sur = Surface::new(
+                                                        width,
+                                                        height,
+                                                        PixelFormatEnum::RGB24,
+                                                    )
+                                                    .map_err(|_| get_error())?;
+                                                    let cutoffx = {
+                                                        if x.width() > width {
+                                                            ((x.width() - width) / 2) as i32
+                                                        } else {
+                                                            0
+                                                        }
+                                                    };
+                                                    let cutoffy = {
+                                                        if x.height() > height {
+                                                            ((x.height() - height) / 2) as i32
+                                                        } else {
+                                                            0
+                                                        }
+                                                    };
+                                                    x.blit(
+                                                        Rect::new(cutoffx, cutoffy, width, height),
+                                                        &mut sur,
+                                                        None,
+                                                    )?;
+                                                    bg_tex = creator
+                                                        .create_texture_from_surface(&sur)
+                                                        .map_err(|_| get_error())?;
+                                                } else {
+                                                    let sur: Surface;
+                                                    if x.width() > x.height() && width < x.width() {
+                                                        if width < x.width() {
+                                                            sur = x.rotozoom(
+                                                                0.0,
+                                                                width as f64 / x.width() as f64,
+                                                                true,
+                                                            )?;
+                                                        } else {
+                                                            sur = x.rotozoom(
+                                                                0.0,
+                                                                x.width() as f64 / width as f64,
+                                                                true,
+                                                            )?;
+                                                        }
+                                                    } else {
+                                                        if height < x.height() {
+                                                            sur = x.rotozoom(
+                                                                0.0,
+                                                                height as f64 / x.height() as f64,
+                                                                true,
+                                                            )?;
+                                                        } else {
+                                                            sur = x.rotozoom(
+                                                                0.0,
+                                                                x.height() as f64 / height as f64,
+                                                                true,
+                                                            )?;
+                                                        }
+                                                    }
+                                                    bg_tex = creator
+                                                        .create_texture_from_surface(&sur)
+                                                        .map_err(|_| get_error())?;
+                                                }
+                                            } else {
+                                                has_bg = false;
+                                                bg_tex = creator
+                                                    .create_texture(
+                                                        None,
+                                                        TextureAccess::Static,
+                                                        1,
+                                                        1,
+                                                    )
+                                                    .map_err(|_| get_error())?;
+                                            }
+                                            let sdl2::render::TextureQuery {
+                                                width: bgw,
+                                                height: bgh,
+                                                ..
+                                            } = bg_tex.query();
+                                            bg_rect = Rect::new(0, 0, bgw, bgh);
+                                        }
+                                    }
+                                    None => {}
+                                },
+                                Err(e) => return Err(e),
+                            }
                         }
                     }
                     // handle vertical window resize by changing number of splits
@@ -862,8 +1008,8 @@ impl App {
                             + splits_height;
                         // if there aren't any splits, we don't need to worry about changing the number of splits
                         if len != 0 {
-                            // if there are too many splits, calculate how many and set flag to make a new list to display
-                            // otherwise if there are too few and there are enough to display more, set recreate flag
+                            // if there are too many splits, calculate how many and change indices
+                            // otherwise if there are too few and there are enough to display more, change indices the other way
                             if height - timer_height < rows_height {
                                 diff = ((rows_height - (height - timer_height)) / splits_height)
                                     as usize;
