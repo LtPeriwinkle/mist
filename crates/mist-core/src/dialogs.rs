@@ -1,5 +1,6 @@
 use crate::parse::MsfParser;
 use crate::run::Run;
+use crate::parse::Config;
 use std::fs::File;
 use std::io::{BufReader, Error};
 use tinyfiledialogs::{
@@ -33,8 +34,8 @@ pub fn get_save_as() -> Option<String> {
 
 fn try_again() -> bool {
     match message_box_yes_no(
-        "Split file parse failed",
-        "Split file parse failed. Do you want to try another?",
+        "File parse failed",
+        "File parse failed. Do you want to try another?",
         MessageBoxIcon::Question,
         YesNo::Yes,
     ) {
@@ -72,6 +73,28 @@ pub fn open_run() -> Result<Option<(Run, String)>, Error> {
                 }
             }
             None => return Ok(None),
+        }
+    }
+}
+
+pub fn open_config() -> Result<Option<Config>, String> {
+    loop {
+        match get_file("Open a config file", "*.cfg") {
+            Some(ref p) => {
+                let f = File::open(p).map_err(|e| e.to_string())?;
+                let config: Result<Config, String> = ron::de::from_reader(f).map_err(|e| e.to_string());
+                match config {
+                    Ok(c) => {
+                        return Ok(Some(c));
+                    }
+                    Err(_) => {
+                        if !try_again() {
+                            return Ok(None);
+                        }
+                    }
+                }
+            }
+            None => return Ok(None)
         }
     }
 }
