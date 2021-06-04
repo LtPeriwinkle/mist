@@ -1,5 +1,10 @@
 # Changelog
 sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### 1.12.0
+- set pb/split pb/gold if the previous one in the run was 0, so that empty split files are handled properly (ish)
+- fix keybind for loading splits
+- add config file reloading
+
 ### 1.11.0
 - fix crash on resize with no splits (#4, fixed in #5)
 - add in a title set that was missing
