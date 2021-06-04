@@ -19,7 +19,7 @@ impl Default for KeybindsRaw {
             pause: "Return".to_owned(),
             reset: "R".to_owned(),
             start_split: "Space".to_owned(),
-            skip_split: "RShift".to_owned(),
+            skip_split: "Right Shift".to_owned(),
             un_split: "Backspace".to_owned(),
             prev_comp: "Left".to_owned(),
             next_comp: "Right".to_owned(),
