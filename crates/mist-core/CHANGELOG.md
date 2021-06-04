@@ -1,4 +1,8 @@
 ## mist-core changelog
+### 0.5.0
+- add keybinds for un/skip split as well as reload config
+- add a dialog box to open a config file
+
 ### 0.4.3
 - add setter for individual sum times that i forgot before
 
