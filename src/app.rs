@@ -59,12 +59,12 @@ impl App {
             .map_err(|_| get_error())?;
         #[cfg(feature = "icon")]
         {
-            let icon = Surface::from_file("assets/MIST.png").map_err(|_| get_error())?;
+            let icon = Surface::from_file("assets/MIST.png")?;
             window.set_icon(icon);
         }
         let canvas = window.into_canvas().build().map_err(|_| get_error())?;
         let ttf = ttf::init().map_err(|_| get_error())?;
-        let ev_pump = context.event_pump().map_err(|_| get_error())?;
+        let ev_pump = context.event_pump()?;
         let config = Config::open()?;
         // start the overarching application timer (kinda)
         let timer = Instant::now();
@@ -76,7 +76,7 @@ impl App {
             canvas,
             ttf,
             state: TimerState::NotRunning {
-                time_str: "0.000".to_string(),
+                time_str: "0.000".to_owned(),
             },
             comparison: Comparison::PersonalBest,
             run: Run::empty(),
@@ -144,7 +144,7 @@ impl App {
         #[cfg(feature = "bg")]
         {
             let bg: Option<Surface> = match self.config.img() {
-                Some(ref p) => Some(Surface::from_file(&p).map_err(|_| get_error())?),
+                Some(ref p) => Some(Surface::from_file(&p)?),
                 None => None,
             };
             if let Some(x) = bg {
@@ -152,8 +152,7 @@ impl App {
                 let width = self.canvas.viewport().width();
                 let height = self.canvas.viewport().height();
                 if !self.config.img_scaled() {
-                    let mut sur = Surface::new(width, height, PixelFormatEnum::RGB24)
-                        .map_err(|_| get_error())?;
+                    let mut sur = Surface::new(width, height, PixelFormatEnum::RGB24)?;
                     let cutoffx = {
                         if x.width() > width {
                             ((x.width() - width) / 2) as i32
@@ -168,8 +167,7 @@ impl App {
                             0
                         }
                     };
-                    x.blit(Rect::new(cutoffx, cutoffy, width, height), &mut sur, None)
-                        .map_err(|_| get_error())?;
+                    x.blit(Rect::new(cutoffx, cutoffy, width, height), &mut sur, None)?;
                     bg_tex = creator
                         .create_texture_from_surface(&sur)
                         .map_err(|_| get_error())?;
@@ -178,22 +176,18 @@ impl App {
                     if x.width() > x.height() && width < x.width() {
                         if width < x.width() {
                             sur = x
-                                .rotozoom(0.0, width as f64 / x.width() as f64, true)
-                                .map_err(|_| get_error())?;
+                                .rotozoom(0.0, width as f64 / x.width() as f64, true)?;
                         } else {
                             sur = x
-                                .rotozoom(0.0, x.width() as f64 / width as f64, true)
-                                .map_err(|_| get_error())?;
+                                .rotozoom(0.0, x.width() as f64 / width as f64, true)?;
                         }
                     } else {
                         if height < x.height() {
                             sur = x
-                                .rotozoom(0.0, height as f64 / x.height() as f64, true)
-                                .map_err(|_| get_error())?;
+                                .rotozoom(0.0, height as f64 / x.height() as f64, true)?;
                         } else {
                             sur = x
-                                .rotozoom(0.0, x.height() as f64 / height as f64, true)
-                                .map_err(|_| get_error())?;
+                                .rotozoom(0.0, x.height() as f64 / height as f64, true)?;
                         }
                     }
                     bg_tex = creator
@@ -289,11 +283,11 @@ impl App {
         let mut index = 0;
         // convert the split names into textures and add them to the split name vec
         while index < split_names.len() {
-            let text_surface = font
+            text_surface = font
                 .render(&split_names[index])
                 .blended(Color::WHITE)
                 .map_err(|_| get_error())?;
-            let texture = creator
+            texture = creator
                 .create_texture_from_surface(&text_surface)
                 .map_err(|_| get_error())?;
             let comp = font
@@ -389,8 +383,7 @@ impl App {
             #[cfg(feature = "bg")]
             if has_bg {
                 self.canvas
-                    .copy(&bg_tex, None, bg_rect)
-                    .map_err(|_| get_error())?;
+                    .copy(&bg_tex, None, bg_rect)?;
             }
             // if the timer is doing an offset, make sure it should still be negative
             // if it shouldnt, convert to running state
@@ -800,11 +793,11 @@ impl App {
                                 splits = vec![];
                                 index = 0;
                                 while index < split_names.len() {
-                                    let text_surface = font
+                                    text_surface = font
                                         .render(&split_names[index])
                                         .blended(Color::WHITE)
                                         .map_err(|_| get_error())?;
-                                    let texture = creator
+                                    texture = creator
                                         .create_texture_from_surface(&text_surface)
                                         .map_err(|_| get_error())?;
                                     let comp = font
@@ -939,8 +932,7 @@ impl App {
                                         {
                                             let bg: Option<Surface> = match self.config.img() {
                                                 Some(ref p) => Some(
-                                                    Surface::from_file(&p)
-                                                        .map_err(|_| get_error())?,
+                                                    Surface::from_file(&p)?,
                                                 ),
                                                 None => None,
                                             };
@@ -953,8 +945,7 @@ impl App {
                                                         width,
                                                         height,
                                                         PixelFormatEnum::RGB24,
-                                                    )
-                                                    .map_err(|_| get_error())?;
+                                                    )?;
                                                     let cutoffx = {
                                                         if x.width() > width {
                                                             ((x.width() - width) / 2) as i32
@@ -1098,14 +1089,14 @@ impl App {
                 if let Comparison::None = self.comparison {
                     // set comp textures to just "-" if there is no comparison
                     while index < len {
-                        let surface = font
-                            .render("-  ")
-                            .blended(Color::WHITE)
+                        text_surface = font
+                        .render("-  ")
+                        .blended(Color::WHITE)
+                        .map_err(|_| get_error())?;
+                        texture = creator
+                            .create_texture_from_surface(&text_surface)
                             .map_err(|_| get_error())?;
-                        let tex = creator
-                            .create_texture_from_surface(&surface)
-                            .map_err(|_| get_error())?;
-                        splits[index].set_comp_tex(tex);
+                        splits[index].set_comp_tex(texture);
                         index += 1;
                     }
                 } else if let Comparison::Average = self.comparison {
@@ -1136,14 +1127,14 @@ impl App {
                         .collect();
                     index = 0;
                     while index < len {
-                        let surface = font
+                        text_surface = font
                             .render(&split_times_raw[index])
                             .blended(Color::WHITE)
                             .map_err(|_| get_error())?;
-                        let tex = creator
-                            .create_texture_from_surface(&surface)
+                        texture = creator
+                            .create_texture_from_surface(&text_surface)
                             .map_err(|_| get_error())?;
-                        splits[index].set_comp_tex(tex);
+                        splits[index].set_comp_tex(texture);
                         index += 1;
                     }
                 } else {
@@ -1159,14 +1150,14 @@ impl App {
                         .collect();
                     index = 0;
                     while index < len {
-                        let surface = font
+                        text_surface = font
                             .render(&split_times_raw[index])
                             .blended(Color::WHITE)
                             .map_err(|_| get_error())?;
-                        let tex = creator
-                            .create_texture_from_surface(&surface)
+                        texture = creator
+                            .create_texture_from_surface(&text_surface)
                             .map_err(|_| get_error())?;
-                        splits[index].set_comp_tex(tex);
+                        splits[index].set_comp_tex(texture);
                         index += 1;
                     }
                 }
