@@ -1,5 +1,8 @@
 # Changelog
-sorry if the versioning doesnt really make sense, ive been trying to follow semver but i keep messing up
+### next
+- skipping splits support
+- small optimizations (i.e. remove unnecessary `map_err` and use existing variables rather than shadowing)
+
 ### 1.12.0
 - set pb/split pb/gold if the previous one in the run was 0, so that empty split files are handled properly (ish)
 - fix keybind for loading splits
