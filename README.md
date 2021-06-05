@@ -29,14 +29,14 @@ Once all planned features are complete, I will likely stop developing this and o
 	* [ ] actually good and usable (hardest part)
 - [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
 - [X] dynamic colors
-- [ ] different run comparisons
+- [X] different run comparisons
 	* [X] sum of best
 	* [X] pb
 	* [X] none
 	* [X] average
-- [ ] hot reloading
+- [X] hot reloading
 	* [X] split file reloading
-	* [ ] config reloading
+	* [X] config reloading
 - [ ] plugins
 	* [ ] autoloading from plugins directory (probably run as some kind of child process thing?)
 	* [ ] communicate with plugins through ipc (i.e. unix socket, windows named pipe)
