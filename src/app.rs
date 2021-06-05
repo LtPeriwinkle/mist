@@ -843,6 +843,47 @@ impl App {
                                     bottom_split_index = 0;
                                 }
                             }
+                        } else if k == self.binds.skip_split {
+                            // can only skip while running
+                            if let TimerState::Running { timestamp: t } = self.state {
+                                // push a zero to active times. Will eventually handle zeroes properly but Not Yet (tm)
+                                active_run_times.push(0);
+                                text_surface = font
+                                    .render("-  ")
+                                    .blended(Color::WHITE)
+                                    .map_err(|_| get_error())?;
+                                texture = creator
+                                    .create_texture_from_surface(&text_surface)
+                                    .map_err(|_| get_error())?;
+                                splits[current_split].set_comp_tex(texture);
+                                // if this is the last split, end but we don't have to worry about setting pb and stuff
+                                // otherwise just increment current split and move on
+                                if len == 0 || len == 1 || current_split == len - 1 {
+                                    elapsed = self.timer.elapsed().as_millis();
+                                    self.canvas
+                                        .window_mut()
+                                        .set_title(&format!(
+                                            "mist: {} ({})",
+                                            self.run.game_title(),
+                                            self.run.category(),
+                                        ))
+                                        .map_err(|_| get_error())?;
+                                    self.state = TimerState::NotRunning {
+                                        time_str: timing::ms_to_readable(
+                                            (elapsed - t) + before_pause,
+                                            true,
+                                        ),
+                                    };
+                                } else if current_split < len - 1 {
+                                    current_split += 1;
+                                    if current_split > bottom_split_index
+                                        && bottom_split_index + 1 < len
+                                    {
+                                        bottom_split_index += 1;
+                                        top_split_index += 1;
+                                    }
+                                }
+                            }
                         } else if k == self.binds.load_config {
                             match dialogs::open_config() {
                                 Ok(c) => match c {
