@@ -4,8 +4,8 @@ use ron::ser::{to_string_pretty, PrettyConfig};
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Write;
-use crate::KeybindsRaw;
-// more will be added to this in the future
+use super::KeybindsRaw;
+use super::LayoutOpts;
 #[derive(Serialize, Deserialize)]
 #[cfg(feature = "bg")]
 /// Configuration of mist.
@@ -14,6 +14,9 @@ pub struct Config {
     img_file: Option<String>,
     img_scaled: bool,
     colors: [(u8, u8, u8); 6],
+    frame_rounding: u128,
+    layout: LayoutOpts,
+    //panels: Vec<Panel>,
     t_font: String,
     s_font: String,
     font_size: (u16, u16),
@@ -26,6 +29,9 @@ pub struct Config {
 pub struct Config {
     def_file: Option<String>,
     colors: [(u8, u8, u8); 6],
+    frame_rounding: u128,
+    layout: LayoutOpts,
+    //panels: Vec<Panel>,
     t_font: String,
     s_font: String,
     font_size: (u16, u16),
@@ -99,6 +105,9 @@ impl Config {
     pub fn binds(&self) -> &KeybindsRaw {
         &self.binds
     }
+    pub fn layout(&self) -> &LayoutOpts {
+        &self.layout
+    }
 }
 
 #[cfg(feature = "bg")]
@@ -116,6 +125,8 @@ impl Default for Config {
                 (255, 255, 0),
                 (0, 0, 0),
             ],
+            frame_rounding: 30,
+            layout: LayoutOpts::default(),
             t_font: "assets/segoe-ui-bold.ttf".to_owned(),
             s_font: "assets/segoe-ui-bold.ttf".to_owned(),
             font_size: (60, 25),
@@ -136,6 +147,8 @@ impl Default for Config {
                 (255, 255, 0),
                 (0, 0, 0),
             ],
+            frame_rounding: 30,
+            layout: LayoutOpts::default(),
             t_font: "assets/segoe-ui-bold.ttf".to_owned(),
             s_font: "assets/segoe-ui-bold.ttf".to_owned(),
             font_size: (60, 25),

@@ -6,8 +6,3 @@ pub use msf::MsfParser;
 mod lss;
 #[cfg(feature = "lss")]
 pub use lss::LssParser;
-
-#[cfg(feature = "config")]
-mod config;
-#[cfg(feature = "config")]
-pub use config::Config;
