@@ -26,11 +26,12 @@ use mist_core::{
     dialogs,
     parse::{MsfParser},
     timing, Run,
-    config::{Config}
+    config::{Config, Panel}
 };
 
 use crate::comparison::Comparison;
 use crate::keybinds::Keybinds;
+use crate::panels::RenderPanel;
 use crate::render;
 use crate::splits::Split;
 use crate::state::TimerState;
@@ -126,8 +127,6 @@ impl App {
         let mut gold = Color::from(colors[4]);
         let mut bg_color = Color::from(colors[5]);
 
-        let mut binds = Keybinds::from_raw(self.config.binds())?;
-
         // grab font sizes from config file and load the fonts
         let sizes = self.config.fsize();
         let mut timer_font = self.ttf.load_font(self.config.tfont(), sizes.0)?;
@@ -135,6 +134,43 @@ impl App {
         let mut font = self.ttf.load_font(self.config.sfont(), sizes.1)?;
         // make the texture creator used a lot later on
         let creator = self.canvas.texture_creator();
+        let mut binds = Keybinds::from_raw(self.config.binds())?;
+        let panels = {
+            let mut ret = vec![];
+            for panel in self.config.panels() {
+                let (text, paneltype) = match panel {
+                    Panel::Pace {golds} => {
+                        if *golds {
+                            ("Current pace (best)", Panel::Pace {golds: true})
+                        } else {
+                           ("Current pace (pb)", Panel::Pace {golds: false})
+                        }
+                    },
+                    Panel::SumOfBest => {
+                       ("Sum of Best", Panel::SumOfBest)
+                    },
+                    Panel::CurrentSplitDiff {golds} => {
+                        if *golds {
+                           ("Current split (best)", Panel::CurrentSplitDiff {golds: true})
+                        } else {
+                           ("Current split (pb)", Panel::CurrentSplitDiff {golds: false})
+                        }
+                    }
+               };
+               let text_sur = font.render(text).blended(Color::WHITE).map_err(|_| get_error())?;
+               let text_tex = creator.create_texture_from_surface(&text_sur).map_err(|_| get_error())?;
+               let time_sur = if let Panel::SumOfBest = panel {
+                   let sob = self.run.gold_times().iter().sum::<u128>().to_string();
+                   font.render(&sob).blended(Color::WHITE).map_err(|_| get_error())?
+               } else {
+                   font.render("-  ").blended(Color::WHITE).map_err(|_| get_error())?
+               };
+               let time_tex = creator.create_texture_from_surface(&time_sur).map_err(|_| get_error())?;
+               let newpanel = RenderPanel::new(text_tex, time_tex, paneltype);
+               ret.push(newpanel);
+            }
+            ret
+        };
 
         #[cfg(feature = "bg")]
         let mut has_bg: bool;
@@ -245,7 +281,7 @@ impl App {
         // set the minimum height of the window to the size of the time texture
         self.canvas
             .window_mut()
-            .set_minimum_size(0, timer_height + 20)
+            .set_minimum_size(0, timer_height + 20 + (splits_height * panels.len() as u32))
             .map_err(|_| get_error())?;
         self.canvas
             .window_mut()
@@ -1260,6 +1296,9 @@ impl App {
                 map_tex = creator
                     .create_texture_from_surface(&map)
                     .map_err(|_| get_error())?;
+            }
+            if panels.len() != 0 {
+                // will update and render panels here
             }
             // copy the name, diff, and time textures to the canvas
             // and highlight the split relative to the top of the list marked by cur
