@@ -171,8 +171,8 @@ impl App {
                     .create_texture_from_surface(&text_sur)
                     .map_err(|_| get_error())?;
                 let time_sur = if let Panel::SumOfBest = panel {
-                    let sob = self.run.gold_times().iter().sum::<u128>().to_string();
-                    font.render(&sob)
+                    let sob = self.run.gold_times().iter().sum::<u128>();
+                    font.render(&timing::split_time_text(sob))
                         .blended(Color::WHITE)
                         .map_err(|_| get_error())?
                 } else {
@@ -1090,6 +1090,7 @@ impl App {
                         let height = self.canvas.viewport().height();
                         let rows_height = ((bottom_split_index - top_split_index) as u32
                             * (splits_height + 2))
+                            + (splits_height * panels.len() as u32)
                             + splits_height;
                         // if there aren't any splits, we don't need to worry about changing the number of splits
                         if len != 0 {
@@ -1317,7 +1318,7 @@ impl App {
                     match panel.panel_type() {
                         Panel::SumOfBest if did_gold => {
                             did_gold = false;
-                            let sob = self.run.gold_times().iter().sum::<u128>().to_string();
+                            let sob = timing::split_time_text(self.run.gold_times().iter().sum::<u128>());
                             text_surface = font
                                 .render(&sob)
                                 .blended(Color::WHITE)
