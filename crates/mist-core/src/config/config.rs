@@ -6,6 +6,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use super::KeybindsRaw;
 use super::LayoutOpts;
+use super::Panel;
 #[derive(Serialize, Deserialize)]
 #[cfg(feature = "bg")]
 /// Configuration of mist.
@@ -16,7 +17,7 @@ pub struct Config {
     colors: [(u8, u8, u8); 6],
     frame_rounding: u128,
     layout: LayoutOpts,
-    //panels: Vec<Panel>,
+    panels: Vec<Panel>,
     t_font: String,
     s_font: String,
     font_size: (u16, u16),
@@ -31,7 +32,7 @@ pub struct Config {
     colors: [(u8, u8, u8); 6],
     frame_rounding: u128,
     layout: LayoutOpts,
-    //panels: Vec<Panel>,
+    panels: Vec<Panel>,
     t_font: String,
     s_font: String,
     font_size: (u16, u16),
@@ -102,11 +103,17 @@ impl Config {
         file.write(&string.as_bytes()).map_err(|e| e.to_string())?;
         Ok(())
     }
+    /// Get the keybinds in string form as names of keys
     pub fn binds(&self) -> &KeybindsRaw {
         &self.binds
     }
+    /// Get the layout options
     pub fn layout(&self) -> &LayoutOpts {
         &self.layout
+    }
+    /// Get the list of timing display panels
+    pub fn panels(&self) -> &Vec<Panel> {
+        &self.panels()
     }
 }
 
@@ -127,6 +134,7 @@ impl Default for Config {
             ],
             frame_rounding: 30,
             layout: LayoutOpts::default(),
+            panels: vec![],
             t_font: "assets/segoe-ui-bold.ttf".to_owned(),
             s_font: "assets/segoe-ui-bold.ttf".to_owned(),
             font_size: (60, 25),
@@ -149,6 +157,7 @@ impl Default for Config {
             ],
             frame_rounding: 30,
             layout: LayoutOpts::default(),
+            panels: vec![],
             t_font: "assets/segoe-ui-bold.ttf".to_owned(),
             s_font: "assets/segoe-ui-bold.ttf".to_owned(),
             font_size: (60, 25),
