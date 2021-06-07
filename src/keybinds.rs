@@ -1,4 +1,4 @@
-use mist_core::KeybindsRaw;
+use mist_core::config::KeybindsRaw;
 use sdl2::keyboard::Keycode;
 
 #[derive(Debug)]

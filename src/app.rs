@@ -24,8 +24,9 @@ use std::time::{Duration, Instant};
 
 use mist_core::{
     dialogs,
-    parse::{Config, MsfParser},
+    parse::{MsfParser},
     timing, Run,
+    config::{Config}
 };
 
 use crate::comparison::Comparison;
