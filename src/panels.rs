@@ -9,9 +9,7 @@ pub struct RenderPanel<'a> {
 
 impl<'a> RenderPanel<'a> {
     pub fn new(text: Texture<'a>, time: Texture<'a>, ty: Panel) -> RenderPanel<'a> {
-        RenderPanel {
-            text, time, ty
-        }
+        RenderPanel { text, time, ty }
     }
     pub fn text(&self) -> &Texture {
         &self.text
@@ -26,4 +24,3 @@ impl<'a> RenderPanel<'a> {
         &self.ty
     }
 }
-

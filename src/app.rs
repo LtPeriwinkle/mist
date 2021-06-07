@@ -23,10 +23,10 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use mist_core::{
+    config::{Config, Panel},
     dialogs,
-    parse::{MsfParser},
+    parse::MsfParser,
     timing, Run,
-    config::{Config, Panel}
 };
 
 use crate::comparison::Comparison;
@@ -141,35 +141,50 @@ impl App {
             let mut ret = vec![];
             for panel in self.config.panels() {
                 let (text, paneltype) = match panel {
-                    Panel::Pace {golds} => {
+                    Panel::Pace { golds } => {
                         if *golds {
-                            ("Current pace (best)", Panel::Pace {golds: true})
+                            ("Current pace (best)", Panel::Pace { golds: true })
                         } else {
-                           ("Current pace (pb)", Panel::Pace {golds: false})
-                        }
-                    },
-                    Panel::SumOfBest => {
-                       ("Sum of Best", Panel::SumOfBest)
-                    },
-                    Panel::CurrentSplitDiff {golds} => {
-                        if *golds {
-                           ("Current split (best)", Panel::CurrentSplitDiff {golds: true})
-                        } else {
-                           ("Current split (pb)", Panel::CurrentSplitDiff {golds: false})
+                            ("Current pace (pb)", Panel::Pace { golds: false })
                         }
                     }
-               };
-               let text_sur = font.render(text).blended(Color::WHITE).map_err(|_| get_error())?;
-               let text_tex = creator.create_texture_from_surface(&text_sur).map_err(|_| get_error())?;
-               let time_sur = if let Panel::SumOfBest = panel {
-                   let sob = self.run.gold_times().iter().sum::<u128>().to_string();
-                   font.render(&sob).blended(Color::WHITE).map_err(|_| get_error())?
-               } else {
-                   font.render("-  ").blended(Color::WHITE).map_err(|_| get_error())?
-               };
-               let time_tex = creator.create_texture_from_surface(&time_sur).map_err(|_| get_error())?;
-               let newpanel = RenderPanel::new(text_tex, time_tex, paneltype);
-               ret.push(newpanel);
+                    Panel::SumOfBest => ("Sum of Best", Panel::SumOfBest),
+                    Panel::CurrentSplitDiff { golds } => {
+                        if *golds {
+                            (
+                                "Current split (best)",
+                                Panel::CurrentSplitDiff { golds: true },
+                            )
+                        } else {
+                            (
+                                "Current split (pb)",
+                                Panel::CurrentSplitDiff { golds: false },
+                            )
+                        }
+                    }
+                };
+                let text_sur = font
+                    .render(text)
+                    .blended(Color::WHITE)
+                    .map_err(|_| get_error())?;
+                let text_tex = creator
+                    .create_texture_from_surface(&text_sur)
+                    .map_err(|_| get_error())?;
+                let time_sur = if let Panel::SumOfBest = panel {
+                    let sob = self.run.gold_times().iter().sum::<u128>().to_string();
+                    font.render(&sob)
+                        .blended(Color::WHITE)
+                        .map_err(|_| get_error())?
+                } else {
+                    font.render("-  ")
+                        .blended(Color::WHITE)
+                        .map_err(|_| get_error())?
+                };
+                let time_tex = creator
+                    .create_texture_from_surface(&time_sur)
+                    .map_err(|_| get_error())?;
+                let newpanel = RenderPanel::new(text_tex, time_tex, paneltype);
+                ret.push(newpanel);
             }
             ret
         };
@@ -214,19 +229,15 @@ impl App {
                     let sur: Surface;
                     if x.width() > x.height() && width < x.width() {
                         if width < x.width() {
-                            sur = x
-                                .rotozoom(0.0, width as f64 / x.width() as f64, true)?;
+                            sur = x.rotozoom(0.0, width as f64 / x.width() as f64, true)?;
                         } else {
-                            sur = x
-                                .rotozoom(0.0, x.width() as f64 / width as f64, true)?;
+                            sur = x.rotozoom(0.0, x.width() as f64 / width as f64, true)?;
                         }
                     } else {
                         if height < x.height() {
-                            sur = x
-                                .rotozoom(0.0, height as f64 / x.height() as f64, true)?;
+                            sur = x.rotozoom(0.0, height as f64 / x.height() as f64, true)?;
                         } else {
-                            sur = x
-                                .rotozoom(0.0, x.height() as f64 / height as f64, true)?;
+                            sur = x.rotozoom(0.0, x.height() as f64 / height as f64, true)?;
                         }
                     }
                     bg_tex = creator
@@ -285,7 +296,10 @@ impl App {
             .window_mut()
             .set_minimum_size(0, timer_height + 20 + (splits_height * panels.len() as u32))
             .map_err(|_| get_error())?;
-        self.canvas.window_mut().set_size(300, 500 + (splits_height * panels.len() as u32)).map_err(|_| get_error())?;
+        self.canvas
+            .window_mut()
+            .set_size(300, 500 + (splits_height * panels.len() as u32))
+            .map_err(|_| get_error())?;
         self.canvas
             .window_mut()
             .set_title(&format!(
@@ -422,8 +436,7 @@ impl App {
 
             #[cfg(feature = "bg")]
             if has_bg {
-                self.canvas
-                    .copy(&bg_tex, None, bg_rect)?;
+                self.canvas.copy(&bg_tex, None, bg_rect)?;
             }
             // if the timer is doing an offset, make sure it should still be negative
             // if it shouldnt, convert to running state
@@ -973,9 +986,7 @@ impl App {
                                         #[cfg(feature = "bg")]
                                         {
                                             let bg: Option<Surface> = match self.config.img() {
-                                                Some(ref p) => Some(
-                                                    Surface::from_file(&p)?,
-                                                ),
+                                                Some(ref p) => Some(Surface::from_file(&p)?),
                                                 None => None,
                                             };
                                             if let Some(x) = bg {
@@ -1132,9 +1143,9 @@ impl App {
                     // set comp textures to just "-" if there is no comparison
                     while index < len {
                         text_surface = font
-                        .render("-  ")
-                        .blended(Color::WHITE)
-                        .map_err(|_| get_error())?;
+                            .render("-  ")
+                            .blended(Color::WHITE)
+                            .map_err(|_| get_error())?;
                         texture = creator
                             .create_texture_from_surface(&text_surface)
                             .map_err(|_| get_error())?;
@@ -1307,8 +1318,13 @@ impl App {
                         Panel::SumOfBest if did_gold => {
                             did_gold = false;
                             let sob = self.run.gold_times().iter().sum::<u128>().to_string();
-                            text_surface = font.render(&sob).blended(Color::WHITE).map_err(|_| get_error())?;
-                            texture = creator.create_texture_from_surface(text_surface).map_err(|_| get_error())?;
+                            text_surface = font
+                                .render(&sob)
+                                .blended(Color::WHITE)
+                                .map_err(|_| get_error())?;
+                            texture = creator
+                                .create_texture_from_surface(text_surface)
+                                .map_err(|_| get_error())?;
                             panel.set_time(texture);
                         }
                         _ => {}
@@ -1333,7 +1349,13 @@ impl App {
             // update the time based on the current timer state
             time_str = self.update_time(before_pause, total_time);
             // copy the time texture to the canvas, place individual characters from map
-            render::render_time(time_str, &map_tex, &coords, (font_y, splits_height, panels.len()  as  i32), &mut self.canvas)?;
+            render::render_time(
+                time_str,
+                &map_tex,
+                &coords,
+                (font_y, splits_height, panels.len() as usize),
+                &mut self.canvas,
+            )?;
             self.canvas.present();
             if Instant::now().duration_since(frame_time) <= one_sixtieth {
                 thread::sleep(
