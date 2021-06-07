@@ -22,5 +22,8 @@ impl<'a> RenderPanel<'a> {
     pub fn set_time(&mut self, new: Texture<'a>) {
         self.time = new;
     }
+    pub fn panel_type(&self) -> &Panel {
+        &self.ty
+    }
 }
 

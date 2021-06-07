@@ -127,6 +127,8 @@ impl App {
         let mut gold = Color::from(colors[4]);
         let mut bg_color = Color::from(colors[5]);
 
+        let mut did_gold = false;
+
         // grab font sizes from config file and load the fonts
         let sizes = self.config.fsize();
         let mut timer_font = self.ttf.load_font(self.config.tfont(), sizes.0)?;
@@ -135,7 +137,7 @@ impl App {
         // make the texture creator used a lot later on
         let creator = self.canvas.texture_creator();
         let mut binds = Keybinds::from_raw(self.config.binds())?;
-        let panels = {
+        let mut panels = {
             let mut ret = vec![];
             for panel in self.config.panels() {
                 let (text, paneltype) = match panel {
@@ -530,6 +532,7 @@ impl App {
                                             || splits[current_split].gold() == 0
                                         {
                                             save = true;
+                                            did_gold = true;
                                             color = gold;
                                             self.run.set_gold_time(
                                                 active_run_times[current_split],
@@ -1298,7 +1301,18 @@ impl App {
                     .map_err(|_| get_error())?;
             }
             if panels.len() != 0 {
-                // will update and render panels here
+                for panel in &mut panels {
+                    match panel.panel_type() {
+                        Panel::SumOfBest if did_gold => {
+                            did_gold = false;
+                            let sob = self.run.gold_times().iter().sum::<u128>().to_string();
+                            text_surface = font.render(&sob).blended(Color::WHITE).map_err(|_| get_error())?;
+                            texture = creator.create_texture_from_surface(text_surface).map_err(|_| get_error())?;
+                            panel.set_time(texture);
+                        }
+                        _ => {}
+                    }
+                }
             }
             // copy the name, diff, and time textures to the canvas
             // and highlight the split relative to the top of the list marked by cur
