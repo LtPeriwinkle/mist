@@ -1,4 +1,8 @@
 ## mist-core changelog
+### 0.6.0
+- move all config related stuff to it's own module
+- add layout options, time rounding, panels to config
+
 ### 0.5.0
 - add keybinds for un/skip split as well as reload config
 - add a dialog box to open a config file
