@@ -44,7 +44,6 @@ pub struct App {
     state: TimerState,
     comparison: Comparison,
     run: Run,
-    binds: Keybinds,
     config: Config,
     msf: MsfParser,
 }
@@ -81,7 +80,6 @@ impl App {
             },
             comparison: Comparison::PersonalBest,
             run: Run::empty(),
-            binds: Keybinds::from_raw(config.binds())?,
             config: config,
             msf: MsfParser::new(),
         };
@@ -127,6 +125,8 @@ impl App {
         let mut losing_time = Color::from(colors[3]);
         let mut gold = Color::from(colors[4]);
         let mut bg_color = Color::from(colors[5]);
+
+        let mut binds = Keybinds::from_raw(self.config.binds())?;
 
         // grab font sizes from config file and load the fonts
         let sizes = self.config.fsize();
@@ -431,7 +431,7 @@ impl App {
                         repeat: false,
                         ..
                     } => {
-                        if k == self.binds.start_split {
+                        if k == binds.start_split {
                             match self.state {
                                 // if timer isnt started, start it.
                                 TimerState::NotRunning { .. } if current_split == 0 => {
@@ -634,7 +634,7 @@ impl App {
                                 }
                                 _ => {}
                             }
-                        } else if k == self.binds.pause {
+                        } else if k == binds.pause {
                             elapsed = self.timer.elapsed().as_millis();
                             match self.state {
                                 // if timer is paused, unpause it, put the amount of time before the pause in a variable
@@ -689,7 +689,7 @@ impl App {
                                 }
                                 _ => {}
                             }
-                        } else if k == self.binds.reset {
+                        } else if k == binds.reset {
                             self.canvas
                                 .window_mut()
                                 .set_title(&format!(
@@ -730,13 +730,13 @@ impl App {
                                 splits[index].set_diff(0, None);
                                 index += 1;
                             }
-                        } else if k == self.binds.prev_comp {
+                        } else if k == binds.prev_comp {
                             self.comparison.prev();
                             comp_changed = true;
-                        } else if k == self.binds.next_comp {
+                        } else if k == binds.next_comp {
                             self.comparison.next();
                             comp_changed = true;
-                        } else if k == self.binds.load_splits {
+                        } else if k == binds.load_splits {
                             // only allow opening a new file if the timer is not running
                             if let TimerState::NotRunning { .. } = self.state {
                                 // save the previous run if it was updated
@@ -837,7 +837,7 @@ impl App {
                                     bottom_split_index = 0;
                                 }
                             }
-                        } else if k == self.binds.skip_split {
+                        } else if k == binds.skip_split {
                             // can only skip while running
                             if let TimerState::Running { timestamp: t } = self.state {
                                 // push a zero to active times. Will eventually handle zeroes properly but Not Yet (tm)
@@ -878,11 +878,12 @@ impl App {
                                     }
                                 }
                             }
-                        } else if k == self.binds.load_config {
+                        } else if k == binds.load_config {
                             match dialogs::open_config() {
                                 Ok(c) => match c {
                                     Some(conf) => {
                                         self.config = conf;
+                                        binds = Keybinds::from_raw(self.config.binds())?;
                                         colors = self.config.color_list();
                                         ahead = Color::from(colors[0]);
                                         behind = Color::from(colors[1]);
