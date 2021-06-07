@@ -113,7 +113,10 @@ impl Config {
     }
     /// Get the list of timing display panels
     pub fn panels(&self) -> &Vec<Panel> {
-        &self.panels()
+        &self.panels
+    }
+    pub fn rounding(&self) -> u128 {
+        self.frame_rounding
     }
 }
 

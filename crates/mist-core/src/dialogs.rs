@@ -1,6 +1,6 @@
 use crate::parse::MsfParser;
 use crate::run::Run;
-use crate::parse::Config;
+use crate::config::Config;
 use std::fs::File;
 use std::io::{BufReader, Error};
 use tinyfiledialogs::{
