@@ -285,6 +285,7 @@ impl App {
             .window_mut()
             .set_minimum_size(0, timer_height + 20 + (splits_height * panels.len() as u32))
             .map_err(|_| get_error())?;
+        self.canvas.window_mut().set_size(300, 500 + (splits_height * panels.len() as u32)).map_err(|_| get_error())?;
         self.canvas
             .window_mut()
             .set_title(&format!(
@@ -1313,6 +1314,7 @@ impl App {
                         _ => {}
                     }
                 }
+                render::render_panels(&panels[..], &mut self.canvas)?;
             }
             // copy the name, diff, and time textures to the canvas
             // and highlight the split relative to the top of the list marked by cur
@@ -1331,7 +1333,7 @@ impl App {
             // update the time based on the current timer state
             time_str = self.update_time(before_pause, total_time);
             // copy the time texture to the canvas, place individual characters from map
-            render::render_time(time_str, &map_tex, &coords, font_y, &mut self.canvas)?;
+            render::render_time(time_str, &map_tex, &coords, (font_y, splits_height, panels.len()  as  i32), &mut self.canvas)?;
             self.canvas.present();
             if Instant::now().duration_since(frame_time) <= one_sixtieth {
                 thread::sleep(

@@ -1,9 +1,11 @@
 // Functions for putting stuff into the correct places on the sdl buffer
 use crate::splits::Split;
+use crate::panels::RenderPanel;
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::{Canvas, Texture, TextureQuery};
 use sdl2::video::Window;
+
 
 // Puts split name textures and their associated times into the SDL backbuffer
 // handles placing all the textures around the other ones and highlighting the active split based on the
@@ -85,7 +87,11 @@ pub fn render_time(
     time_str: String,
     atlas: &Texture,
     coords: &[u32],
-    font_y: u32,
+    (
+        font_y,
+        splits_height,
+        num_panels
+    ): (u32, u32, usize),
     canvas: &mut Canvas<Window>,
 ) -> Result<(), String> {
     let mut x = 0;
@@ -94,7 +100,7 @@ pub fn render_time(
     let w = vp.width();
     let mut src = Rect::new(0, 0, 0, font_y);
     // multiply initial values by 8/10 so that the font is smaller
-    let mut dst = Rect::new(0, (h - (font_y * 8 / 10)) as i32 - 5, 0, font_y * 8 / 10);
+    let mut dst = Rect::new(0, (h - (font_y * 8 / 10) - (splits_height * num_panels as u32)) as i32 - 5, 0, font_y * 8 / 10);
     let mut idx: usize;
     let mut char_num = 0;
     let space = coords[14] - coords[13];
@@ -138,11 +144,23 @@ pub fn render_time(
             dst.set_width(width * 8 / 10);
         } else {
             dst.set_width(width);
-            dst.set_y((h - font_y) as i32);
+            dst.set_y((h - font_y - (splits_height * num_panels as u32)) as i32);
             dst.set_height(font_y);
         }
         canvas.copy(atlas, Some(src), Some(dst))?;
         char_num += 1;
+    }
+    Ok(())
+}
+
+pub fn render_panels(panels: &[RenderPanel], canvas: &mut Canvas<Window>) -> Result<(), String> {
+    let mut num = 1;
+    for panel in panels {
+        let TextureQuery {width, height, ..} = panel.text().query();
+        canvas.copy(panel.text(), None, Some(Rect::new(0, (canvas.viewport().height() - (num * height)) as i32, width, height)))?;
+        let TextureQuery {width, height, ..} = panel.time().query();
+        canvas.copy(panel.time(), None, Some(Rect::new((canvas.viewport().width() - width) as i32, (canvas.viewport().height() - (num * height)) as i32, width, height)))?;
+        num += 1;
     }
     Ok(())
 }
