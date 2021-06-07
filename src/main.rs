@@ -7,6 +7,7 @@ extern crate sdl2;
 mod app;
 mod comparison;
 mod keybinds;
+mod panels;
 mod render;
 mod splits;
 mod state;
