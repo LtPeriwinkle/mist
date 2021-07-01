@@ -1318,9 +1318,26 @@ impl App {
                     match panel.panel_type() {
                         Panel::SumOfBest if did_gold => {
                             did_gold = false;
-                            let sob = timing::split_time_text(self.run.gold_times().iter().sum::<u128>());
+                            let sob =
+                                timing::split_time_text(self.run.gold_times().iter().sum::<u128>());
                             text_surface = font
                                 .render(&sob)
+                                .blended(Color::WHITE)
+                                .map_err(|_| get_error())?;
+                            texture = creator
+                                .create_texture_from_surface(text_surface)
+                                .map_err(|_| get_error())?;
+                            panel.set_time(texture);
+                        }
+                        Panel::Pace { golds: false }
+                            if matches!(self.state, TimerState::Running { .. }) =>
+                        {
+                            let pb_times = self.run.pb_times();
+                            let pace = timing::split_time_text(pb_times[current_split + 1..].iter().sum::<u128>()
+                                + total_time.elapsed().as_millis()
+                                + before_pause);
+                            text_surface = font
+                                .render(&pace)
                                 .blended(Color::WHITE)
                                 .map_err(|_| get_error())?;
                             texture = creator
