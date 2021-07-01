@@ -7,10 +7,10 @@
 /// # Arguments
 ///
 /// * `ms` - the value to convert to string.
-/// * `round` - whether to round to 30hz or not
-pub fn ms_to_readable(mut ms: u128, round: bool) -> String {
-    if round {
-        ms = round_ms_30(ms);
+/// * `round` - `Some(value)` to round to `value` frames/sec. None for no rounding
+pub fn ms_to_readable(mut ms: u128, round: Option<u128>) -> String {
+    if round.is_some() {
+        ms = round_ms(round.unwrap(), ms);
     }
     if ms >= 1000 {
         let remain_ms = ms % 1000;
@@ -20,7 +20,6 @@ pub fn ms_to_readable(mut ms: u128, round: bool) -> String {
             let remain_s = s % 60;
             s -= remain_s;
             let mut min = s / 60;
-
             if min >= 60 {
                 let remain_min = min % 60;
                 min -= remain_min;
@@ -112,16 +111,39 @@ pub fn split_time_sum(ms_vec: &Vec<u128>) -> Vec<u128> {
     vec
 }
 
-fn round_ms_30(ms: u128) -> u128 {
+fn round_ms(frames: u128, ms: u128) -> u128 {
     let hundreds = ms / 100;
-    let mut rounded = ms % 100;
-    rounded = match rounded {
-        0..=32 => 0,
-        33..=66 => 33,
-        67..=99 => 67,
-        _ => 0,
-    };
-    rounded + (hundreds * 100)
+    let mut rem = ms % 100;
+    println!("{:?}", gen_round_values(frames));
+    let rounds = gen_round_values(frames);
+    for val in &rounds {
+        println!("{}", val);
+        if rem <= *val {
+            rem = val - rounds[0];
+            println!("{}", rem);
+            if *val % 10 >= 5 && rounds[0] % 10 < 5 {
+                rem -= 1;
+            }
+            println!("{}", rem);
+            break;
+        }
+    }
+    rem + (hundreds * 100)
+}
+
+fn gen_round_values(frames: u128) -> Vec<u128> {
+    let frame = 1000 / frames;
+    let mut sum = frame;
+    let mut ret = vec![];
+    while sum < 100 {
+        if sum % 10 >= 5 {
+            sum += 1;
+        }
+        ret.push(sum);
+        sum += frame;
+    }
+    ret.push(sum);
+    ret
 }
 
 #[cfg(test)]
@@ -130,15 +152,24 @@ mod tests {
     #[test]
     // 3,611,111 ms should be 1 hour, 1 minute, 1 second, 111 ms
     fn test_readable() {
-        assert_eq!(ms_to_readable(3_661_111, false), "1:01:01.111");
+        assert_eq!(ms_to_readable(3_661_111, None), "1:01:01.111");
     }
     #[test]
     fn test_rounding_30() {
-        assert_eq!(round_ms_30(500), 500);
-        assert_eq!(round_ms_30(710), 700);
-        assert_eq!(round_ms_30(645), 633);
-        assert_eq!(round_ms_30(384), 367);
-        assert_eq!(round_ms_30(399), 367);
+        assert_eq!(round_ms(30, 500), 500);
+        assert_eq!(round_ms(30, 710), 700);
+        assert_eq!(round_ms(30, 645), 633);
+        assert_eq!(round_ms(30, 384), 367);
+        assert_eq!(round_ms(30, 399), 367);
+    }
+    #[test]
+    fn test_rounding_60() {
+        assert_eq!(round_ms(60, 500), 500);
+        assert_eq!(round_ms(60, 710), 700);
+        assert_eq!(round_ms(60, 460), 450);
+        assert_eq!(round_ms(60, 645), 633);
+        assert_eq!(round_ms(60, 384), 383);
+        assert_eq!(round_ms(60, 399), 383);
     }
     #[test]
     fn test_sum() {
