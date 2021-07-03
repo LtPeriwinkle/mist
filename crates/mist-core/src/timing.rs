@@ -114,17 +114,13 @@ pub fn split_time_sum(ms_vec: &Vec<u128>) -> Vec<u128> {
 fn round_ms(frames: u128, ms: u128) -> u128 {
     let hundreds = ms / 100;
     let mut rem = ms % 100;
-    println!("{:?}", gen_round_values(frames));
     let rounds = gen_round_values(frames);
     for val in &rounds {
-        println!("{}", val);
         if rem <= *val {
             rem = val - rounds[0];
-            println!("{}", rem);
             if *val % 10 >= 5 && rounds[0] % 10 < 5 {
                 rem -= 1;
             }
-            println!("{}", rem);
             break;
         }
     }
