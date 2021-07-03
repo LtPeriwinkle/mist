@@ -46,7 +46,7 @@ Once all planned features are complete, I will likely stop developing this and o
 - [X] skip splits (because somehow i missed this all along)
 
 ## Unplanned features
-These features are will not be implemented, in the spirit of minimalism.
+These features will not be implemented, in the spirit of minimalism.
 * Autosplitters
 * Horizontal timer layout
 * Ingame time
