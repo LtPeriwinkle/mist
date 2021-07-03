@@ -152,12 +152,12 @@ impl App {
                     Panel::CurrentSplitDiff { golds } => {
                         if *golds {
                             (
-                                "Current split (best)",
+                                "Split (best)",
                                 Panel::CurrentSplitDiff { golds: true },
                             )
                         } else {
                             (
-                                "Current split (pb)",
+                                "Split (pb)",
                                 Panel::CurrentSplitDiff { golds: false },
                             )
                         }
@@ -1332,17 +1332,46 @@ impl App {
                         Panel::Pace { golds }
                             if matches!(self.state, TimerState::Running { .. }) =>
                         {
-                            let times: &Vec<u128>;
-                            if *golds {
-                                times = self.run.gold_times();
+                            let times = if *golds {
+                                self.run.gold_times()
                             } else {
-                                times = self.run.pb_times();
-                            }
-                            let pace = timing::split_time_text(times[current_split + 1..].iter().sum::<u128>()
-                                + total_time.elapsed().as_millis()
-                                + before_pause);
+                                self.run.pb_times()
+                            };
+                            let pace = timing::split_time_text(
+                                times[current_split + 1..].iter().sum::<u128>()
+                                    + total_time.elapsed().as_millis()
+                                    + before_pause,
+                            );
                             text_surface = font
                                 .render(&pace)
+                                .blended(Color::WHITE)
+                                .map_err(|_| get_error())?;
+                            texture = creator
+                                .create_texture_from_surface(text_surface)
+                                .map_err(|_| get_error())?;
+                            panel.set_time(texture);
+                        }
+                        Panel::CurrentSplitDiff { golds }
+                            if matches!(self.state, TimerState::Running { .. })
+                                && splits.len() > 1 =>
+                        {
+                            let time = if !*golds {
+                                let tm = (self.timer.elapsed().as_millis() - split_time_ticks) + before_pause_split;
+                                if tm < self.run.gold_times()[current_split] {
+                                    timing::diff_text(-1 * (self.run.pb_times()[current_split] - tm) as i128)
+                                } else {
+                                    timing::diff_text((tm - self.run.pb_times()[current_split]) as i128)
+                                }
+                            } else {
+                                let tm = (self.timer.elapsed().as_millis() - split_time_ticks) + before_pause_split;
+                                if tm < self.run.gold_times()[current_split] {
+                                    timing::diff_text(-1 * (self.run.gold_times()[current_split] - tm) as i128)
+                                } else {
+                                    timing::diff_text((tm - self.run.gold_times()[current_split]) as i128)
+                                }
+                            };
+                            text_surface = font
+                                .render(&time)
                                 .blended(Color::WHITE)
                                 .map_err(|_| get_error())?;
                             texture = creator
