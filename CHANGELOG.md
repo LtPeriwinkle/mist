@@ -1,4 +1,7 @@
 # Changelog
+### 1.13.1
+- fix some crust in the timing system. no longer relies on multiple instants for timing different things
+
 ### 1.13.0
 - skipping splits support
 - small optimizations (i.e. remove unnecessary `map_err` and use existing variables rather than shadowing)
