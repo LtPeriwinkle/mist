@@ -391,8 +391,6 @@ impl App {
         // set up variables used in the mainloop
         // framerate cap timer
         let mut frame_time: Instant;
-        // instant used to calculate time that the timer has been running
-        //let mut total_time = Instant::now();
         // display time
         let mut time_str: String;
         // keep track of amount of time that passed before the timer was paused
