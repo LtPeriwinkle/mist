@@ -1,7 +1,8 @@
 # Changelog
-### next
+### 1.13.0
 - skipping splits support
 - small optimizations (i.e. remove unnecessary `map_err` and use existing variables rather than shadowing)
+- panels! sum of best, current run pace, current split diff
 
 ### 1.12.0
 - set pb/split pb/gold if the previous one in the run was 0, so that empty split files are handled properly (ish)

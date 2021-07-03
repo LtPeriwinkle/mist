@@ -1,6 +1,6 @@
 [package]
 name = "mist"
-version = "1.12.0"
+version = "1.13.0"
 authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
 include = ["assets/", "assets/*", "src/*.rs"]
 edition = "2018"

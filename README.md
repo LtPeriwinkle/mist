@@ -19,7 +19,7 @@ Once all planned features are complete, I will likely stop developing this and o
 	* [X] custom colors
 	* [X] keybinds
 	* [X] timer backgrounds
-	* [ ] panels (sum of best etc)
+	* [X] panels (sum of best etc)
 	* [ ] time rounding (30/60/off)
 	* [ ] *very limited* timer layout (i.e. use two rows for splits like option available in LiveSplit)
 - [ ] split file creation tool
