@@ -69,7 +69,7 @@ impl App {
         let config = Config::open()?;
         // start the overarching application timer (kinda)
         let timer = Instant::now();
-        // return an App that hasn't started and has an empty run
+        // make an App that hasn't started and has an empty run
         let mut app = App {
             _context: context,
             ev_pump,
@@ -392,7 +392,7 @@ impl App {
         // framerate cap timer
         let mut frame_time: Instant;
         // instant used to calculate time that the timer has been running
-        let mut total_time = Instant::now();
+        //let mut total_time = Instant::now();
         // display time
         let mut time_str: String;
         // keep track of amount of time that passed before the timer was paused
@@ -415,7 +415,8 @@ impl App {
         // current split in the slice of splits sent to render_time()
         let mut cur: usize;
         // elapsed time when last split happened
-        let mut split_time_ticks = 0;
+        let mut split_ticks = 0;
+        let mut start_ticks = 0;
         // split times of current run
         let mut active_run_times: Vec<u128> = vec![];
         // variable used to hold elapsed milliseconds of the application timer
@@ -441,11 +442,11 @@ impl App {
             // if the timer is doing an offset, make sure it should still be negative
             // if it shouldnt, convert to running state
             if let TimerState::OffsetCountdown { amt } = self.state {
-                if amt <= total_time.elapsed().as_millis() {
-                    elapsed = self.timer.elapsed().as_millis();
+                elapsed = self.timer.elapsed().as_millis();
+                if amt <= elapsed - start_ticks {
                     self.state = TimerState::Running { timestamp: elapsed };
-                    split_time_ticks = elapsed;
-                    total_time = Instant::now();
+                    split_ticks = elapsed;
+                    start_ticks = elapsed;
                 }
             }
             // repeat stuff in here for every event that occured between frames
@@ -488,7 +489,8 @@ impl App {
                                 // if timer isnt started, start it.
                                 TimerState::NotRunning { .. } if current_split == 0 => {
                                     elapsed = self.timer.elapsed().as_millis();
-                                    total_time = Instant::now();
+                                    start_ticks = elapsed;
+                                    split_ticks = elapsed;
                                     self.canvas
                                         .window_mut()
                                         .set_title(&format!(
@@ -503,7 +505,6 @@ impl App {
                                             }
                                         ))
                                         .map_err(|_| get_error())?;
-                                    split_time_ticks = elapsed;
                                     match offset {
                                         // if we are in the start offset, tell it to offset
                                         Some(x) => {
@@ -520,19 +521,19 @@ impl App {
                                     if len != 0 {
                                         elapsed = self.timer.elapsed().as_millis();
                                         active_run_times.push(
-                                            (elapsed - split_time_ticks) + before_pause_split,
+                                            (elapsed - split_ticks) + before_pause_split,
                                         );
                                         let sum = self.run.sum_times()[current_split];
                                         self.run.set_sum_time(
                                             (
                                                 sum.0 + 1,
                                                 sum.1
-                                                    + ((elapsed - split_time_ticks)
+                                                    + ((elapsed - split_ticks)
                                                         + before_pause_split),
                                             ),
                                             current_split,
                                         );
-                                        split_time_ticks = elapsed;
+                                        split_ticks = elapsed;
                                         before_pause_split = 0;
                                         // create the difference time shown after a split
                                         let sum = timing::split_time_sum(&active_run_times)
@@ -709,8 +710,8 @@ impl App {
                                             }
                                         ))
                                         .map_err(|_| get_error())?;
-                                    total_time = Instant::now();
-                                    split_time_ticks = elapsed;
+                                    start_ticks = elapsed;
+                                    split_ticks = elapsed;
                                     before_pause = t;
                                     before_pause_split = s;
                                     self.state = TimerState::Running { timestamp: elapsed };
@@ -731,11 +732,12 @@ impl App {
                                             }
                                         ))
                                         .map_err(|_| get_error())?;
+                                    elapsed = self.timer.elapsed().as_millis();
                                     self.state = TimerState::Paused {
-                                        time: total_time.elapsed().as_millis() + before_pause,
-                                        split: (elapsed - split_time_ticks) + before_pause_split,
+                                        time: (elapsed - start_ticks) + before_pause,
+                                        split: (elapsed - split_ticks) + before_pause_split,
                                         time_str: timing::ms_to_readable(
-                                            total_time.elapsed().as_millis() + before_pause,
+                                            (elapsed - start_ticks) + before_pause,
                                             true,
                                         ),
                                     };
@@ -1227,7 +1229,7 @@ impl App {
                 elapsed = self.timer.elapsed().as_millis();
                 // if we are in split 0 there's no need for fancy losing/gaining time, only ahead and behind
                 if current_split == 0 && len != 0 {
-                    if (elapsed - split_time_ticks) + before_pause_split
+                    if (elapsed - split_ticks) + before_pause_split
                         < splits[current_split].time()
                     {
                         color = ahead;
@@ -1258,7 +1260,7 @@ impl App {
                             - splits[current_split - 1].diff();
                         let buffer = splits[current_split - 1].diff();
                         // get amount of time that has passed in the current split
-                        let time = ((elapsed - split_time_ticks) + before_pause_split) as i128;
+                        let time = ((elapsed - split_ticks) + before_pause_split) as i128;
                         // if the last split was ahead of comparison split
                         if buffer < 0 {
                             // if the runner has spent more time than allowed they have to be behind
@@ -1339,7 +1341,7 @@ impl App {
                             };
                             let pace = timing::split_time_text(
                                 times[current_split + 1..].iter().sum::<u128>()
-                                    + total_time.elapsed().as_millis()
+                                    + (self.timer.elapsed().as_millis() - start_ticks)
                                     + before_pause,
                             );
                             text_surface = font
@@ -1356,14 +1358,14 @@ impl App {
                                 && splits.len() > 1 =>
                         {
                             let time = if !*golds {
-                                let tm = (self.timer.elapsed().as_millis() - split_time_ticks) + before_pause_split;
+                                let tm = (self.timer.elapsed().as_millis() - split_ticks) + before_pause_split;
                                 if tm < self.run.gold_times()[current_split] {
                                     timing::diff_text(-1 * (self.run.pb_times()[current_split] - tm) as i128)
                                 } else {
                                     timing::diff_text((tm - self.run.pb_times()[current_split]) as i128)
                                 }
                             } else {
-                                let tm = (self.timer.elapsed().as_millis() - split_time_ticks) + before_pause_split;
+                                let tm = (self.timer.elapsed().as_millis() - split_ticks) + before_pause_split;
                                 if tm < self.run.gold_times()[current_split] {
                                     timing::diff_text(-1 * (self.run.gold_times()[current_split] - tm) as i128)
                                 } else {
@@ -1399,7 +1401,7 @@ impl App {
                 )?;
             }
             // update the time based on the current timer state
-            time_str = self.update_time(before_pause, total_time);
+            time_str = self.update_time(before_pause, start_ticks);
             // copy the time texture to the canvas, place individual characters from map
             render::render_time(
                 time_str,
@@ -1438,12 +1440,12 @@ impl App {
         Ok(())
     }
     // updates time string based on timer state, basically leaves it the same if timer is not running
-    fn update_time(&self, before_pause: u128, total_time: Instant) -> String {
+    fn update_time(&self, before_pause: u128, start_ticks: u128) -> String {
         let time: String;
         match &self.state {
             TimerState::Running { .. } => {
                 time =
-                    timing::ms_to_readable(total_time.elapsed().as_millis() + before_pause, false);
+                    timing::ms_to_readable((self.timer.elapsed().as_millis() - start_ticks) + before_pause, false);
             }
             TimerState::NotRunning { time_str: string }
             | TimerState::Paused {
@@ -1452,9 +1454,9 @@ impl App {
                 time = string.to_owned();
             }
             TimerState::OffsetCountdown { amt: amount } => {
-                if amount > &total_time.elapsed().as_millis() {
+                if amount > &(self.timer.elapsed().as_millis() - start_ticks) {
                     let num =
-                        timing::ms_to_readable(amount - total_time.elapsed().as_millis(), false);
+                        timing::ms_to_readable(amount - (self.timer.elapsed().as_millis() - start_ticks), false);
                     time = format!("-{}", num);
                 } else {
                     time = "0.000".to_owned();
