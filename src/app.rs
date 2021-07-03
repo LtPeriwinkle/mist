@@ -143,9 +143,9 @@ impl App {
                 let (text, paneltype) = match panel {
                     Panel::Pace { golds } => {
                         if *golds {
-                            ("Current pace (best)", Panel::Pace { golds: true })
+                            ("Pace (best)", Panel::Pace { golds: true })
                         } else {
-                            ("Current pace (pb)", Panel::Pace { golds: false })
+                            ("Pace (pb)", Panel::Pace { golds: false })
                         }
                     }
                     Panel::SumOfBest => ("Sum of Best", Panel::SumOfBest),
@@ -1329,11 +1329,16 @@ impl App {
                                 .map_err(|_| get_error())?;
                             panel.set_time(texture);
                         }
-                        Panel::Pace { golds: false }
+                        Panel::Pace { golds }
                             if matches!(self.state, TimerState::Running { .. }) =>
                         {
-                            let pb_times = self.run.pb_times();
-                            let pace = timing::split_time_text(pb_times[current_split + 1..].iter().sum::<u128>()
+                            let times: &Vec<u128>;
+                            if *golds {
+                                times = self.run.gold_times();
+                            } else {
+                                times = self.run.pb_times();
+                            }
+                            let pace = timing::split_time_text(times[current_split + 1..].iter().sum::<u128>()
                                 + total_time.elapsed().as_millis()
                                 + before_pause);
                             text_surface = font
