@@ -1,6 +1,10 @@
 ## mist-core changelog
+### 0.7.0
+- time rounding to arbitrary fps values
+- changed config frame_rounding to `Option<u128>`
+
 ### 0.6.0
-- move all config related stuff to it's own module
+- move all config related stuff to its own module
 - add layout options, time rounding, panels to config
 
 ### 0.5.0
