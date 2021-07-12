@@ -9,8 +9,10 @@
 /// * `ms` - the value to convert to string.
 /// * `round` - `Some(value)` to round to `value` frames/sec. None for no rounding
 pub fn ms_to_readable(mut ms: u128, round: Option<u128>) -> String {
-    if round.is_some() {
-        ms = round_ms(round.unwrap(), ms);
+    if let Some(r) = round {
+        if r != 0 {
+            ms = round_ms(r, ms);
+        }
     }
     if ms >= 1000 {
         let remain_ms = ms % 1000;
