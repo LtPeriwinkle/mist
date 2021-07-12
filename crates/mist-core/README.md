@@ -10,9 +10,9 @@ Add mist-core to your Cargo.toml.
 
 ```toml
 [dependencies.mist-core]
-version = "0.5"
+version = "0.7"
 ```
 
-`mist-core` provides several features: `timing`, `dialogs`, `config`, `lss`, and `bg`. These disable functionality if you don't want it.
-`bg` is used by mist to enable or disable background image support in configuration; `timing`, `dialogs`, and `config` disable their respective
-modules; `lss` removes the LssParser from module parse.
+`mist-core` provides several features: `timing`, `dialogs`, `config`, `lss`, and `bg`. These enable functionality.
+`bg` is used by mist to enable or enable background image support in configuration; `timing`, `dialogs`, and `config` enable their respective
+modules; `lss` adds the LssParser to module parse.

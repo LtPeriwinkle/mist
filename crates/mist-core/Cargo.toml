@@ -1,6 +1,6 @@
 [package]
 name = "mist-core"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
 edition = "2018"
 description = "core functionality of mist"
