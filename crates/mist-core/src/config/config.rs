@@ -15,7 +15,7 @@ pub struct Config {
     img_file: Option<String>,
     img_scaled: bool,
     colors: [(u8, u8, u8); 6],
-    frame_rounding: u128,
+    frame_rounding: Option<u128>,
     layout: LayoutOpts,
     panels: Vec<Panel>,
     t_font: String,
@@ -30,7 +30,7 @@ pub struct Config {
 pub struct Config {
     def_file: Option<String>,
     colors: [(u8, u8, u8); 6],
-    frame_rounding: u128,
+    frame_rounding: Option<u128>,
     layout: LayoutOpts,
     panels: Vec<Panel>,
     t_font: String,
@@ -115,7 +115,7 @@ impl Config {
     pub fn panels(&self) -> &Vec<Panel> {
         &self.panels
     }
-    pub fn rounding(&self) -> u128 {
+    pub fn rounding(&self) -> Option<u128> {
         self.frame_rounding
     }
 }
@@ -135,7 +135,7 @@ impl Default for Config {
                 (255, 255, 0),
                 (0, 0, 0),
             ],
-            frame_rounding: 30,
+            frame_rounding: Some(30),
             layout: LayoutOpts::default(),
             panels: vec![],
             t_font: "assets/segoe-ui-bold.ttf".to_owned(),
@@ -158,7 +158,7 @@ impl Default for Config {
                 (255, 255, 0),
                 (0, 0, 0),
             ],
-            frame_rounding: 30,
+            frame_rounding: Some(30),
             layout: LayoutOpts::default(),
             panels: vec![],
             t_font: "assets/segoe-ui-bold.ttf".to_owned(),
