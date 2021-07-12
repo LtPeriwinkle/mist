@@ -316,7 +316,7 @@ impl App {
         match offset {
             Some(x) => {
                 self.state = TimerState::NotRunning {
-                    time_str: format!("-{}", timing::ms_to_readable(x, false)),
+                    time_str: format!("-{}", timing::ms_to_readable(x, None)),
                 };
             }
             _ => {}
@@ -624,7 +624,7 @@ impl App {
                                             self.state = TimerState::NotRunning {
                                                 time_str: timing::ms_to_readable(
                                                     (elapsed - t) + before_pause,
-                                                    true,
+                                                    self.config.rounding(),
                                                 ),
                                             };
                                             // if this run was a pb then set the Run struct's pb and splits
@@ -679,7 +679,7 @@ impl App {
                                         self.state = TimerState::NotRunning {
                                             time_str: timing::ms_to_readable(
                                                 (elapsed - t) + before_pause,
-                                                true,
+                                                self.config.rounding(),
                                             ),
                                         };
                                     }
@@ -736,7 +736,7 @@ impl App {
                                         split: (elapsed - split_ticks) + before_pause_split,
                                         time_str: timing::ms_to_readable(
                                             (elapsed - start_ticks) + before_pause,
-                                            true,
+                                            self.config.rounding(),
                                         ),
                                     };
                                 }
@@ -767,7 +767,7 @@ impl App {
                             match offset {
                                 Some(x) => {
                                     self.state = TimerState::NotRunning {
-                                        time_str: format!("-{}", timing::ms_to_readable(x, false)),
+                                        time_str: format!("-{}", timing::ms_to_readable(x, None)),
                                     };
                                 }
                                 None => {
@@ -829,7 +829,7 @@ impl App {
                                         self.state = TimerState::NotRunning {
                                             time_str: format!(
                                                 "-{}",
-                                                timing::ms_to_readable(x, false)
+                                                timing::ms_to_readable(x, None)
                                             ),
                                         };
                                     }
@@ -918,7 +918,7 @@ impl App {
                                     self.state = TimerState::NotRunning {
                                         time_str: timing::ms_to_readable(
                                             (elapsed - t) + before_pause,
-                                            true,
+                                            self.config.rounding(),
                                         ),
                                     };
                                 } else if current_split < len - 1 {
@@ -1443,7 +1443,7 @@ impl App {
         match &self.state {
             TimerState::Running { .. } => {
                 time =
-                    timing::ms_to_readable((self.timer.elapsed().as_millis() - start_ticks) + before_pause, false);
+                    timing::ms_to_readable((self.timer.elapsed().as_millis() - start_ticks) + before_pause, None);
             }
             TimerState::NotRunning { time_str: string }
             | TimerState::Paused {
@@ -1454,7 +1454,7 @@ impl App {
             TimerState::OffsetCountdown { amt: amount } => {
                 if amount > &(self.timer.elapsed().as_millis() - start_ticks) {
                     let num =
-                        timing::ms_to_readable(amount - (self.timer.elapsed().as_millis() - start_ticks), false);
+                        timing::ms_to_readable(amount - (self.timer.elapsed().as_millis() - start_ticks), None);
                     time = format!("-{}", num);
                 } else {
                     time = "0.000".to_owned();
