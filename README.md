@@ -20,7 +20,7 @@ Once all planned features are complete, I will likely stop developing this and o
 	* [X] keybinds
 	* [X] timer backgrounds
 	* [X] panels (sum of best etc)
-	* [ ] time rounding (30/60/off)
+	* [X] time rounding (30/60/off)
 	* [ ] *very limited* timer layout (i.e. use two rows for splits like option available in LiveSplit)
 - [ ] split file creation tool
 	* [X] edit existing msf
