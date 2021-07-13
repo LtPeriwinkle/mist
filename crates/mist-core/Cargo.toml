@@ -15,7 +15,7 @@ default = ["timing", "dialogs", "config"]
 lss = ["quick-xml"]
 timing = []
 dialogs = ["tinyfiledialogs"]
-config = []
+config = ["rust-fontconfig"]
 bg = ["config"]
 
 [dependencies.ron]
@@ -32,4 +32,8 @@ optional = true
 
 [dependencies.tinyfiledialogs]
 version = "3.8"
+optional = true
+
+[dependencies.rust-fontconfig]
+version = "0.1.5"
 optional = true
