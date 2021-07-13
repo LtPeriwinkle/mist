@@ -32,4 +32,17 @@ impl Font {
             Ok(())
         }
     }
+    pub fn timer_default() -> Self {
+        Font {
+            system: false,
+            path_name: "assets/DejaVuSans-Bold.ttf".to_owned()
+        }
+    }
+    pub fn splits_default() -> Self {
+        Font {
+            system: false,
+            path_name: "assets/DejaVuSans.ttf".to_owned()
+        }
+    }
 }
+

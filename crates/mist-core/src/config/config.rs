@@ -7,6 +7,8 @@ use std::io::Write;
 use super::KeybindsRaw;
 use super::LayoutOpts;
 use super::Panel;
+use super::Font;
+
 #[derive(Serialize, Deserialize)]
 #[cfg(feature = "bg")]
 /// Configuration of mist.
@@ -18,8 +20,8 @@ pub struct Config {
     frame_rounding: Option<u128>,
     layout: LayoutOpts,
     panels: Vec<Panel>,
-    t_font: String,
-    s_font: String,
+    t_font: Font,
+    s_font: Font,
     font_size: (u16, u16),
     binds: KeybindsRaw,
 }
@@ -33,8 +35,8 @@ pub struct Config {
     frame_rounding: Option<u128>,
     layout: LayoutOpts,
     panels: Vec<Panel>,
-    t_font: String,
-    s_font: String,
+    t_font: Font,
+    s_font: Font,
     font_size: (u16, u16),
     binds: KeybindsRaw,
 }
@@ -72,12 +74,12 @@ impl Config {
     pub fn set_file(&mut self, file: &String) {
         self.def_file = Some(file.to_owned());
     }
-    /// Get the path to the font used for the display timer.
-    pub fn tfont(&self) -> &str {
+    /// Get the Font used for the display timer.
+    pub fn tfont(&self) -> &Font {
         &self.t_font
     }
-    /// Get the path to the font used for the rows of splits.
-    pub fn sfont(&self) -> &str {
+    /// Get the Font used for the rows of splits.
+    pub fn sfont(&self) -> &Font {
         &self.s_font
     }
     /// Get the tuple of font sizes for the timer and split fonts respectively.
@@ -138,8 +140,8 @@ impl Default for Config {
             frame_rounding: Some(30),
             layout: LayoutOpts::default(),
             panels: vec![],
-            t_font: "assets/segoe-ui-bold.ttf".to_owned(),
-            s_font: "assets/segoe-ui-bold.ttf".to_owned(),
+            t_font: Font::timer_default(),
+            s_font: Font::splits_default(),
             font_size: (60, 25),
             binds: KeybindsRaw::default(),
         }
@@ -161,8 +163,8 @@ impl Default for Config {
             frame_rounding: Some(30),
             layout: LayoutOpts::default(),
             panels: vec![],
-            t_font: "assets/segoe-ui-bold.ttf".to_owned(),
-            s_font: "assets/segoe-ui-bold.ttf".to_owned(),
+            t_font: Font::timer_default(),
+            s_font: Font::splits_default(),
             font_size: (60, 25),
             binds: KeybindsRaw::default(),
         }
