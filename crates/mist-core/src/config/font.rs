@@ -13,11 +13,14 @@ pub struct Font {
 }
 
 impl Font {
+    /// Get the contents of the font file requested and write them to `buf`
+    ///
+    /// # Errors
+    /// * if the font cannot be opened, found or read
     pub fn get_bytes(self, buf: &mut [u8]) -> Result<(), String> {
         if !self.system {
             let mut file = File::open(self.path_name).map_err(|e| format!("font file: {}", e))?;
             file.read(buf).map_err(|e| format!("font read: {}", e))?;
-            Ok(())
         } else {
             let cache = FcFontCache::build();
             let pat = FcPattern {
@@ -28,16 +31,20 @@ impl Font {
             if let Some(font) = res {
                 let mut file = File::open(&font.path).map_err(|e| format!("font file: {}", e))?;
                 file.read(buf).map_err(|e| format!("font read: {}", e))?;
+            } else {
+                return Err("Could not find system font".to_owned());
             }
-            Ok(())
         }
+        Ok(())
     }
+    /// get the default timer font
     pub fn timer_default() -> Self {
         Font {
             system: false,
             path_name: "assets/DejaVuSans-Bold.ttf".to_owned()
         }
     }
+    /// get the default splits font
     pub fn splits_default() -> Self {
         Font {
             system: false,
