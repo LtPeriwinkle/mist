@@ -1,4 +1,9 @@
 # Changelog
+### next
+- error dialog on panic so that the user can report crashes easier
+- arbitrary time frame rounding
+- new font so that i am no longer breaking the law
+
 ### 1.13.1
 - fix some crust in the timing system. no longer relies on multiple instants for timing different things
 
