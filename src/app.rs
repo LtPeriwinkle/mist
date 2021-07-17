@@ -668,7 +668,7 @@ impl App {
                                             ))
                                             .map_err(|_| get_error())?;
                                         elapsed = self.timer.elapsed().as_millis();
-                                        if no_file {
+                                        if no_file || (elapsed - t) + before_pause < self.run.pb() {
                                             no_file = false;
                                             save = true;
                                             self.run.set_pb((elapsed - t) + before_pause);
@@ -1224,7 +1224,7 @@ impl App {
             if matches!(self.state, TimerState::Running {..}) {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
                 elapsed = self.timer.elapsed().as_millis();
-                if self.run.pb_times()[current_split] == 0 {
+                if len == 0 || self.run.pb_times()[current_split] == 0 {
                     color = ahead;
                 } else if current_split == 0 && len != 0 {
                     if (elapsed - split_ticks) + before_pause_split
