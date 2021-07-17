@@ -42,7 +42,7 @@ pub struct Config {
 }
 
 impl Config {
-    /// Attempts to open the configuration file used by mist and reaturns the Config within if possible.
+    /// Attempts to open and parse mist's default config
     ///
     /// If a Config cannot be parsed, returns the default.
     /// Only will return `Err` if it cannot read/write to the config file.
@@ -94,7 +94,7 @@ impl Config {
     ///
     /// # Errors
     ///
-    /// * If the serialization fails
+    /// * If the serialization fails.
     /// * If the file cannot be written to or opened.
     pub fn save(&self) -> Result<(), String> {
         let mut file = OpenOptions::new()
@@ -105,18 +105,20 @@ impl Config {
         file.write(&string.as_bytes()).map_err(|e| e.to_string())?;
         Ok(())
     }
-    /// Get the keybinds in string form as names of keys
+    /// Get the keybinds in string form as names of keys.
     pub fn binds(&self) -> &KeybindsRaw {
         &self.binds
     }
-    /// Get the layout options
+    /// Get the layout options.
     pub fn layout(&self) -> &LayoutOpts {
         &self.layout
     }
-    /// Get the list of timing display panels
+    /// Get the list of timing display panels.
     pub fn panels(&self) -> &Vec<Panel> {
         &self.panels
     }
+    /// Get the requested framerate to round times to.
+    /// None representes no rounding.
     pub fn rounding(&self) -> Option<u128> {
         self.frame_rounding
     }

@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize, Debug)]
-/// The raw representation of mist keybinds as [`String`]s.
+/// The raw representation of mist keybinds as strings.
 pub struct KeybindsRaw {
     pub pause: String,
     pub reset: String,

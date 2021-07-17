@@ -116,10 +116,11 @@ impl Run {
     pub fn set_pb_times(&mut self, new: &Vec<u128>) {
         self.pb_times = new.to_owned();
     }
-    /// Set the best times on each split..
+    /// Set the best time for each split.
     pub fn set_gold_times(&mut self, new: &Vec<u128>) {
         self.gold_times = new.to_owned();
     }
+    /// Set a single gold time, specified by `idx`
     pub fn set_gold_time(&mut self, new: u128, idx: usize) {
         self.gold_times[idx] = new;
     }

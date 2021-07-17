@@ -1,13 +1,14 @@
-//! Functions used for formatting of times
+//! Functions used for formatting of times.
 
-/// Convert milliseconds into a readable time in the form HH:MM:SS.mmm
+/// Convert milliseconds into a readable time in the form HH:MM:SS.mmm.
 ///
-/// Optionally rounds to a possible 30hz value, i.e. 33ms, 67ms, etc.
+/// Optionally rounds to a valid number of milliseconds on which a frame
+/// can occur, at any framerate.
 ///
 /// # Arguments
 ///
 /// * `ms` - the value to convert to string.
-/// * `round` - `Some(value)` to round to `value` frames/sec. None for no rounding
+/// * `round` - `Some(value)` to round to `value` frames/sec. `None` for no rounding.
 pub fn ms_to_readable(mut ms: u128, round: Option<u128>) -> String {
     if let Some(r) = round {
         if r != 0 {
@@ -98,7 +99,7 @@ pub fn split_time_text(ms: u128) -> String {
     }
 }
 
-/// Gets the sums of elements in a vec
+/// Gets the sums of elements in a vec.
 ///
 /// Returns a Vec with the sums of every element up to that point in it.
 ///

@@ -1,3 +1,4 @@
+//! Structs related to configuration of mist
 mod config;
 mod keybinds;
 mod layout;

@@ -1,4 +1,4 @@
-//! Parse [Run](crate::run::Run)s and configurations from their file representations.
+//! Parse [`Runs`](crate::run::Run) from their file representations.
 mod msf;
 pub use msf::MsfParser;
 

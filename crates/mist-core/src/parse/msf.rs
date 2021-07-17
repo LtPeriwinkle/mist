@@ -48,9 +48,8 @@ impl MsfParser {
     ///
     /// # Errors
     ///
-    /// * If the reader cannot be read from.
-    /// * If a Run (legacy or otherwise) cannot be parsed from the reader.
-    /// * If the reader is empty.
+    /// * If the reader cannot be read from or is empty.
+    /// * If a [`Run`] (legacy or otherwise) cannot be parsed from the reader.
     pub fn parse<R: BufRead>(&self, reader: R) -> Result<Run, String> {
         let mut lines = reader.lines().map(|l| l.unwrap());
         // TODO: better error handling

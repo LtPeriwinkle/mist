@@ -13,22 +13,22 @@ fn str_to_ms(tm: &String) -> u128 {
     return ms + (sec * 1000) + (min * 60000) + (hr * 3600000);
 }
 
-/// Constructs a [Run] from a LiveSplit split file.
+/// Constructs a [`Run`] from a LiveSplit split file.
 ///
 /// Attempts to retrieve the relevant information from LiveSplit's XML-based split file
-/// in order to construct a mist Run.
+/// in order to construct a mist [`Run`]. Any info that cannot be retrieved is zeroed.
 pub struct LssParser<R: BufRead> {
     reader: R,
 }
 
 impl<R: BufRead> LssParser<R> {
-    /// Create a new LssParser from the reader. Reader must implement [BufRead].
+    /// Create a new LssParser from the reader. Reader must implement [`BufRead`].
     pub fn new(reader: R) -> Self {
         LssParser { reader }
     }
-    /// Retrieve the information from the reader to create a Run.
+    /// Retrieve the information from the reader to create a [`Run`].
     ///
-    /// Returns a Run with all of the fields that were found filled in. This can return an empty Run if the LiveSplit file
+    /// Returns a [`Run`] with all of the fields that were found filled in. This can return an empty [`Run`] if the LiveSplit file
     /// was malformed or missing information.
     pub fn parse(&mut self) -> Run {
         let mut run = Run::empty();

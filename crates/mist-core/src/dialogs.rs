@@ -1,3 +1,7 @@
+//! Dialog boxes to prompt the user for things.
+//!
+//! Uses [tinyfiledialogs] to provide dialog boxes, which is cross-platform and can even work
+//! in a terminal if none of the dialog APIs it's expecting are available.
 use crate::parse::MsfParser;
 use crate::run::Run;
 use crate::config::Config;
@@ -7,8 +11,9 @@ use tinyfiledialogs::{
     message_box_ok, message_box_yes_no, open_file_dialog, MessageBoxIcon, YesNo, save_file_dialog_with_filter
 };
 
-/// Open a dialog box to check if the user wants to save their modified split file.
-/// If they click yes, return true. No returns false.
+/// Check if the user wants to save their modified split file.
+///
+/// If they click yes, return `true`. No returns `false`.
 pub fn save_check() -> bool {
     match message_box_yes_no(
         "Save run?",
@@ -20,14 +25,17 @@ pub fn save_check() -> bool {
         YesNo::No => false,
     }
 }
-/// Open a selectfile dialog box.
+/// Open a file select dialog box.
+///
 /// Box title will be `title`. `filter` should be formatted like `*.msf` to filter for msf file extensions etc.
+/// Returns `None` if the user closes the dialog box or presses Cancel.
 pub fn get_file(title: &str, filter: &str) -> Option<String> {
     open_file_dialog(title, "", Some((&[filter], "")))
 }
 
-/// Open a save as file dialog box.
-/// `None` if the user closes/cancels without choosing a file path to save to.
+/// Open a save as dialog box.
+///
+/// Returns `None` if the user closes the dialog box or presses Cancel.
 pub fn get_save_as() -> Option<String> {
     save_file_dialog_with_filter("Save as:", "", &["*.msf"], "mist split files")
 }
@@ -44,16 +52,16 @@ fn try_again() -> bool {
     }
 }
 
-/// One-and-done function to both select a file but also parse it to a Run.
+/// Function to both select a file and parse it to a [`Run`].
 ///
 /// # Errors
 ///
-/// * If the file cannot be read or there is another fs error
+/// * If the file cannot be read or there is another fs error.
 ///
 /// # Nones
 ///
-/// * If the user does not select a file
-/// * If the file selected cannot be parsed into a run
+/// * If the user does not select a file.
+/// * If the file selected cannot be parsed into a [`Run`].
 pub fn open_run() -> Result<Option<(Run, String)>, Error> {
     loop {
         match get_file("Open split file", "*.msf") {
@@ -77,6 +85,17 @@ pub fn open_run() -> Result<Option<(Run, String)>, Error> {
     }
 }
 
+
+/// Similar to [`open_run`] but returns a [`Config`] instead.
+///
+/// # Errors
+///
+/// * If the file cannot be read or there is another fs error.
+///
+/// # Nones
+///
+/// * If the user does not select a file.
+/// * If the file selected cannot be parsed into a [`Config`].
 pub fn open_config() -> Result<Option<Config>, String> {
     loop {
         match get_file("Open a config file", "*.cfg") {
@@ -99,7 +118,8 @@ pub fn open_config() -> Result<Option<Config>, String> {
     }
 }
 
-/// Create a dialog box informing the user of an error, then exit the program.
+/// Inform the user of an error, then exit the program.
+///
 /// Only used at the top level of the call stack in mist. Do not go using this in places.
 pub fn error(err: &str) -> ! {
     message_box_ok("Error", err, MessageBoxIcon::Error);
