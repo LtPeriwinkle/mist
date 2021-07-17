@@ -1,4 +1,8 @@
 ## mist-core changelog
+### 0.8.0
+- add utility to load system fonts
+- add font struct in config, specified whether path to file or system font.
+
 ### 0.7.0
 - time rounding to arbitrary fps values
 - changed config frame_rounding to `Option<u128>`
