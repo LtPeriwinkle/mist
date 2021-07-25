@@ -3,7 +3,7 @@ use rust_fontconfig::{FcFontCache, FcPattern};
 use std::fs::File;
 use std::io::Read;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 /// A font as represented in the config file.
 pub struct Font {
     /// Whether the font is a system font or in a local file.

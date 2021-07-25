@@ -9,7 +9,7 @@ use super::LayoutOpts;
 use super::Panel;
 use super::Font;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[cfg(feature = "bg")]
 /// Configuration of mist.
 pub struct Config {
@@ -26,7 +26,7 @@ pub struct Config {
     binds: KeybindsRaw,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[cfg(not(feature = "bg"))]
 /// Configuration of mist.
 pub struct Config {
