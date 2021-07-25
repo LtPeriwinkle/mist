@@ -22,4 +22,4 @@ default-features = false
 features = ["ttf"]
 
 [dependencies.mist-core]
-version = "0.7"
+version = "0.8"

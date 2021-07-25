@@ -14,6 +14,7 @@ use sdl2::rect::Rect;
 #[cfg(feature = "bg")]
 use sdl2::render::TextureAccess;
 use sdl2::render::{Texture, WindowCanvas};
+use sdl2::rwops::RWops;
 use sdl2::surface::Surface;
 use sdl2::ttf;
 
@@ -35,6 +36,7 @@ use crate::panels::RenderPanel;
 use crate::render;
 use crate::splits::Split;
 use crate::state::TimerState;
+
 // struct that holds information about the running app and its state
 pub struct App {
     _context: sdl2::Sdl,
@@ -48,6 +50,7 @@ pub struct App {
     config: Config,
     msf: MsfParser,
 }
+
 impl App {
     pub fn init(context: sdl2::Sdl) -> Result<Self, String> {
         // sdl setup boilerplate
@@ -131,9 +134,11 @@ impl App {
 
         // grab font sizes from config file and load the fonts
         let sizes = self.config.fsize();
-        let mut timer_font = self.ttf.load_font(self.config.tfont(), sizes.0)?;
+        let rw = RWops::from_file(self.config.tfont().get_path()?, "r")?;
+        let mut timer_font = self.ttf.load_font_from_rwops(rw, sizes.0)?;
         timer_font.set_kerning(false);
-        let mut font = self.ttf.load_font(self.config.sfont(), sizes.1)?;
+        let rw = RWops::from_file(self.config.sfont().get_path()?, "r")?;
+        let mut font = self.ttf.load_font_from_rwops(rw, sizes.1)?;
         // make the texture creator used a lot later on
         let creator = self.canvas.texture_creator();
         let mut binds = Keybinds::from_raw(self.config.binds())?;
@@ -943,12 +948,14 @@ impl App {
                                         losing_time = Color::from(colors[3]);
                                         gold = Color::from(colors[4]);
                                         bg_color = Color::from(colors[5]);
-                                        timer_font = self.ttf.load_font(
-                                            self.config.tfont(),
+                                        let rw = RWops::from_file(self.config.tfont().get_path()?, "r")?;
+                                        timer_font = self.ttf.load_font_from_rwops(
+                                            rw,
                                             self.config.fsize().0,
                                         )?;
-                                        font = self.ttf.load_font(
-                                            self.config.sfont(),
+                                        let rw = RWops::from_file(self.config.sfont().get_path()?, "r")?;
+                                        font = self.ttf.load_font_from_rwops(
+                                            rw,
                                             self.config.fsize().1,
                                         )?;
                                         splits_height = font.size_of("qwertyuiopasdfghjklzxcvbnm01234567890!@#$%^&*(){}[]|\\:;'\",.<>?/`~-_=+").map_err(|_| get_error())?.1;
@@ -1432,7 +1439,6 @@ impl App {
                 }
             } else {
                 let mut f = File::create(&path).map_err(|e| e.to_string())?;
-                println!("a");
                 self.msf.write(&self.run, &mut f)?;
             }
         }
