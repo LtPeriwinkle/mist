@@ -1,7 +1,5 @@
 use serde::{Serialize, Deserialize};
 use rust_fontconfig::{FcFontCache, FcPattern};
-use std::fs::File;
-use std::io::Read;
 
 #[derive(Serialize, Deserialize, Debug)]
 /// A font as represented in the config file.
@@ -17,25 +15,22 @@ impl Font {
     ///
     /// # Errors
     /// * If the font cannot be opened, found or read.
-    pub fn get_bytes(self, buf: &mut [u8]) -> Result<(), String> {
+    pub fn get_path(&self) -> Result<String, String> {
         if !self.system {
-            let mut file = File::open(self.path_name).map_err(|e| format!("font file: {}", e))?;
-            file.read(buf).map_err(|e| format!("font read: {}", e))?;
+            Ok(self.path_name.clone())
         } else {
             let cache = FcFontCache::build();
             let pat = FcPattern {
-                name: Some(self.path_name),
+                name: Some(self.path_name.clone()),
                     .. Default::default()
             };
             let res = cache.query(&pat);
             if let Some(font) = res {
-                let mut file = File::open(&font.path).map_err(|e| format!("font file: {}", e))?;
-                file.read(buf).map_err(|e| format!("font read: {}", e))?;
+                return Ok(font.path.clone());
             } else {
                 return Err("Could not find system font".to_owned());
             }
         }
-        Ok(())
     }
     /// Get the default timer font.
     pub fn timer_default() -> Self {
