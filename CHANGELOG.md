@@ -1,6 +1,7 @@
 # Changelog
 ### next
 - begin properly handling times of 0 as empty
+- add system font finding
 
 ### 1.13.2
 - error dialog on panic so that the user can report crashes easier

@@ -42,7 +42,7 @@ Once all planned features are complete, I will likely stop developing this and o
 	* [ ] communicate with plugins through ipc (i.e. unix socket, windows named pipe)
 	* [ ] plugins that are shipped with this repo (a discord presence, some kind of notes plugin, maybe more)
 - [ ] search for config/assets in standard os-specific dirs rather than hard-coded one (allows for packaging, installation, etc)
-- [ ] better way to find fonts than paths in config file
+- [X] better way to find fonts than paths in config file
 - [X] skip splits (because somehow i missed this all along)
 
 ## Unplanned features

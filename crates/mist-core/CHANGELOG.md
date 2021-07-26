@@ -1,4 +1,7 @@
 ## mist-core changelog
+### 0.8.1
+- get font path rather than bytes of file to deal with lifetimes for rwops better
+
 ### 0.8.0
 - add utility to load system fonts
 - add font struct in config, specified whether path to file or system font.
