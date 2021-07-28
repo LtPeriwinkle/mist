@@ -376,7 +376,7 @@ impl App {
 
         // if there are too few splits then set the max splits to the number of splits rather than
         // the max allowed amount
-        let max_initial_splits: usize = ((500 - timer_height) / splits_height) as usize;
+        let max_initial_splits: usize = ((self.canvas.viewport().height() - timer_height) / ((splits_height * (1 + !self.config.layout().inline_splits as u32)) + 5)) as usize;
         if splits.len() == 0 {
             max_splits = 0;
             bottom_split_index = 0;
@@ -427,6 +427,7 @@ impl App {
         let mut save = false;
         // set when comparison has changed and textures need to be rerendered
         let mut comp_changed = false;
+        let mut height_details = (splits_height, self.config.layout().inline_splits);
         self.canvas.present();
 
         // main loop
@@ -985,6 +986,7 @@ impl App {
                                             .create_texture_from_surface(&map)
                                             .map_err(|_| get_error())?;
                                         timer_height = font_y + splits_height;
+                                        height_details = (splits_height, self.config.layout().inline_splits);
                                         self.canvas
                                             .window_mut()
                                             .set_minimum_size(0, timer_height + 20)
@@ -1094,16 +1096,18 @@ impl App {
                     } => {
                         // calculate the height taken by the splits and the total new height of the window
                         let height = self.canvas.viewport().height();
+                        let check_height = splits_height * (!height_details.1 as u32 + 1);
+                        let check_timer_height = timer_height + (splits_height *  panels.len() as u32);
                         let rows_height = ((bottom_split_index - top_split_index) as u32
-                            * (splits_height + 2))
+                            * (check_height + 5))
                             + (splits_height * panels.len() as u32)
-                            + splits_height;
+                            + check_height;
                         // if there aren't any splits, we don't need to worry about changing the number of splits
                         if len != 0 {
                             // if there are too many splits, calculate how many and change indices
                             // otherwise if there are too few and there are enough to display more, change indices the other way
-                            if height - timer_height < rows_height {
-                                diff = ((rows_height - (height - timer_height)) / splits_height)
+                            if height - check_timer_height < rows_height {
+                                diff = ((rows_height - (height - check_timer_height)) / check_height)
                                     as usize;
                                 if max_splits > diff {
                                     max_splits -= diff;
@@ -1119,7 +1123,7 @@ impl App {
                                     bottom_split_index = 0;
                                 }
                             } else if rows_height < height - timer_height {
-                                diff = (((height - timer_height) - rows_height) / splits_height)
+                                diff = (((height - timer_height) - rows_height) / check_height)
                                     as usize;
                                 if current_split == bottom_split_index
                                     && current_split != len - 1
@@ -1395,13 +1399,13 @@ impl App {
             // and highlight the split relative to the top of the list marked by cur
             // function places the rows and ensures that they don't go offscreen
             if max_splits == 0 {
-                render::render_rows(&[], &mut self.canvas, window_width, splits_height, cur)?;
+                render::render_rows(&[], &mut self.canvas, window_width, height_details, cur)?;
             } else {
                 render::render_rows(
                     &splits[top_split_index..=bottom_split_index],
                     &mut self.canvas,
                     window_width,
-                    splits_height,
+                    height_details,
                     cur,
                 )?;
             }

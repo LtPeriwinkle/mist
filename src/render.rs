@@ -13,9 +13,10 @@ pub fn render_rows(
     on_screen: &[Split],
     canvas: &mut Canvas<Window>,
     window_width: u32,
-    split_height: u32,
+    (split_height, inline): (u32, bool),
     current: usize,
 ) -> Result<(), String> {
+    let incr_height: i32 = (split_height * (!inline as u32 + 1)) as i32;
     let mut y = 0;
     let mut row: Rect;
     let mut index = 0;
@@ -25,7 +26,7 @@ pub fn render_rows(
         // draw the blue highlight box before drawing the text for the split with index current
         if index == current {
             canvas.set_draw_color(Color::BLUE);
-            canvas.fill_rect(Rect::new(0, y - 1, window_width, height + 4))?;
+            canvas.fill_rect(Rect::new(0, y - 1, window_width, incr_height as u32 + 5))?;
         }
         row = Rect::new(0, y, width, height);
         canvas.copy(&item.name(), None, Some(row))?;
@@ -36,7 +37,7 @@ pub fn render_rows(
                 let tinfo = x.query();
                 row = Rect::new(
                     (window_width - tinfo.width) as i32,
-                    y,
+                    y + split_height as i32,
                     tinfo.width,
                     tinfo.height,
                 );
@@ -47,7 +48,7 @@ pub fn render_rows(
                 let tinfo = item.comp_texture().query();
                 row = Rect::new(
                     (window_width - tinfo.width) as i32,
-                    y,
+                    y + split_height as i32,
                     tinfo.width,
                     tinfo.height,
                 );
@@ -63,17 +64,18 @@ pub fn render_rows(
                     height: dh,
                     ..
                 } = x.query();
-                row = Rect::new(((window_width - texinfo.width - 25) - dw) as i32, y, dw, dh);
+                row = Rect::new(((window_width - texinfo.width - 25) - dw) as i32, y + split_height as i32, dw, dh);
                 canvas.copy(&x, None, Some(row))?;
             }
         }
         canvas.set_draw_color(Color::GRAY);
         // draw a line to separate between the rows
+        y += incr_height + 3;
         canvas.draw_line(
-            Point::new(0, y + split_height as i32 + 3),
-            Point::new(window_width as i32, y + split_height as i32 + 3),
+            Point::new(0, y),
+            Point::new(window_width as i32, y),
         )?;
-        y += split_height as i32 + 5;
+        y += 2;
         index += 1;
     }
     Ok(())
