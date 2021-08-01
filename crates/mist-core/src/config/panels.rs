@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Different types of information panels.
@@ -6,10 +6,6 @@ use serde::{Serialize, Deserialize};
 /// `golds` field represents whether to compare against gold times rather than pb times.
 pub enum Panel {
     SumOfBest,
-    CurrentSplitDiff {
-        golds: bool,
-    },
-    Pace {
-        golds: bool
-    }
+    CurrentSplitDiff { golds: bool },
+    Pace { golds: bool },
 }

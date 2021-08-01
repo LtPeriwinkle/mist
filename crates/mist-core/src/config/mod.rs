@@ -1,8 +1,7 @@
 //! Structs related to configuration of mist
 mod config;
+mod font;
 mod keybinds;
 mod layout;
 mod panels;
-mod font;
-pub use {config::Config, keybinds::KeybindsRaw, layout::LayoutOpts, panels::Panel, font::Font};
-
+pub use {config::Config, font::Font, keybinds::KeybindsRaw, layout::LayoutOpts, panels::Panel};

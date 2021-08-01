@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
 use rust_fontconfig::{FcFontCache, FcPattern};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 /// A font as represented in the config file.
@@ -22,7 +22,7 @@ impl Font {
             let cache = FcFontCache::build();
             let pat = FcPattern {
                 name: Some(self.path_name.clone()),
-                    .. Default::default()
+                ..Default::default()
             };
             let res = cache.query(&pat);
             if let Some(font) = res {
@@ -36,15 +36,14 @@ impl Font {
     pub fn timer_default() -> Self {
         Font {
             system: false,
-            path_name: "assets/DejaVuSans-Bold.ttf".to_owned()
+            path_name: "assets/DejaVuSans-Bold.ttf".to_owned(),
         }
     }
     /// Get the default splits font.
     pub fn splits_default() -> Self {
         Font {
             system: false,
-            path_name: "assets/DejaVuSans.ttf".to_owned()
+            path_name: "assets/DejaVuSans.ttf".to_owned(),
         }
     }
 }
-

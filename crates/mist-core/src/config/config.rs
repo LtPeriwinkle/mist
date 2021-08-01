@@ -1,14 +1,14 @@
 // handle configuration of color and font path
-use ron::de::from_reader;
-use ron::ser::{to_string_pretty, PrettyConfig};
-use ron::extensions::Extensions;
-use serde::{Deserialize, Serialize};
-use std::fs::OpenOptions;
-use std::io::Write;
+use super::Font;
 use super::KeybindsRaw;
 use super::LayoutOpts;
 use super::Panel;
-use super::Font;
+use ron::de::from_reader;
+use ron::extensions::Extensions;
+use ron::ser::{to_string_pretty, PrettyConfig};
+use serde::{Deserialize, Serialize};
+use std::fs::OpenOptions;
+use std::io::Write;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[cfg(feature = "bg")]
@@ -102,7 +102,11 @@ impl Config {
             .write(true)
             .open("assets/mist.cfg")
             .map_err(|e| e.to_string())?;
-        let string = to_string_pretty(self, PrettyConfig::new().with_extensions(Extensions::IMPLICIT_SOME)).map_err(|e| e.to_string())?;
+        let string = to_string_pretty(
+            self,
+            PrettyConfig::new().with_extensions(Extensions::IMPLICIT_SOME),
+        )
+        .map_err(|e| e.to_string())?;
         file.write(&string.as_bytes()).map_err(|e| e.to_string())?;
         Ok(())
     }

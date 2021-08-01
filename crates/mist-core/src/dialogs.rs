@@ -2,13 +2,14 @@
 //!
 //! Uses [tinyfiledialogs] to provide dialog boxes, which is cross-platform and can even work
 //! in a terminal if none of the dialog APIs it's expecting are available.
+use crate::config::Config;
 use crate::parse::MsfParser;
 use crate::run::Run;
-use crate::config::Config;
 use std::fs::File;
 use std::io::{BufReader, Error};
 use tinyfiledialogs::{
-    message_box_ok, message_box_yes_no, open_file_dialog, MessageBoxIcon, YesNo, save_file_dialog_with_filter
+    message_box_ok, message_box_yes_no, open_file_dialog, save_file_dialog_with_filter,
+    MessageBoxIcon, YesNo,
 };
 
 /// Check if the user wants to save their modified split file.
@@ -85,7 +86,6 @@ pub fn open_run() -> Result<Option<(Run, String)>, Error> {
     }
 }
 
-
 /// Similar to [`open_run`] but returns a [`Config`] instead.
 ///
 /// # Errors
@@ -101,7 +101,8 @@ pub fn open_config() -> Result<Option<Config>, String> {
         match get_file("Open a config file", "*.cfg") {
             Some(ref p) => {
                 let f = File::open(p).map_err(|e| e.to_string())?;
-                let config: Result<Config, String> = ron::de::from_reader(f).map_err(|e| e.to_string());
+                let config: Result<Config, String> =
+                    ron::de::from_reader(f).map_err(|e| e.to_string());
                 match config {
                     Ok(c) => {
                         return Ok(Some(c));
@@ -113,7 +114,7 @@ pub fn open_config() -> Result<Option<Config>, String> {
                     }
                 }
             }
-            None => return Ok(None)
+            None => return Ok(None),
         }
     }
 }

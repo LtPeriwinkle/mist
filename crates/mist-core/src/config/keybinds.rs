@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 /// The raw representation of mist keybinds as strings.
 pub struct KeybindsRaw {
@@ -24,7 +24,7 @@ impl Default for KeybindsRaw {
             prev_comp: "Left".to_owned(),
             next_comp: "Right".to_owned(),
             load_splits: "F1".to_owned(),
-            load_config: "F2".to_owned()
+            load_config: "F2".to_owned(),
         }
     }
 }
