@@ -2,6 +2,7 @@
 //!
 //! Uses [tinyfiledialogs] to provide dialog boxes, which is cross-platform and can even work
 //! in a terminal if none of the dialog APIs it's expecting are available.
+#[cfg(feature = "config")]
 use crate::config::Config;
 use crate::parse::MsfParser;
 use crate::run::Run;
