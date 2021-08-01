@@ -58,7 +58,7 @@ impl MsfParser {
             Some(num) => num.1.parse::<u32>().unwrap_or(0),
             None => 0,
         };
-        let mut data = {
+        let data = {
             let mut s = String::new();
             if version == 0 {
                 s.push_str(&ver_info);
