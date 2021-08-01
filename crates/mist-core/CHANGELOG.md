@@ -1,4 +1,7 @@
 ## mist-core changelog
+### 0.8.2
+- check for general run sanity before returning a parsed run or writing a run to msf
+
 ### 0.8.1
 - get font path rather than bytes of file to deal with lifetimes for rwops better
 
