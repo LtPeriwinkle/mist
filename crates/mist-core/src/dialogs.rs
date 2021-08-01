@@ -97,6 +97,7 @@ pub fn open_run() -> Result<Option<(Run, String)>, Error> {
 ///
 /// * If the user does not select a file.
 /// * If the file selected cannot be parsed into a [`Config`].
+#[cfg(feature = "config")]
 pub fn open_config() -> Result<Option<Config>, String> {
     loop {
         match get_file("Open a config file", "*.cfg") {
