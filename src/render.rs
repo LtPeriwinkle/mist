@@ -12,7 +12,6 @@ use sdl2::video::Window;
 pub fn render_rows(
     on_screen: &[Split],
     canvas: &mut Canvas<Window>,
-    window_width: u32,
     (split_height, inline): (u32, bool),
     current: usize,
 ) -> Result<(), String> {
@@ -20,6 +19,7 @@ pub fn render_rows(
     let mut y = 0;
     let mut row: Rect;
     let mut index = 0;
+    let window_width = canvas.viewport().width();
     // draw each split name on the left of the screen
     for item in on_screen {
         let TextureQuery { width, height, .. } = item.name().query();

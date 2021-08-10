@@ -404,8 +404,6 @@ impl App {
         let one_sixtieth = Duration::new(0, 1_000_000_000 / 60);
         // active split's index
         let mut current_split = 0;
-        // width of the canvas
-        let mut window_width: u32;
         // color of text
         let mut color = Color::WHITE;
         // used to determine if timer font map should be rerendered
@@ -1226,9 +1224,6 @@ impl App {
                     }
                 }
             }
-            // reset window width for placing text
-            window_width = self.canvas.viewport().width();
-
             // make some changes to stuff before updating screen based on what happened in past loop
             // but only if the timer is running
             old_color = color;
@@ -1399,12 +1394,11 @@ impl App {
             // and highlight the split relative to the top of the list marked by cur
             // function places the rows and ensures that they don't go offscreen
             if max_splits == 0 {
-                render::render_rows(&[], &mut self.canvas, window_width, height_details, cur)?;
+                render::render_rows(&[], &mut self.canvas, height_details, cur)?;
             } else {
                 render::render_rows(
                     &splits[top_split_index..=bottom_split_index],
                     &mut self.canvas,
-                    window_width,
                     height_details,
                     cur,
                 )?;
