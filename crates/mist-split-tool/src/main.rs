@@ -1,14 +1,17 @@
 use fltk::{app, button, dialog, draw, input, table, window::*};
-use mist_core::{parse::LssParser, parse::MsfParser, Run};
+use lazy_static::lazy_static;
+use mist_core::{parse::LssParser, parse::MsfParser, timing::ms_to_readable, Run};
+use regex::Regex;
 use std::convert::TryInto;
 use std::sync::Mutex;
 use tinyfiledialogs as tfd;
 
-use lazy_static::lazy_static;
-
 static HEADERS: [&'static str; 3] = ["Split Name", "Personal Best", "Gold"];
 
 lazy_static! {
+    static ref HOURS: Regex = Regex::new(r"^(\d+):([0-5]\d):([0-5]\d)(?:\.(\d{1,3}))?$").unwrap();
+    static ref MINS: Regex = Regex::new(r"^([0-5]?\d):([0-5]\d)(?:\.(\d{1,3}))?$").unwrap();
+    static ref SECS: Regex = Regex::new(r"^([0-5]?\d)(?:\.(\d{1,3}))?$").unwrap();
     static ref RUN: Mutex<Run> = Mutex::new(Run::empty());
     static ref VECS: Mutex<(Vec<u128>, Vec<u128>, Vec<String>)> =
         Mutex::new((vec![], vec![], vec![]));
@@ -39,55 +42,44 @@ fn get_save_as() -> Option<String> {
     }
 }
 
-fn ms_to_readable(mut ms: u128) -> String {
-    if ms >= 1000 {
-        let remain_ms = ms % 1000;
-        ms -= remain_ms;
-        let mut s = ms / 1000;
-        if s >= 60 {
-            let remain_s = s % 60;
-            s -= remain_s;
-            let mut min = s / 60;
-            if min >= 60 {
-                let remain_min = min % 60;
-                min -= remain_min;
-                let hr = min / 60;
-                return format!("{}:{:02}:{:02}.{:03}", hr, remain_min, remain_s, remain_ms);
-            } else {
-                return format!("{}:{:02}.{:03}", min, remain_s, remain_ms);
-            }
-        } else {
-            return format!("{}.{:03}", s, remain_ms);
-        }
-    } else {
-        return format!("0.{:03}", ms);
-    }
-}
-
 fn str_to_ms(tm: String) -> u128 {
-    unsafe {
-        ILLEGAL = false;
-    }
     let mut ms: u128 = 0;
-    fn alert(_: std::num::ParseIntError) -> u128 {
-        dialog::alert_default("invalid time entered");
-        unsafe {
-            ILLEGAL = true;
-        }
-        0
-    }
-    let split: Vec<&str> = tm.split(':').collect();
-    if split.len() == 2 {
-        ms += split[0].parse::<u128>().unwrap_or_else(alert) * 60000;
-        let split2: Vec<&str> = split[1].split('.').collect();
-        ms += split2[0].parse::<u128>().unwrap_or_else(alert) * 1000;
-        ms += split2[1].parse::<u128>().unwrap_or_else(alert);
-    } else if split.len() == 3 {
-        ms += split[0].parse::<u128>().unwrap_or_else(alert) * 3600000;
-        ms += split[1].parse::<u128>().unwrap_or_else(alert) * 60000;
-        let split2: Vec<&str> = split[2].split('.').collect();
-        ms += split2[0].parse::<u128>().unwrap_or_else(alert) * 1000;
-        ms += split2[1].parse::<u128>().unwrap_or_else(alert);
+    if HOURS.is_match(&tm) {
+        let caps = HOURS.captures_iter(&tm).next().unwrap();
+        ms = (caps[1].parse::<u128>()
+            .unwrap()
+            * 3600000)
+            + (caps[2]
+                .parse::<u128>()
+                .unwrap()
+                * 60000)
+            + (caps[3]
+                .parse::<u128>()
+                .unwrap()
+                * 1000)
+            + caps
+                .get(4)
+                .map_or("0", |m| m.as_str())
+                .parse::<u128>()
+                .unwrap();
+    } else if MINS.is_match(&tm) {
+        let caps = MINS.captures_iter(&tm).next().unwrap();
+        ms = (caps[1]
+            .parse::<u128>()
+            .unwrap()
+            * 60000)
+            + (caps[2]
+                .parse::<u128>()
+                .unwrap()
+                * 1000)
+            + caps
+                .get(3)
+                .map_or("0", |m| m.as_str())
+                .parse::<u128>()
+                .unwrap();
+    } else if SECS.is_match(&tm) {
+        let caps = SECS.captures_iter(&tm).next().unwrap();
+        ms = (caps[1].parse::<u128>().unwrap() * 1000) + caps.get(2).map_or("0", |m| m.as_str()).parse::<u128>().unwrap();
     }
     return ms;
 }
@@ -120,15 +112,16 @@ fn main() {
                 *RUN.lock().unwrap() = run;
             }
         }
-        None => return,
+        None => *RUN.lock().unwrap() = Run::empty(),
     }
     let app = app::App::default();
     let mut win = Window::default()
-        .with_size(510, 600)
+        .with_size(510, 635)
         .center_screen()
         .with_label("mist split editor");
-    let mut table = table::Table::new(5, 50, 503, 550, "");
+    let mut table = table::Table::new(5, 85, 503, 550, "");
     let og_len: u32 = RUN.lock().unwrap().splits().len().try_into().unwrap();
+    let og_len = if og_len == 0 {1} else {og_len};
     table.set_rows(og_len);
     table.set_row_header(true);
     table.set_cols(3);
@@ -137,13 +130,19 @@ fn main() {
     table.set_col_width(1, 140);
     table.set_col_width(2, 140);
     table.end();
-    let mut save_button = button::Button::new(423, 25, 80, 25, "save file");
-    let mut add_button = button::Button::new(342, 25, 80, 25, "add split");
-    let mut sub_button = button::Button::new(261, 25, 80, 25, "remove split");
-    let mut open_button = button::Button::new(180, 25, 80, 25, "open file");
+    let mut save_button = button::Button::new(423, 60, 80, 25, "save file");
+    let mut add_button = button::Button::new(342, 60, 80, 25, "add split");
+    let mut sub_button = button::Button::new(261, 60, 80, 25, "remove split");
+    let mut open_button = button::Button::new(180, 60, 80, 25, "open file");
+    let mut title_inp = input::Input::new(100, 5, 180, 25, RUN.lock().unwrap().game_title());
+    let mut cat_inp = input::Input::new(100, 30, 180, 25, RUN.lock().unwrap().category());
     win.make_resizable(false);
     win.end();
     win.show();
+    cat_inp.set_callback2(|inp| {RUN.lock().unwrap().set_category(inp.value())});
+    title_inp.set_callback2(|inp| {RUN.lock().unwrap().set_game_title(inp.value())});
+    cat_inp.set_label("Category Title: ");
+    title_inp.set_label("Game Title: ");
     let mut tbl = table.clone();
     open_button.set_callback(move || {
         let path = open_split_file();
@@ -246,7 +245,7 @@ fn main() {
                     })
                 } else if col == 1 {
                     if (row as usize) < VECS.lock().unwrap().0.len() {
-                        inp.set_value(&ms_to_readable(VECS.lock().unwrap().0[row as usize]));
+                        inp.set_value(&ms_to_readable(VECS.lock().unwrap().0[row as usize], None));
                     }
                     inp.set_callback2(move |input| {
                         if (row as usize) >= VECS.lock().unwrap().0.len() {
@@ -257,7 +256,7 @@ fn main() {
                     })
                 } else if col == 2 {
                     if (row as usize) < VECS.lock().unwrap().1.len() {
-                        inp.set_value(&ms_to_readable(VECS.lock().unwrap().1[row as usize]));
+                        inp.set_value(&ms_to_readable(VECS.lock().unwrap().1[row as usize], None));
                     }
                     inp.set_callback2(move |input| {
                         if (row as usize) >= VECS.lock().unwrap().1.len() {

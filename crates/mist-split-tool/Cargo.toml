@@ -17,8 +17,11 @@ version = "3.8"
 [dependencies.mist-core]
 version = "0.8"
 default-features = false
-features = ["dialogs", "lss"]
+features = ["lss"]
 path = "../mist-core/"
 
 [dependencies.lazy_static]
 version = "1.4"
+
+[dependencies.regex]
+version = "1.5"
