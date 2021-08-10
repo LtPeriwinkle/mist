@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies.fltk]
-version = "0.16"
+version = "1.1"
 
 [dependencies.tinyfiledialogs]
 version = "3.8"

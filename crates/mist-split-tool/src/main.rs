@@ -1,4 +1,4 @@
-use fltk::{app, button, dialog, draw, input, table, window::*};
+use fltk::{app, button, dialog, draw, enums::{FrameType, Font, Color, Align}, input, prelude::*, table, window::*};
 use lazy_static::lazy_static;
 use mist_core::{parse::LssParser, parse::MsfParser, timing::ms_to_readable, Run};
 use regex::Regex;
@@ -120,7 +120,7 @@ fn main() {
         .center_screen()
         .with_label("mist split editor");
     let mut table = table::Table::new(5, 85, 503, 550, "");
-    let og_len: u32 = RUN.lock().unwrap().splits().len().try_into().unwrap();
+    let og_len: i32 = RUN.lock().unwrap().splits().len().try_into().unwrap();
     let og_len = if og_len == 0 {1} else {og_len};
     table.set_rows(og_len);
     table.set_row_header(true);
@@ -134,17 +134,17 @@ fn main() {
     let mut add_button = button::Button::new(342, 60, 80, 25, "add split");
     let mut sub_button = button::Button::new(261, 60, 80, 25, "remove split");
     let mut open_button = button::Button::new(180, 60, 80, 25, "open file");
-    let mut title_inp = input::Input::new(100, 5, 180, 25, "Game Title: ");
-    let mut cat_inp = input::Input::new(100, 30, 180, 25, "Category Title: ");
+    let mut title_inp = input::Input::new(100, 5, 180, 25, "Category Title: ");
+    let mut cat_inp = input::Input::new(100, 30, 180, 25, "Game Title: ");
     win.make_resizable(false);
     win.end();
     win.show();
-    cat_inp.set_callback2(|inp| {RUN.lock().unwrap().set_category(inp.value())});
-    title_inp.set_callback2(|inp| {RUN.lock().unwrap().set_game_title(inp.value())});
+    cat_inp.set_callback(|inp| {RUN.lock().unwrap().set_category(inp.value())});
+    title_inp.set_callback(|inp| {RUN.lock().unwrap().set_game_title(inp.value())});
     cat_inp.set_value(RUN.lock().unwrap().category());
     title_inp.set_value(RUN.lock().unwrap().game_title());
     let mut tbl = table.clone();
-    open_button.set_callback(move || {
+    open_button.set_callback(move |_| {
         let path = open_split_file();
         match path {
             Some(ref p) => {
@@ -172,7 +172,7 @@ fn main() {
             }
             None => return,
         }
-        fltk::TableExt::clear(&mut tbl);
+        TableExt::clear(&mut tbl);
         tbl.set_rows(og_len);
         tbl.set_row_header(true);
         tbl.set_cols(3);
@@ -181,7 +181,7 @@ fn main() {
         tbl.set_col_width(1, 140);
         tbl.set_col_width(2, 140);
     });
-    save_button.set_callback(move || {
+    save_button.set_callback(move |_| {
         let vecs = VECS.lock().unwrap();
         let mut run = RUN.lock().unwrap();
         run.set_pb_times(&vecs.0);
@@ -215,7 +215,7 @@ fn main() {
             }
         }
     });
-    table.draw_cell2(move |t, ctx, row, col, x, y, w, h| match ctx {
+    table.draw_cell(move |t, ctx, row, col, x, y, w, h| match ctx {
         table::TableContext::StartPage => draw::set_font(Font::Helvetica, 14),
         table::TableContext::ColHeader => {
             draw::push_clip(x, y, w, h);
@@ -236,7 +236,7 @@ fn main() {
             if row < ((VECS.lock().unwrap().2.len()) as i32) {
                 if col == 0 {
                     inp.set_value(&VECS.lock().unwrap().2[row as usize]);
-                    inp.set_callback2(move |input| {
+                    inp.set_callback(move |input| {
                         if (row as usize) >= VECS.lock().unwrap().2.len() {
                             VECS.lock().unwrap().2.push(input.value())
                         } else {
@@ -247,7 +247,7 @@ fn main() {
                     if (row as usize) < VECS.lock().unwrap().0.len() {
                         inp.set_value(&ms_to_readable(VECS.lock().unwrap().0[row as usize], None));
                     }
-                    inp.set_callback2(move |input| {
+                    inp.set_callback(move |input| {
                         if (row as usize) >= VECS.lock().unwrap().0.len() {
                             VECS.lock().unwrap().0.push(str_to_ms(input.value()))
                         } else {
@@ -258,7 +258,7 @@ fn main() {
                     if (row as usize) < VECS.lock().unwrap().1.len() {
                         inp.set_value(&ms_to_readable(VECS.lock().unwrap().1[row as usize], None));
                     }
-                    inp.set_callback2(move |input| {
+                    inp.set_callback(move |input| {
                         if (row as usize) >= VECS.lock().unwrap().1.len() {
                             VECS.lock().unwrap().1.push(str_to_ms(input.value()))
                         } else {
@@ -268,7 +268,7 @@ fn main() {
                 }
             } else {
                 if col == 0 {
-                    inp.set_callback2(move |input| {
+                    inp.set_callback(move |input| {
                         if (row as usize) > VECS.lock().unwrap().2.len() {
                             VECS.lock().unwrap().2.push(input.value())
                         } else {
@@ -276,7 +276,7 @@ fn main() {
                         }
                     })
                 } else if col == 1 {
-                    inp.set_callback2(move |input| {
+                    inp.set_callback(move |input| {
                         if (row as usize) > VECS.lock().unwrap().0.len() {
                             VECS.lock().unwrap().0.push(str_to_ms(input.value()))
                         } else {
@@ -287,7 +287,7 @@ fn main() {
                         }
                     })
                 } else if col == 2 {
-                    inp.set_callback2(move |input| {
+                    inp.set_callback(move |input| {
                         if (row as usize) > VECS.lock().unwrap().1.len() {
                             VECS.lock().unwrap().1.push(str_to_ms(input.value()))
                         } else {
@@ -304,11 +304,11 @@ fn main() {
         _ => {}
     });
     let mut table1 = table.clone();
-    add_button.set_callback(move || {
+    add_button.set_callback(move |_| {
         table.set_rows(table.rows() + 1);
         table.redraw();
     });
-    sub_button.set_callback(move || {
+    sub_button.set_callback(move |_| {
         let new_rows = table1.rows() - 1;
         if (new_rows as usize) < VECS.lock().unwrap().0.len() {
             VECS.lock().unwrap().0.pop();
