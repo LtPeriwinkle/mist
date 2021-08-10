@@ -134,15 +134,15 @@ fn main() {
     let mut add_button = button::Button::new(342, 60, 80, 25, "add split");
     let mut sub_button = button::Button::new(261, 60, 80, 25, "remove split");
     let mut open_button = button::Button::new(180, 60, 80, 25, "open file");
-    let mut title_inp = input::Input::new(100, 5, 180, 25, RUN.lock().unwrap().game_title());
-    let mut cat_inp = input::Input::new(100, 30, 180, 25, RUN.lock().unwrap().category());
+    let mut title_inp = input::Input::new(100, 5, 180, 25, "Game Title: ");
+    let mut cat_inp = input::Input::new(100, 30, 180, 25, "Category Title: ");
     win.make_resizable(false);
     win.end();
     win.show();
     cat_inp.set_callback2(|inp| {RUN.lock().unwrap().set_category(inp.value())});
     title_inp.set_callback2(|inp| {RUN.lock().unwrap().set_game_title(inp.value())});
-    cat_inp.set_label("Category Title: ");
-    title_inp.set_label("Game Title: ");
+    cat_inp.set_value(RUN.lock().unwrap().category());
+    title_inp.set_value(RUN.lock().unwrap().game_title());
     let mut tbl = table.clone();
     open_button.set_callback(move || {
         let path = open_split_file();
