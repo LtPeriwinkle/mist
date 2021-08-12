@@ -84,7 +84,7 @@ impl App {
             },
             comparison: Comparison::PersonalBest,
             run: Run::empty(),
-            config: config,
+            config,
             msf: MsfParser::new(),
         };
         // try to use the filepath specified in the config file
@@ -104,7 +104,7 @@ impl App {
                 Err(e) => return Err(e.to_string()),
             }
         }
-        return Ok(app);
+        Ok(app)
     }
 
     pub fn run(&mut self) -> Result<(), String> {
@@ -232,13 +232,12 @@ impl App {
                         } else {
                             sur = x.rotozoom(0.0, x.width() as f64 / width as f64, true)?;
                         }
+                    } else if height < x.height() {
+                        sur = x.rotozoom(0.0, height as f64 / x.height() as f64, true)?;
                     } else {
-                        if height < x.height() {
-                            sur = x.rotozoom(0.0, height as f64 / x.height() as f64, true)?;
-                        } else {
-                            sur = x.rotozoom(0.0, x.height() as f64 / height as f64, true)?;
-                        }
+                        sur = x.rotozoom(0.0, x.height() as f64 / height as f64, true)?;
                     }
+
                     bg_tex = creator
                         .create_texture_from_surface(&sur)
                         .map_err(|_| get_error())?;
@@ -313,16 +312,13 @@ impl App {
         let mut split_names = self.run.splits();
         let mut offset = self.run.offset();
         // if there is an offset, display it properly
-        match offset {
-            Some(x) => {
-                self.state = TimerState::NotRunning {
-                    time_str: format!("-{}", timing::ms_to_readable(x, None)),
-                };
-            }
-            _ => {}
+        if let Some(x) = offset {
+            self.state = TimerState::NotRunning {
+                time_str: format!("-{}", timing::ms_to_readable(x, None)),
+            };
         }
         // get ms split times then convert them to pretty, summed times
-        let split_times_ms: Vec<u128> = self.run.pb_times().iter().cloned().collect();
+        let split_times_ms: Vec<u128> = self.run.pb_times().to_vec();
         let mut summed_times = timing::split_time_sum(&split_times_ms);
         let split_times_raw: Vec<String> = summed_times
             .iter()
@@ -380,7 +376,7 @@ impl App {
         let max_initial_splits: usize = ((self.canvas.viewport().height() - timer_height)
             / ((splits_height * (1 + !self.config.layout().inline_splits as u32)) + 5))
             as usize;
-        if splits.len() == 0 {
+        if splits.is_empty() {
             max_splits = 0;
             bottom_split_index = 0;
         } else if max_initial_splits > splits.len() {
@@ -502,7 +498,7 @@ impl App {
                                             self.run.game_title(),
                                             self.run.category(),
                                             current_split + 1,
-                                            if self.run.splits().len() != 0 {
+                                            if !self.run.splits().is_empty() {
                                                 &self.run.splits()[current_split]
                                             } else {
                                                 ""
@@ -605,7 +601,7 @@ impl App {
                                                     self.run.game_title(),
                                                     self.run.category(),
                                                     current_split + 1,
-                                                    if self.run.splits().len() != 0 {
+                                                    if !self.run.splits().is_empty() {
                                                         &self.run.splits()[current_split]
                                                     } else {
                                                         ""
@@ -710,7 +706,7 @@ impl App {
                                             self.run.game_title(),
                                             self.run.category(),
                                             current_split + 1,
-                                            if self.run.splits().len() != 0 {
+                                            if !self.run.splits().is_empty() {
                                                 &self.run.splits()[current_split]
                                             } else {
                                                 ""
@@ -732,7 +728,7 @@ impl App {
                                             self.run.game_title(),
                                             self.run.category(),
                                             current_split + 1,
-                                            if self.run.splits().len() != 0 {
+                                            if !self.run.splits().is_empty() {
                                                 &self.run.splits()[current_split]
                                             } else {
                                                 ""
@@ -803,16 +799,13 @@ impl App {
                             if let TimerState::NotRunning { .. } = self.state {
                                 // save the previous run if it was updated
                                 if save && dialogs::save_check() {
-                                    if path == "" {
+                                    if path.is_empty() {
                                         let p = dialogs::get_save_as();
-                                        match p {
-                                            Some(s) => {
-                                                path = s;
-                                                let mut f = File::create(&path)
-                                                    .map_err(|e| e.to_string())?;
-                                                self.msf.write(&self.run, &mut f)?;
-                                            }
-                                            None => {}
+                                        if let Some(s) = p {
+                                            path = s;
+                                            let mut f =
+                                                File::create(&path).map_err(|e| e.to_string())?;
+                                            self.msf.write(&self.run, &mut f)?;
                                         }
                                     } else {
                                         let mut f =
@@ -823,32 +816,24 @@ impl App {
                                 // open a file dialog to get a new split file + run
                                 // if the user cancelled, do nothing
                                 match dialogs::open_run() {
-                                    Ok(s) => match s {
-                                        Some((r, p)) => {
+                                    Ok(s) => {
+                                        if let Some((r, p)) = s {
                                             self.run = r;
                                             path = p;
                                         }
-                                        _ => {}
-                                    },
+                                    }
                                     Err(e) => return Err(e.to_string()),
                                 }
                                 offset = self.run.offset();
                                 // if there is an offset, display it properly
-                                match offset {
-                                    Some(x) => {
-                                        self.state = TimerState::NotRunning {
-                                            time_str: format!(
-                                                "-{}",
-                                                timing::ms_to_readable(x, None)
-                                            ),
-                                        };
-                                    }
-                                    _ => {}
+                                if let Some(x) = offset {
+                                    self.state = TimerState::NotRunning {
+                                        time_str: format!("-{}", timing::ms_to_readable(x, None)),
+                                    };
                                 }
                                 // recreate split names, times, textures, etc
                                 split_names = self.run.splits();
-                                let split_times_ms: Vec<u128> =
-                                    self.run.pb_times().iter().cloned().collect();
+                                let split_times_ms: Vec<u128> = self.run.pb_times().to_vec();
                                 summed_times = timing::split_time_sum(&split_times_ms);
                                 let split_times_raw: Vec<String> = summed_times
                                     .iter()
@@ -943,8 +928,8 @@ impl App {
                             }
                         } else if k == binds.load_config {
                             match dialogs::open_config() {
-                                Ok(c) => match c {
-                                    Some(conf) => {
+                                Ok(c) => {
+                                    if let Some(conf) = c {
                                         self.config = conf;
                                         binds = Keybinds::from_raw(self.config.binds())?;
                                         colors = self.config.color_list();
@@ -1051,21 +1036,20 @@ impl App {
                                                                 true,
                                                             )?;
                                                         }
+                                                    } else if height < x.height() {
+                                                        sur = x.rotozoom(
+                                                            0.0,
+                                                            height as f64 / x.height() as f64,
+                                                            true,
+                                                        )?;
                                                     } else {
-                                                        if height < x.height() {
-                                                            sur = x.rotozoom(
-                                                                0.0,
-                                                                height as f64 / x.height() as f64,
-                                                                true,
-                                                            )?;
-                                                        } else {
-                                                            sur = x.rotozoom(
-                                                                0.0,
-                                                                x.height() as f64 / height as f64,
-                                                                true,
-                                                            )?;
-                                                        }
+                                                        sur = x.rotozoom(
+                                                            0.0,
+                                                            x.height() as f64 / height as f64,
+                                                            true,
+                                                        )?;
                                                     }
+
                                                     bg_tex = creator
                                                         .create_texture_from_surface(&sur)
                                                         .map_err(|_| get_error())?;
@@ -1089,8 +1073,7 @@ impl App {
                                             bg_rect = Rect::new(0, 0, bgw, bgh);
                                         }
                                     }
-                                    None => {}
-                                },
+                                }
                                 Err(e) => return Err(e),
                             }
                         }
@@ -1183,7 +1166,7 @@ impl App {
                     };
                     index = 0;
                     while index < attempts.len() {
-                        times[index] = times[index] / {
+                        times[index] /= {
                             if attempts[index] == 0 {
                                 1
                             } else {
@@ -1338,7 +1321,7 @@ impl App {
                     .create_texture_from_surface(&map)
                     .map_err(|_| get_error())?;
             }
-            if panels.len() != 0 {
+            if !panels.is_empty() {
                 for panel in &mut panels {
                     match panel.panel_type() {
                         Panel::SumOfBest if did_gold => {
@@ -1382,30 +1365,26 @@ impl App {
                                 && splits.len() > 1
                                 && self.run.pb_times()[current_split] != 0 =>
                         {
+                            let tm = (self.timer.elapsed().as_millis() - split_ticks)
+                                + before_pause_split;
                             let time = if !*golds {
-                                let tm = (self.timer.elapsed().as_millis() - split_ticks)
-                                    + before_pause_split;
                                 if tm < self.run.gold_times()[current_split] {
                                     timing::diff_text(
-                                        -1 * (self.run.pb_times()[current_split] - tm) as i128,
+                                        -((self.run.pb_times()[current_split] - tm) as i128),
                                     )
                                 } else {
                                     timing::diff_text(
                                         (tm - self.run.pb_times()[current_split]) as i128,
                                     )
                                 }
+                            } else if tm < self.run.gold_times()[current_split] {
+                                timing::diff_text(
+                                    -((self.run.gold_times()[current_split] - tm) as i128),
+                                )
                             } else {
-                                let tm = (self.timer.elapsed().as_millis() - split_ticks)
-                                    + before_pause_split;
-                                if tm < self.run.gold_times()[current_split] {
-                                    timing::diff_text(
-                                        -1 * (self.run.gold_times()[current_split] - tm) as i128,
-                                    )
-                                } else {
-                                    timing::diff_text(
-                                        (tm - self.run.gold_times()[current_split]) as i128,
-                                    )
-                                }
+                                timing::diff_text(
+                                    (tm - self.run.gold_times()[current_split]) as i128,
+                                )
                             };
                             text_surface = font
                                 .render(&time)
@@ -1455,15 +1434,12 @@ impl App {
         self.config.save()?;
         // if splits were updated, prompt user to save the split file
         if save && dialogs::save_check() {
-            if path == "" {
+            if path.is_empty() {
                 let p = dialogs::get_save_as();
-                match p {
-                    Some(s) => {
-                        path = s;
-                        let mut f = File::create(&path).map_err(|e| e.to_string())?;
-                        self.msf.write(&self.run, &mut f)?;
-                    }
-                    None => {}
+                if let Some(s) = p {
+                    path = s;
+                    let mut f = File::create(&path).map_err(|e| e.to_string())?;
+                    self.msf.write(&self.run, &mut f)?;
                 }
             } else {
                 let mut f = File::create(&path).map_err(|e| e.to_string())?;
@@ -1500,6 +1476,6 @@ impl App {
                 }
             }
         }
-        return time;
+        time
     }
 }

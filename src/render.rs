@@ -19,10 +19,9 @@ pub fn render_rows(
     let incr_height: i32 = (split_height * (!inline as u32 + 1)) as i32;
     let mut y = 0;
     let mut row: Rect;
-    let mut index = 0;
     let window_width = canvas.viewport().width();
     // draw each split name on the left of the screen
-    for item in on_screen {
+    for (index, item) in on_screen.iter().enumerate() {
         let TextureQuery { width, height, .. } = item.name().query();
         // draw the blue highlight box before drawing the text for the split with index current
         if index == current {
@@ -74,7 +73,6 @@ pub fn render_rows(
         y += incr_height + 3;
         canvas.draw_line(Point::new(0, y), Point::new(window_width as i32, y))?;
         y += 2;
-        index += 1;
     }
     Ok(())
 }
