@@ -37,7 +37,7 @@ pub fn render_rows(
                 let tinfo = x.query();
                 row = Rect::new(
                     (window_width - tinfo.width) as i32,
-                    y + split_height as i32,
+                    y,
                     tinfo.width,
                     tinfo.height,
                 );
@@ -48,7 +48,7 @@ pub fn render_rows(
                 let tinfo = item.comp_texture().query();
                 row = Rect::new(
                     (window_width - tinfo.width) as i32,
-                    y + split_height as i32,
+                    y,
                     tinfo.width,
                     tinfo.height,
                 );
@@ -64,17 +64,19 @@ pub fn render_rows(
                     height: dh,
                     ..
                 } = x.query();
-                row = Rect::new(((window_width - texinfo.width - 25) - dw) as i32, y + split_height as i32, dw, dh);
+                row = Rect::new(
+                    ((window_width - texinfo.width - 25) - dw) as i32,
+                    y,
+                    dw,
+                    dh,
+                );
                 canvas.copy(&x, None, Some(row))?;
             }
         }
         canvas.set_draw_color(Color::GRAY);
         // draw a line to separate between the rows
         y += incr_height + 3;
-        canvas.draw_line(
-            Point::new(0, y),
-            Point::new(window_width as i32, y),
-        )?;
+        canvas.draw_line(Point::new(0, y), Point::new(window_width as i32, y))?;
         y += 2;
         index += 1;
     }
