@@ -156,15 +156,9 @@ impl App {
                     Panel::SumOfBest => ("Sum of Best", Panel::SumOfBest),
                     Panel::CurrentSplitDiff { golds } => {
                         if *golds {
-                            (
-                                "Split (best)",
-                                Panel::CurrentSplitDiff { golds: true },
-                            )
+                            ("Split (best)", Panel::CurrentSplitDiff { golds: true })
                         } else {
-                            (
-                                "Split (pb)",
-                                Panel::CurrentSplitDiff { golds: false },
-                            )
+                            ("Split (pb)", Panel::CurrentSplitDiff { golds: false })
                         }
                     }
                 };
@@ -275,6 +269,7 @@ impl App {
                 let size = timer_font
                     .size_of(&chr.to_string())
                     .map_err(|_| get_error())?;
+                println!("{:?}", size);
                 raw.push(size.0);
                 ret.push(raw.iter().sum::<u32>());
             }
@@ -331,7 +326,13 @@ impl App {
         let mut summed_times = timing::split_time_sum(&split_times_ms);
         let split_times_raw: Vec<String> = summed_times
             .iter()
-            .map(|&val| if val == 0 {"-  ".into()} else {timing::split_time_text(val)})
+            .map(|&val| {
+                if val == 0 {
+                    "-  ".into()
+                } else {
+                    timing::split_time_text(val)
+                }
+            })
             .collect();
         // initialize variables that are used in the loop for replacing textures
         let mut text_surface: Surface;
@@ -376,7 +377,9 @@ impl App {
 
         // if there are too few splits then set the max splits to the number of splits rather than
         // the max allowed amount
-        let max_initial_splits: usize = ((self.canvas.viewport().height() - timer_height) / ((splits_height * (1 + !self.config.layout().inline_splits as u32)) + 5)) as usize;
+        let max_initial_splits: usize = ((self.canvas.viewport().height() - timer_height)
+            / ((splits_height * (1 + !self.config.layout().inline_splits as u32)) + 5))
+            as usize;
         if splits.len() == 0 {
             max_splits = 0;
             bottom_split_index = 0;
@@ -521,9 +524,8 @@ impl App {
                                     // only try to do this stuff if there is at least one split
                                     if len != 0 {
                                         elapsed = self.timer.elapsed().as_millis();
-                                        active_run_times.push(
-                                            (elapsed - split_ticks) + before_pause_split,
-                                        );
+                                        active_run_times
+                                            .push((elapsed - split_ticks) + before_pause_split);
                                         let sum = self.run.sum_times()[current_split];
                                         self.run.set_sum_time(
                                             (
@@ -556,7 +558,11 @@ impl App {
                                             [current_split];
                                         let diff =
                                             sum as i128 - summed_times[current_split] as i128;
-                                        time_str = if self.run.pb_times()[current_split] == 0 {"-  ".into()} else {timing::diff_text(diff)};
+                                        time_str = if self.run.pb_times()[current_split] == 0 {
+                                            "-  ".into()
+                                        } else {
+                                            timing::diff_text(diff)
+                                        };
                                         text_surface = font
                                             .render(&time_str)
                                             .blended(color)
@@ -809,7 +815,8 @@ impl App {
                                             None => {}
                                         }
                                     } else {
-                                        let mut f = File::create(&path).map_err(|e| e.to_string())?;
+                                        let mut f =
+                                            File::create(&path).map_err(|e| e.to_string())?;
                                         self.msf.write(&self.run, &mut f)?;
                                     }
                                 }
@@ -947,16 +954,16 @@ impl App {
                                         losing_time = Color::from(colors[3]);
                                         gold = Color::from(colors[4]);
                                         bg_color = Color::from(colors[5]);
-                                        let rw = RWops::from_file(self.config.tfont().get_path()?, "r")?;
-                                        timer_font = self.ttf.load_font_from_rwops(
-                                            rw,
-                                            self.config.fsize().0,
-                                        )?;
-                                        let rw = RWops::from_file(self.config.sfont().get_path()?, "r")?;
-                                        font = self.ttf.load_font_from_rwops(
-                                            rw,
-                                            self.config.fsize().1,
-                                        )?;
+                                        let rw =
+                                            RWops::from_file(self.config.tfont().get_path()?, "r")?;
+                                        timer_font = self
+                                            .ttf
+                                            .load_font_from_rwops(rw, self.config.fsize().0)?;
+                                        let rw =
+                                            RWops::from_file(self.config.sfont().get_path()?, "r")?;
+                                        font = self
+                                            .ttf
+                                            .load_font_from_rwops(rw, self.config.fsize().1)?;
                                         splits_height = font.size_of("qwertyuiopasdfghjklzxcvbnm01234567890!@#$%^&*(){}[]|\\:;'\",.<>?/`~-_=+").map_err(|_| get_error())?.1;
                                         coords = {
                                             let mut raw: Vec<u32> = vec![];
@@ -984,7 +991,8 @@ impl App {
                                             .create_texture_from_surface(&map)
                                             .map_err(|_| get_error())?;
                                         timer_height = font_y + splits_height;
-                                        height_details = (splits_height, self.config.layout().inline_splits);
+                                        height_details =
+                                            (splits_height, self.config.layout().inline_splits);
                                         self.canvas
                                             .window_mut()
                                             .set_minimum_size(0, timer_height + 20)
@@ -1095,7 +1103,8 @@ impl App {
                         // calculate the height taken by the splits and the total new height of the window
                         let height = self.canvas.viewport().height();
                         let check_height = splits_height * (!height_details.1 as u32 + 1);
-                        let check_timer_height = timer_height + (splits_height *  panels.len() as u32);
+                        let check_timer_height =
+                            timer_height + (splits_height * panels.len() as u32);
                         let rows_height = ((bottom_split_index - top_split_index) as u32
                             * (check_height + 5))
                             + (splits_height * panels.len() as u32)
@@ -1105,8 +1114,8 @@ impl App {
                             // if there are too many splits, calculate how many and change indices
                             // otherwise if there are too few and there are enough to display more, change indices the other way
                             if height - check_timer_height < rows_height {
-                                diff = ((rows_height - (height - check_timer_height)) / check_height)
-                                    as usize;
+                                diff = ((rows_height - (height - check_timer_height))
+                                    / check_height) as usize;
                                 if max_splits > diff {
                                     max_splits -= diff;
                                 } else {
@@ -1185,7 +1194,13 @@ impl App {
                     }
                     let split_times_raw: Vec<String> = timing::split_time_sum(&times)
                         .iter()
-                        .map(|&val| if val == 0 {"-  ".into()} else {timing::split_time_text(val)})
+                        .map(|&val| {
+                            if val == 0 {
+                                "-  ".into()
+                            } else {
+                                timing::split_time_text(val)
+                            }
+                        })
                         .collect();
                     index = 0;
                     while index < len {
@@ -1208,7 +1223,13 @@ impl App {
                     // rerender comparisons to either personal best or golds
                     let split_times_raw: Vec<String> = timing::split_time_sum(&split_times)
                         .iter()
-                        .map(|&val| if val == 0 {"-  ".into()} else {timing::split_time_text(val)})
+                        .map(|&val| {
+                            if val == 0 {
+                                "-  ".into()
+                            } else {
+                                timing::split_time_text(val)
+                            }
+                        })
                         .collect();
                     index = 0;
                     while index < len {
@@ -1227,15 +1248,13 @@ impl App {
             // make some changes to stuff before updating screen based on what happened in past loop
             // but only if the timer is running
             old_color = color;
-            if matches!(self.state, TimerState::Running {..}) {
+            if matches!(self.state, TimerState::Running { .. }) {
                 // calculates if run is ahead/behind/gaining/losing and adjusts accordingly
                 elapsed = self.timer.elapsed().as_millis();
                 if len == 0 || self.run.pb_times()[current_split] == 0 {
                     color = ahead;
                 } else if current_split == 0 && len != 0 {
-                    if (elapsed - split_ticks) + before_pause_split
-                        < splits[current_split].time()
-                    {
+                    if (elapsed - split_ticks) + before_pause_split < splits[current_split].time() {
                         color = ahead;
                     } else {
                         color = behind;
@@ -1336,7 +1355,8 @@ impl App {
                             panel.set_time(texture);
                         }
                         Panel::Pace { golds }
-                            if matches!(self.state, TimerState::Running { .. }) && self.run.pb_times()[current_split] != 0 =>
+                            if matches!(self.state, TimerState::Running { .. })
+                                && self.run.pb_times()[current_split] != 0 =>
                         {
                             let times = if *golds {
                                 self.run.gold_times()
@@ -1359,21 +1379,32 @@ impl App {
                         }
                         Panel::CurrentSplitDiff { golds }
                             if matches!(self.state, TimerState::Running { .. })
-                                && splits.len() > 1 && self.run.pb_times()[current_split] != 0 =>
+                                && splits.len() > 1
+                                && self.run.pb_times()[current_split] != 0 =>
                         {
                             let time = if !*golds {
-                                let tm = (self.timer.elapsed().as_millis() - split_ticks) + before_pause_split;
+                                let tm = (self.timer.elapsed().as_millis() - split_ticks)
+                                    + before_pause_split;
                                 if tm < self.run.gold_times()[current_split] {
-                                    timing::diff_text(-1 * (self.run.pb_times()[current_split] - tm) as i128)
+                                    timing::diff_text(
+                                        -1 * (self.run.pb_times()[current_split] - tm) as i128,
+                                    )
                                 } else {
-                                    timing::diff_text((tm - self.run.pb_times()[current_split]) as i128)
+                                    timing::diff_text(
+                                        (tm - self.run.pb_times()[current_split]) as i128,
+                                    )
                                 }
                             } else {
-                                let tm = (self.timer.elapsed().as_millis() - split_ticks) + before_pause_split;
+                                let tm = (self.timer.elapsed().as_millis() - split_ticks)
+                                    + before_pause_split;
                                 if tm < self.run.gold_times()[current_split] {
-                                    timing::diff_text(-1 * (self.run.gold_times()[current_split] - tm) as i128)
+                                    timing::diff_text(
+                                        -1 * (self.run.gold_times()[current_split] - tm) as i128,
+                                    )
                                 } else {
-                                    timing::diff_text((tm - self.run.gold_times()[current_split]) as i128)
+                                    timing::diff_text(
+                                        (tm - self.run.gold_times()[current_split]) as i128,
+                                    )
                                 }
                             };
                             text_surface = font
@@ -1446,8 +1477,10 @@ impl App {
         let time: String;
         match &self.state {
             TimerState::Running { .. } => {
-                time =
-                    timing::ms_to_readable((self.timer.elapsed().as_millis() - start_ticks) + before_pause, None);
+                time = timing::ms_to_readable(
+                    (self.timer.elapsed().as_millis() - start_ticks) + before_pause,
+                    None,
+                );
             }
             TimerState::NotRunning { time_str: string }
             | TimerState::Paused {
@@ -1457,8 +1490,10 @@ impl App {
             }
             TimerState::OffsetCountdown { amt: amount } => {
                 if amount > &(self.timer.elapsed().as_millis() - start_ticks) {
-                    let num =
-                        timing::ms_to_readable(amount - (self.timer.elapsed().as_millis() - start_ticks), None);
+                    let num = timing::ms_to_readable(
+                        amount - (self.timer.elapsed().as_millis() - start_ticks),
+                        None,
+                    );
                     time = format!("-{}", num);
                 } else {
                     time = "0.000".to_owned();

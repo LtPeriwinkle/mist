@@ -65,12 +65,7 @@ pub fn render_rows(
                     height: dh,
                     ..
                 } = x.query();
-                row = Rect::new(
-                    ((window_width - texinfo.width - 25) - dw) as i32,
-                    y,
-                    dw,
-                    dh,
-                );
+                row = Rect::new(((window_width - texinfo.width - 25) - dw) as i32, y, dw, dh);
                 canvas.copy(&x, None, Some(row))?;
             }
         }
@@ -152,11 +147,7 @@ pub fn get_coords(time_str: String, coords: &[u32]) -> Vec<(u32, u32, u32, u32)>
             coords[coord_idx] + (coord_idx as u32 * space),
             width,
             x,
-            if idx < 4 {
-                width * 8 / 10
-            } else {
-                width
-            },
+            if idx < 4 { width * 8 / 10 } else { width },
         );
         ret.push(tup);
     }
