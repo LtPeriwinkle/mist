@@ -1407,9 +1407,8 @@ impl App {
             time_str = self.update_time(before_pause, start_ticks);
             // copy the time texture to the canvas, place individual characters from map
             render::render_time(
-                time_str,
                 &map_tex,
-                &coords,
+                &render::get_coords(time_str, &coords),
                 (font_y, splits_height, panels.len() as usize),
                 &mut self.canvas,
             )?;

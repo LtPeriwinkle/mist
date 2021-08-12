@@ -5,6 +5,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::{Canvas, Texture, TextureQuery};
 use sdl2::video::Window;
+use std::convert::TryInto;
 
 // Puts split name textures and their associated times into the SDL backbuffer
 // handles placing all the textures around the other ones and highlighting the active split based on the
@@ -87,13 +88,11 @@ pub fn render_rows(
 // cuts the individual characters out of the font map produced earlier
 // scales milliseconds down to look nicer
 pub fn render_time(
-    time_str: String,
     atlas: &Texture,
-    coords: &[u32],
+    coords: &[(u32, u32, u32, u32)],
     (font_y, splits_height, num_panels): (u32, u32, usize),
     canvas: &mut Canvas<Window>,
 ) -> Result<(), String> {
-    let mut x = 0;
     let vp = canvas.viewport();
     let h = vp.height();
     let w = vp.width();
@@ -105,12 +104,27 @@ pub fn render_time(
         0,
         font_y * 8 / 10,
     );
-    let mut idx: usize;
-    let mut char_num = 0;
+    for (idx, (sx, sw, dx, dw)) in coords.iter().enumerate() {
+        src.set_x((*sx).try_into().unwrap());
+        src.set_width(*sw);
+        dst.set_x((w - *dx).try_into().unwrap());
+        dst.set_width(*dw);
+        if idx == 3 {
+            dst.set_y((h - font_y - (splits_height * num_panels as u32)) as i32);
+            dst.set_height(font_y);
+        }
+        canvas.copy(atlas, Some(src), Some(dst))?;
+    }
+    Ok(())
+}
+
+pub fn get_coords(time_str: String, coords: &[u32]) -> Vec<(u32, u32, u32, u32)> {
+    let mut coord_idx;
+    let mut ret: Vec<(u32, u32, u32, u32)> = vec![];
+    let mut x = 0;
     let space = coords[14] - coords[13];
-    for chr in time_str.chars().rev() {
-        // get the index in the coordinate slice based on the character to render
-        idx = match chr {
+    for (idx, chr) in time_str.chars().rev().enumerate() {
+        coord_idx = match chr {
             '-' => 0,
             '0' => 1,
             '1' => 2,
@@ -126,35 +140,27 @@ pub fn render_time(
             '.' => 12,
             _ => 0,
         };
-        let width = coords[idx + 1] - coords[idx];
-        // only monospace numbers so that the typically smaller punctuation looks better
-        if chr == '.' || chr == ':' {
-            x += width;
+        let width = coords[coord_idx + 1] - coords[coord_idx];
+        x += if chr == ':' || chr == '.' {
+            width
+        } else if idx < 4 {
+            coords[15] * 8 / 10
         } else {
-            if char_num < 4 {
-                x += coords[15] * 8 / 10;
+            coords[15]
+        };
+        let tup = (
+            coords[coord_idx] + (coord_idx as u32 * space),
+            width,
+            x,
+            if idx < 4 {
+                width * 8 / 10
             } else {
-                x += coords[15];
-            }
-        }
-        src.set_x(if idx != 0 {
-            (coords[idx] - 2) as i32 + (idx as u32 * space) as i32
-        } else {
-            (coords[idx]) as i32 + (idx as u32 * space) as i32
-        });
-        src.set_width(width);
-        dst.set_x((w - x) as i32);
-        if char_num < 4 {
-            dst.set_width(width * 8 / 10);
-        } else {
-            dst.set_width(width);
-            dst.set_y((h - font_y - (splits_height * num_panels as u32)) as i32);
-            dst.set_height(font_y);
-        }
-        canvas.copy(atlas, Some(src), Some(dst))?;
-        char_num += 1;
+                width
+            },
+        );
+        ret.push(tup);
     }
-    Ok(())
+    ret
 }
 
 pub fn render_panels(panels: &[RenderPanel], canvas: &mut Canvas<Window>) -> Result<(), String> {
