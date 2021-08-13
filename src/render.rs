@@ -30,6 +30,7 @@ pub fn render_rows(
         }
         row = Rect::new(0, y, width, height);
         canvas.copy(&item.name(), None, Some(row))?;
+        let num_y = if !inline {y + split_height as i32} else {y};
         // if the split has a texture from an active run, draw it to reflect the current time
         // otherwise draw the pb split time
         let texinfo = match item.cur() {
@@ -37,7 +38,7 @@ pub fn render_rows(
                 let tinfo = x.query();
                 row = Rect::new(
                     (window_width - tinfo.width) as i32,
-                    y,
+                    num_y,
                     tinfo.width,
                     tinfo.height,
                 );
@@ -48,7 +49,7 @@ pub fn render_rows(
                 let tinfo = item.comp_texture().query();
                 row = Rect::new(
                     (window_width - tinfo.width) as i32,
-                    y,
+                    num_y,
                     tinfo.width,
                     tinfo.height,
                 );
