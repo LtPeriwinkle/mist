@@ -11,12 +11,13 @@ license = "Apache-2.0 OR MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["timing", "dialogs", "config"]
+default = ["timing", "dialogs", "config", "instant"]
 lss = ["quick-xml"]
 timing = []
 dialogs = ["tinyfiledialogs"]
 config = ["rust-fontconfig"]
 bg = ["config"]
+instant = ["libc"]
 
 [dependencies.ron]
 version = "0.6"
@@ -36,4 +37,8 @@ optional = true
 
 [dependencies.rust-fontconfig]
 version = "0.1.5"
+optional = true
+
+[dependencies.libc]
+version = "0.2"
 optional = true
