@@ -27,6 +27,7 @@ use mist_core::{
     config::{Config, Panel},
     dialogs,
     parse::MsfParser,
+    MistInstant,
     timing, Run,
 };
 
@@ -41,7 +42,7 @@ use crate::state::TimerState;
 pub struct App {
     _context: sdl2::Sdl,
     ev_pump: sdl2::EventPump,
-    timer: Instant,
+    timer: MistInstant,
     canvas: WindowCanvas,
     ttf: sdl2::ttf::Sdl2TtfContext,
     state: TimerState,
@@ -71,7 +72,7 @@ impl App {
         let ev_pump = context.event_pump()?;
         let config = Config::open()?;
         // start the overarching application timer (kinda)
-        let timer = Instant::now();
+        let timer = MistInstant::now();
         // make an App that hasn't started and has an empty run
         let mut app = App {
             _context: context,
@@ -268,7 +269,6 @@ impl App {
                 let size = timer_font
                     .size_of(&chr.to_string())
                     .map_err(|_| get_error())?;
-                println!("{:?}", size);
                 raw.push(size.0);
                 ret.push(raw.iter().sum::<u32>());
             }
