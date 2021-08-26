@@ -14,9 +14,9 @@ mod inner {
             denom: u32,
         }
         fn info() -> mach_timebase_info {
-            static INFO_BITS: AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+            static INFO_BITS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
-            let info_bits = INFO_BITS.load(std::cmp::Ordering::Relaxed);
+            let info_bits = INFO_BITS.load(std::sync::atomic::Ordering::Relaxed);
             if info_bits != 0 {
                 return info_from_bits(info_bits);
             }
@@ -29,7 +29,7 @@ mod inner {
             unsafe {
                 mach_timebase_info(&mut info);
             }
-            INFO_BITS.store(info_to_bits(info), std::cmp::Ordering::Relaxed);
+            INFO_BITS.store(info_to_bits(info), std::sync::atomic::Ordering::Relaxed);
             info
         }
 
@@ -68,7 +68,7 @@ mod inner {
                     .checked_sub(other.t)
                     .expect("overflow when subtracting instants");
                 let info = info();
-                let nanos = ((diff / info.denom) * numer) + (((diff % info.denom) * numer) / info.denom);
+                let nanos = ((diff / info.denom as u64) * info.numer as u64) + (((diff % info.denom as u64) * info.numer as u64) / info.denom as u64);
                 std::time::Duration::new(nanos / 1_000_000_000, (nanos % 1_000_000_000) as u32)
             }
         }
