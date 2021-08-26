@@ -27,8 +27,7 @@ use mist_core::{
     config::{Config, Panel},
     dialogs,
     parse::MsfParser,
-    MistInstant,
-    timing, Run,
+    timing, MistInstant, Run,
 };
 
 use crate::comparison::Comparison;
