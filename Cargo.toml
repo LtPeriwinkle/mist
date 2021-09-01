@@ -1,6 +1,6 @@
 [package]
 name = "mist"
-version = "1.13.2"
+version = "1.14.0"
 authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
 include = ["assets/", "assets/*", "src/*.rs"]
 edition = "2018"
@@ -12,7 +12,8 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["bg", "icon"]
+default = ["bg", "icon", "instant"]
+instant = ["mist-core/instant"]
 bg = ["sdl2/gfx", "sdl2/image", "mist-core/bg"]
 icon = ["sdl2/image"]
 
@@ -22,4 +23,5 @@ default-features = false
 features = ["ttf"]
 
 [dependencies.mist-core]
-version = "0.8"
+version = "0.9"
+path = "./crates/mist-core/"

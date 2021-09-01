@@ -242,7 +242,7 @@ dependencies = [
 
 [[package]]
 name = "mist"
-version = "1.13.2"
+version = "1.14.0"
 dependencies = [
  "mist-core",
  "sdl2",
@@ -250,10 +250,9 @@ dependencies = [
 
 [[package]]
 name = "mist-core"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ccd15281f90d3fe9ae2db0097d6278844ef8cd4273039b72c3df3c96ae59426"
+version = "0.9.0"
 dependencies = [
+ "libc",
  "ron",
  "rust-fontconfig",
  "serde",

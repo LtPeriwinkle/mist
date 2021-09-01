@@ -1,5 +1,6 @@
 # Changelog
 ### next
+- use a custom implementation of `Instant`
 - begin properly handling times of 0 as empty
 - add system font finding
 - add two-line splits

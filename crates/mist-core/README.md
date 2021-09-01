@@ -10,7 +10,7 @@ Add mist-core to your Cargo.toml.
 
 ```toml
 [dependencies.mist-core]
-version = "0.8"
+version = "0.9"
 ```
 
 `mist-core` provides several features: `timing`, `dialogs`, `config`, `lss`, and `bg`. These enable functionality.
