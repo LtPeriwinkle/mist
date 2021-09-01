@@ -1,6 +1,6 @@
 [package]
 name = "mist"
-version = "1.13.2"
+version = "1.14.0"
 authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
 include = ["assets/", "assets/*", "src/*.rs"]
 edition = "2018"
@@ -23,5 +23,5 @@ default-features = false
 features = ["ttf"]
 
 [dependencies.mist-core]
-version = "0.8"
+version = "0.9"
 path = "./crates/mist-core/"

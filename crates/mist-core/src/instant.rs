@@ -22,7 +22,7 @@ impl MistInstant {
 
 #[cfg(all(feature = "instant", unix))]
 mod inner {
-    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    #[cfg(any(target_os = "macos"))]
     pub mod platform {
         use std::sync::atomic;
         use std::time::Duration;

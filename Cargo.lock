@@ -242,7 +242,7 @@ dependencies = [
 
 [[package]]
 name = "mist"
-version = "1.13.2"
+version = "1.14.0"
 dependencies = [
  "mist-core",
  "sdl2",
@@ -250,7 +250,7 @@ dependencies = [
 
 [[package]]
 name = "mist-core"
-version = "0.8.2"
+version = "0.9.0"
 dependencies = [
  "libc",
  "ron",

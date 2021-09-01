@@ -1,4 +1,7 @@
 ## mist-core changelog
+### 0.9.0
+- implement a custom `Instant` to measure time across system suspends
+
 ### 0.8.2
 - check for general run sanity before returning a parsed run or writing a run to msf
 
