@@ -1,12 +1,31 @@
 #![allow(non_camel_case_types)]
-pub use inner::MistInstant;
+#[cfg(feature = "instant")]
+pub use inner::platform::MistInstant;
 
-#[cfg(unix)]
+#[cfg(any(not(feature = "instant"), windows))]
+/// An arbitrary point in time, used for timing speedruns.
+///
+/// Wraps an [`Instant`](std::time::Instant) for use on Windows (since its Instant already behaves how we want),
+/// or on platforms that lack the functions for continuous time.
+pub struct MistInstant(std::time::Instant);
+#[cfg(any(not(feature = "instant"), windows))]
+impl MistInstant {
+    /// Create a MistInstant referring to the point in time that is 'now'.
+    pub fn now() -> Self {
+        MistInstant(std::time::Instant::now())
+    }
+    /// Find the amount of time that has passed since this MistInstant was created.
+    pub fn elapsed(&self) -> std::time::Duration {
+        self.0.elapsed()
+    }
+}
+
+#[cfg(all(feature = "instant", unix))]
 mod inner {
-    pub use innerinner::MistInstant;
-
     #[cfg(any(target_os = "macos", target_os = "ios"))]
-    mod innerinner {
+    pub mod platform {
+        use std::sync::atomic;
+        use std::time::Duration;
         #[repr(C)]
         #[derive(Copy, Clone)]
         struct mach_timebase_info {
@@ -14,9 +33,9 @@ mod inner {
             denom: u32,
         }
         fn info() -> mach_timebase_info {
-            static INFO_BITS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+            static INFO_BITS: atomic::AtomicU64 = atomic::AtomicU64::new(0);
 
-            let info_bits = INFO_BITS.load(std::sync::atomic::Ordering::Relaxed);
+            let info_bits = INFO_BITS.load(atomic::Ordering::Relaxed);
             if info_bits != 0 {
                 return info_from_bits(info_bits);
             }
@@ -29,7 +48,7 @@ mod inner {
             unsafe {
                 mach_timebase_info(&mut info);
             }
-            INFO_BITS.store(info_to_bits(info), std::sync::atomic::Ordering::Relaxed);
+            INFO_BITS.store(info_to_bits(info), atomic::Ordering::Relaxed);
             info
         }
 
@@ -46,11 +65,13 @@ mod inner {
             }
         }
         #[derive(Copy, Clone)]
+        /// An arbitrary point in time, used for timing speedruns.
         pub struct MistInstant {
             t: u64,
         }
 
         impl MistInstant {
+            /// Create a MistInstant referring to the point in time that is 'now'.
             pub fn now() -> Self {
                 extern "C" {
                     fn mach_continuous_time() -> u64;
@@ -62,20 +83,24 @@ mod inner {
         }
 
         impl std::ops::Sub<MistInstant> for MistInstant {
-            type Output = std::time::Duration;
+            type Output = Duration;
             fn sub(self, other: MistInstant) -> Self::Output {
-                let diff = self.t
+                let diff = self
+                    .t
                     .checked_sub(other.t)
                     .expect("overflow when subtracting instants");
                 let info = info();
-                let nanos = ((diff / info.denom as u64) * info.numer as u64) + (((diff % info.denom as u64) * info.numer as u64) / info.denom as u64);
-                std::time::Duration::new(nanos / 1_000_000_000, (nanos % 1_000_000_000) as u32)
+                let nanos = ((diff / info.denom as u64) * info.numer as u64)
+                    + (((diff % info.denom as u64) * info.numer as u64) / info.denom as u64);
+                Duration::new(nanos / 1_000_000_000, (nanos % 1_000_000_000) as u32)
             }
         }
     }
 
     #[cfg(target_os = "linux")]
-    mod innerinner {
+    pub mod platform {
+        use std::cmp::Ordering;
+        use std::time::Duration;
         #[derive(Copy, Clone)]
         struct Timespec {
             t: libc::timespec,
@@ -90,13 +115,13 @@ mod inner {
         impl Eq for Timespec {}
 
         impl PartialOrd for Timespec {
-            fn partial_cmp(&self, other: &Timespec) -> Option<std::cmp::Ordering> {
+            fn partial_cmp(&self, other: &Timespec) -> Option<Ordering> {
                 Some(self.cmp(other))
             }
         }
 
         impl Ord for Timespec {
-            fn cmp(&self, other: &Timespec) -> std::cmp::Ordering {
+            fn cmp(&self, other: &Timespec) -> Ordering {
                 let me = (self.t.tv_sec, self.t.tv_nsec);
                 let other = (other.t.tv_sec, other.t.tv_nsec);
                 me.cmp(&other)
@@ -104,7 +129,7 @@ mod inner {
         }
 
         impl Timespec {
-            fn sub_timespec(&self, other: &Timespec) -> Option<std::time::Duration> {
+            fn sub_timespec(&self, other: &Timespec) -> Option<Duration> {
                 if self >= other {
                     let (secs, nsec) = if self.t.tv_nsec >= other.t.tv_nsec {
                         (
@@ -117,7 +142,7 @@ mod inner {
                             self.t.tv_nsec as u32 + 1_000_000_000u32 - other.t.tv_nsec as u32,
                         )
                     };
-                    Some(std::time::Duration::new(secs, nsec))
+                    Some(Duration::new(secs, nsec))
                 } else {
                     None
                 }
@@ -125,11 +150,13 @@ mod inner {
         }
 
         #[derive(Copy, Clone)]
+        /// An arbitrary point in time, used for timing speedruns.
         pub struct MistInstant {
             t: Timespec,
         }
 
         impl MistInstant {
+            /// Create a MistInstant referring to the point in time that is 'now'.
             pub fn now() -> Self {
                 Self {
                     t: now(libc::CLOCK_BOOTTIME),
@@ -157,7 +184,7 @@ mod inner {
         }
 
         impl std::ops::Sub<MistInstant> for MistInstant {
-            type Output = std::time::Duration;
+            type Output = Duration;
             fn sub(self, other: MistInstant) -> Self::Output {
                 self.t
                     .sub_timespec(&other.t)
@@ -165,23 +192,10 @@ mod inner {
             }
         }
     }
-
-    impl MistInstant {
+    impl platform::MistInstant {
+        /// Find the amount of time that has passed since this MistInstant was created.
         pub fn elapsed(&self) -> std::time::Duration {
             Self::now() - *self
-        }
-    }
-}
-
-#[cfg(windows)]
-mod inner {
-    pub struct MistInstant(std::time::Instant);
-    impl MistInstant {
-        pub fn now() -> Self {
-            MistInstant(std::time::Instant::now())
-        }
-        pub fn elapsed() -> std::time::Duration {
-            self.0.elapsed()
         }
     }
 }
