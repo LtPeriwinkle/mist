@@ -162,26 +162,14 @@ impl App {
                         }
                     }
                 };
-                let text_sur = font
-                    .render(text)
-                    .blended(Color::WHITE)
-                    .map_err(|_| get_error())?;
-                let text_tex = creator
-                    .create_texture_from_surface(&text_sur)
-                    .map_err(|_| get_error())?;
-                let time_sur = if let Panel::SumOfBest = panel {
+                let time = if let Panel::SumOfBest = panel {
                     let sob = self.run.gold_times().iter().sum::<u128>();
-                    font.render(&timing::split_time_text(sob))
-                        .blended(Color::WHITE)
-                        .map_err(|_| get_error())?
+                    timing::split_time_text(sob)
                 } else {
-                    font.render("-  ")
-                        .blended(Color::WHITE)
-                        .map_err(|_| get_error())?
+                    "-  ".into()
                 };
-                let time_tex = creator
-                    .create_texture_from_surface(&time_sur)
-                    .map_err(|_| get_error())?;
+                let time_tex = render::render_white_text(&time, &font, &creator)?;
+                let text_tex = render::render_white_text(&text, &font, &creator)?;
                 let newpanel = RenderPanel::new(text_tex, time_tex, paneltype);
                 ret.push(newpanel);
             }
@@ -338,28 +326,14 @@ impl App {
         let mut index = 0;
         // convert the split names into textures and add them to the split name vec
         while index < split_names.len() {
-            text_surface = font
-                .render(&split_names[index])
-                .blended(Color::WHITE)
-                .map_err(|_| get_error())?;
-            texture = creator
-                .create_texture_from_surface(&text_surface)
-                .map_err(|_| get_error())?;
-            let comp = font
-                .render(&split_times_raw[index])
-                .blended(Color::WHITE)
-                .map_err(|_| get_error())?;
-            let comp_texture = creator
-                .create_texture_from_surface(&comp)
-                .map_err(|_| get_error())?;
             // create split struct with its corresponding times and textures
             let split = Split::new(
                 split_times_ms[index],
                 self.run.gold_times()[index],
                 0,
                 None,
-                texture,
-                comp_texture,
+                render::render_white_text(&split_names[index], &font, &creator)?,
+                render::render_white_text(&split_times_raw[index], &font, &creator)?,
                 None,
             );
             splits.push(split);
@@ -568,27 +542,13 @@ impl App {
                                         splits[current_split].set_diff(diff, Some(texture));
                                         time_str =
                                             timing::split_time_text((elapsed - t) + before_pause);
-                                        text_surface = font
-                                            .render(&time_str)
-                                            .blended(Color::WHITE)
-                                            .map_err(|_| get_error())?;
-                                        texture = creator
-                                            .create_texture_from_surface(&text_surface)
-                                            .map_err(|_| get_error())?;
-                                        splits[current_split].set_cur(Some(texture));
+                                        splits[current_split].set_cur(Some(render::render_white_text(&time_str, &font, &creator)?));
                                         // update the comparison texture if we are looking at average, because the average
                                         // will have changed
                                         if let Comparison::Average = self.comparison {
                                             let sum = self.run.sum_times()[current_split];
                                             let tm = sum.1 / sum.0;
-                                            text_surface = font
-                                                .render(&timing::split_time_text(tm))
-                                                .blended(Color::WHITE)
-                                                .map_err(|_| get_error())?;
-                                            texture = creator
-                                                .create_texture_from_surface(&text_surface)
-                                                .map_err(|_| get_error())?;
-                                            splits[current_split].set_comp_tex(texture);
+                                            splits[current_split].set_comp_tex(render::render_white_text(&timing::split_time_text(tm), &font, &creator)?);
                                         }
                                         // if there are still splits left, continue the run and advance the current split
                                         if current_split < len - 1 {
@@ -644,14 +604,7 @@ impl App {
                                                     .map(|val| timing::split_time_text(*val))
                                                     .collect();
                                                 while index < len {
-                                                    text_surface = font
-                                                        .render(&split_times_raw[index])
-                                                        .blended(Color::WHITE)
-                                                        .map_err(|_| get_error())?;
-                                                    texture = creator
-                                                        .create_texture_from_surface(text_surface)
-                                                        .map_err(|_| get_error())?;
-                                                    splits[index].set_comp_tex(texture);
+                                                    splits[index].set_comp_tex(render::render_white_text(&split_times_raw[index], &font, &creator)?);
                                                     splits[index].set_cur(None);
                                                     splits[index].set_time(active_run_times[index]);
                                                     index += 1;
@@ -841,27 +794,13 @@ impl App {
                                 splits = vec![];
                                 index = 0;
                                 while index < split_names.len() {
-                                    text_surface = font
-                                        .render(&split_names[index])
-                                        .blended(Color::WHITE)
-                                        .map_err(|_| get_error())?;
-                                    texture = creator
-                                        .create_texture_from_surface(&text_surface)
-                                        .map_err(|_| get_error())?;
-                                    let comp = font
-                                        .render(&split_times_raw[index])
-                                        .blended(Color::WHITE)
-                                        .map_err(|_| get_error())?;
-                                    let comp_texture = creator
-                                        .create_texture_from_surface(&comp)
-                                        .map_err(|_| get_error())?;
                                     let split = Split::new(
                                         split_times_ms[index],
                                         self.run.gold_times()[index],
                                         0,
                                         None,
-                                        texture,
-                                        comp_texture,
+                                        render::render_white_text(&split_names[index], &font, &creator)?,
+                                        render::render_white_text(&split_times_raw[index], &font, &creator)?,
                                         None,
                                     );
                                     splits.push(split);
@@ -1142,14 +1081,7 @@ impl App {
                 if let Comparison::None = self.comparison {
                     // set comp textures to just "-" if there is no comparison
                     while index < len {
-                        text_surface = font
-                            .render("-  ")
-                            .blended(Color::WHITE)
-                            .map_err(|_| get_error())?;
-                        texture = creator
-                            .create_texture_from_surface(&text_surface)
-                            .map_err(|_| get_error())?;
-                        splits[index].set_comp_tex(texture);
+                        splits[index].set_comp_tex(render::render_white_text("-  ", &font, &creator)?);
                         index += 1;
                     }
                 } else if let Comparison::Average = self.comparison {
@@ -1163,7 +1095,6 @@ impl App {
                         }
                         (att, tm)
                     };
-                    index = 0;
                     while index < attempts.len() {
                         times[index] /= {
                             if attempts[index] == 0 {
@@ -1186,14 +1117,7 @@ impl App {
                         .collect();
                     index = 0;
                     while index < len {
-                        text_surface = font
-                            .render(&split_times_raw[index])
-                            .blended(Color::WHITE)
-                            .map_err(|_| get_error())?;
-                        texture = creator
-                            .create_texture_from_surface(&text_surface)
-                            .map_err(|_| get_error())?;
-                        splits[index].set_comp_tex(texture);
+                        splits[index].set_comp_tex(render::render_white_text(&split_times_raw[index], &font, &creator)?);
                         index += 1;
                     }
                 } else {
@@ -1215,14 +1139,7 @@ impl App {
                         .collect();
                     index = 0;
                     while index < len {
-                        text_surface = font
-                            .render(&split_times_raw[index])
-                            .blended(Color::WHITE)
-                            .map_err(|_| get_error())?;
-                        texture = creator
-                            .create_texture_from_surface(&text_surface)
-                            .map_err(|_| get_error())?;
-                        splits[index].set_comp_tex(texture);
+                        splits[index].set_comp_tex(render::render_white_text(&split_times_raw[index], &font, &creator)?);
                         index += 1;
                     }
                 }
@@ -1327,14 +1244,7 @@ impl App {
                             did_gold = false;
                             let sob =
                                 timing::split_time_text(self.run.gold_times().iter().sum::<u128>());
-                            text_surface = font
-                                .render(&sob)
-                                .blended(Color::WHITE)
-                                .map_err(|_| get_error())?;
-                            texture = creator
-                                .create_texture_from_surface(text_surface)
-                                .map_err(|_| get_error())?;
-                            panel.set_time(texture);
+                            panel.set_time(render::render_white_text(sob, &font, &creator)?);
                         }
                         Panel::Pace { golds }
                             if matches!(self.state, TimerState::Running { .. })
@@ -1350,14 +1260,7 @@ impl App {
                                     + (self.timer.elapsed().as_millis() - start_ticks)
                                     + before_pause,
                             );
-                            text_surface = font
-                                .render(&pace)
-                                .blended(Color::WHITE)
-                                .map_err(|_| get_error())?;
-                            texture = creator
-                                .create_texture_from_surface(text_surface)
-                                .map_err(|_| get_error())?;
-                            panel.set_time(texture);
+                            panel.set_time(render::render_white_text(pace, &font, &creator)?);
                         }
                         Panel::CurrentSplitDiff { golds }
                             if matches!(self.state, TimerState::Running { .. })
@@ -1385,14 +1288,7 @@ impl App {
                                     (tm - self.run.gold_times()[current_split]) as i128,
                                 )
                             };
-                            text_surface = font
-                                .render(&time)
-                                .blended(Color::WHITE)
-                                .map_err(|_| get_error())?;
-                            texture = creator
-                                .create_texture_from_surface(text_surface)
-                                .map_err(|_| get_error())?;
-                            panel.set_time(texture);
+                            panel.set_time(render::render_white_text(time, &font, &creator)?);
                         }
                         _ => {}
                     }

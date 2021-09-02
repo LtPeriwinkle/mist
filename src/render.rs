@@ -30,7 +30,7 @@ pub fn render_rows(
         }
         row = Rect::new(0, y, width, height);
         canvas.copy(&item.name(), None, Some(row))?;
-        let num_y = if !inline {y + split_height as i32} else {y};
+        let num_y = if !inline { y + split_height as i32 } else { y };
         // if the split has a texture from an active run, draw it to reflect the current time
         // otherwise draw the pb split time
         let texinfo = match item.cur() {
@@ -181,4 +181,9 @@ pub fn render_panels(panels: &[RenderPanel], canvas: &mut Canvas<Window>) -> Res
         num += 1;
     }
     Ok(())
+}
+
+pub fn render_white_text<'a, T: ToString>(text: T, font: &sdl2::ttf::Font, creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>) -> Result<Texture<'a>, String> {
+    let sur = font.render(&text.to_string()).blended(Color::WHITE).map_err(|_| sdl2::get_error())?;
+    creator.create_texture_from_surface(sur).map_err(|_| sdl2::get_error())
 }
