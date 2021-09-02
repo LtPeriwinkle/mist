@@ -27,7 +27,7 @@ Once all planned features are complete, I will likely stop developing this and o
 	* [X] convert lss to msf
 	* [X] create new splits
 	* [ ] actually good and usable (hardest part)
-- [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time) (30fps done)
+- [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time)
 - [X] dynamic colors
 - [X] different run comparisons
 	* [X] sum of best
