@@ -1,5 +1,8 @@
 # Changelog
 ### next
+- fix the display of CurrentSplitDiff when golds is false
+
+### 1.14.0
 - use a custom implementation of `Instant`
 - begin properly handling times of 0 as empty
 - add system font finding
