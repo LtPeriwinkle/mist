@@ -542,13 +542,21 @@ impl App {
                                         splits[current_split].set_diff(diff, Some(texture));
                                         time_str =
                                             timing::split_time_text((elapsed - t) + before_pause);
-                                        splits[current_split].set_cur(Some(render::render_white_text(&time_str, &font, &creator)?));
+                                        splits[current_split].set_cur(Some(
+                                            render::render_white_text(&time_str, &font, &creator)?,
+                                        ));
                                         // update the comparison texture if we are looking at average, because the average
                                         // will have changed
                                         if let Comparison::Average = self.comparison {
                                             let sum = self.run.sum_times()[current_split];
                                             let tm = sum.1 / sum.0;
-                                            splits[current_split].set_comp_tex(render::render_white_text(&timing::split_time_text(tm), &font, &creator)?);
+                                            splits[current_split].set_comp_tex(
+                                                render::render_white_text(
+                                                    &timing::split_time_text(tm),
+                                                    &font,
+                                                    &creator,
+                                                )?,
+                                            );
                                         }
                                         // if there are still splits left, continue the run and advance the current split
                                         if current_split < len - 1 {
@@ -604,7 +612,13 @@ impl App {
                                                     .map(|val| timing::split_time_text(*val))
                                                     .collect();
                                                 while index < len {
-                                                    splits[index].set_comp_tex(render::render_white_text(&split_times_raw[index], &font, &creator)?);
+                                                    splits[index].set_comp_tex(
+                                                        render::render_white_text(
+                                                            &split_times_raw[index],
+                                                            &font,
+                                                            &creator,
+                                                        )?,
+                                                    );
                                                     splits[index].set_cur(None);
                                                     splits[index].set_time(active_run_times[index]);
                                                     index += 1;
@@ -799,8 +813,16 @@ impl App {
                                         self.run.gold_times()[index],
                                         0,
                                         None,
-                                        render::render_white_text(&split_names[index], &font, &creator)?,
-                                        render::render_white_text(&split_times_raw[index], &font, &creator)?,
+                                        render::render_white_text(
+                                            &split_names[index],
+                                            &font,
+                                            &creator,
+                                        )?,
+                                        render::render_white_text(
+                                            &split_times_raw[index],
+                                            &font,
+                                            &creator,
+                                        )?,
                                         None,
                                     );
                                     splits.push(split);
@@ -1081,7 +1103,8 @@ impl App {
                 if let Comparison::None = self.comparison {
                     // set comp textures to just "-" if there is no comparison
                     while index < len {
-                        splits[index].set_comp_tex(render::render_white_text("-  ", &font, &creator)?);
+                        splits[index]
+                            .set_comp_tex(render::render_white_text("-  ", &font, &creator)?);
                         index += 1;
                     }
                 } else if let Comparison::Average = self.comparison {
@@ -1117,7 +1140,11 @@ impl App {
                         .collect();
                     index = 0;
                     while index < len {
-                        splits[index].set_comp_tex(render::render_white_text(&split_times_raw[index], &font, &creator)?);
+                        splits[index].set_comp_tex(render::render_white_text(
+                            &split_times_raw[index],
+                            &font,
+                            &creator,
+                        )?);
                         index += 1;
                     }
                 } else {
@@ -1139,7 +1166,11 @@ impl App {
                         .collect();
                     index = 0;
                     while index < len {
-                        splits[index].set_comp_tex(render::render_white_text(&split_times_raw[index], &font, &creator)?);
+                        splits[index].set_comp_tex(render::render_white_text(
+                            &split_times_raw[index],
+                            &font,
+                            &creator,
+                        )?);
                         index += 1;
                     }
                 }
