@@ -1367,7 +1367,7 @@ impl App {
                             let tm = (self.timer.elapsed().as_millis() - split_ticks)
                                 + before_pause_split;
                             let time = if !*golds {
-                                if tm < self.run.gold_times()[current_split] {
+                                if tm < self.run.pb_times()[current_split] {
                                     timing::diff_text(
                                         -((self.run.pb_times()[current_split] - tm) as i128),
                                     )
