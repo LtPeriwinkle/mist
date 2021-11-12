@@ -65,7 +65,12 @@ pub fn render_rows(
                     height: dh,
                     ..
                 } = x.query();
-                row = Rect::new(((window_width - texinfo.width - 25) - dw) as i32, y, dw, dh);
+                row = Rect::new(
+                    ((window_width - texinfo.width - 25) - dw) as i32,
+                    num_y,
+                    dw,
+                    dh,
+                );
                 canvas.copy(&x, None, Some(row))?;
             }
         }
