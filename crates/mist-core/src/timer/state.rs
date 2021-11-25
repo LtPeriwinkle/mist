@@ -5,6 +5,7 @@ pub struct RunState {
     run: Run,
     timer: MistInstant,
     timer_state: TimerState,
+    comparison: Comparison,
     active_run_times: Vec<u128>,
     active_run_diffs: Vec<i128>,
     before_pause: u128,
@@ -25,8 +26,8 @@ pub enum TimerState {
 }
 
 pub enum StateChangeRequest {
+    None,
     Pause,
-    Unpause,
     Split,
     Reset,
 }
@@ -106,7 +107,7 @@ impl RunState {
                 self.before_pause = (elapsed - self.start) + self.before_pause;
                 self.before_pause_split = (elapsed - self.split) + self.before_pause_split;
             }
-            Unpause if self.timer_state == TimerState::Paused => {
+            Pause if self.timer_state == TimerState::Paused => {
                 self.timer_state = TimerState::Running;
                 self.start = elapsed;
                 self.split = elapsed;
