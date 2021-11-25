@@ -13,7 +13,6 @@ pub struct RunState {
     before_pause_split: u128,
     split: u128,
     start: u128,
-    reset: bool,
     current_split: usize,
 }
 
@@ -82,7 +81,6 @@ impl RunState {
             before_pause_split: 0,
             split: 0,
             start: 0,
-            reset: false,
             current_split: 0,
         }
     }
@@ -158,7 +156,6 @@ impl RunState {
                 self.before_pause_split = 0;
                 self.split = 0;
                 self.start = 0;
-                self.reset = false;
                 self.active_run_diffs = vec![];
                 self.active_run_times = vec![];
                 self.current_split = 0;
