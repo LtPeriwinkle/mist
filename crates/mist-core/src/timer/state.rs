@@ -1,5 +1,6 @@
-use crate::instant::MistInstant;
-use crate::run::Run;
+use crate::timer::comparison::Comparison;
+use crate::MistInstant;
+use crate::Run;
 
 pub struct RunState {
     run: Run,
@@ -30,6 +31,7 @@ pub enum StateChangeRequest {
     Pause,
     Split,
     Reset,
+    Comparison(bool)
 }
 
 // commented items will be used for plugins later
@@ -73,6 +75,7 @@ impl RunState {
             run,
             timer: MistInstant::now(),
             timer_state: TimerState::NotRunning,
+            comparison: Comparison::PersonalBest,
             active_run_times: vec![],
             active_run_diffs: vec![],
             before_pause: 0,
@@ -106,23 +109,49 @@ impl RunState {
                 self.timer_state = TimerState::Paused;
                 self.before_pause = (elapsed - self.start) + self.before_pause;
                 self.before_pause_split = (elapsed - self.split) + self.before_pause_split;
+                return vec![StateChange::Pause];
             }
             Pause if self.timer_state == TimerState::Paused => {
                 self.timer_state = TimerState::Running;
                 self.start = elapsed;
                 self.split = elapsed;
+                return vec![StateChange::Unpause];
             }
             Split if self.timer_state == TimerState::Running => {
                 // TODO run updates/save file updates etc
                 if self.current_split == self.run.pb_times().len() - 1 {
                     self.timer_state = TimerState::Finished;
+                    return vec![
+                        StateChange::ExitSplit {
+                            idx: self.current_split,
+                            time: self.active_run_times[self.current_split],
+                            status: SplitStatus::Ahead,
+                        },
+                        StateChange::Finish,
+                    ];
                 } else {
                     self.current_split += 1;
-                    self.active_run_times.push((elapsed - self.split) + self.before_pause_split);
+                    self.active_run_times
+                        .push((elapsed - self.split) + self.before_pause_split);
+                    return vec![
+                        StateChange::ExitSplit {
+                            idx: self.current_split - 1,
+                            time: self.active_run_times[self.current_split - 1],
+                            status: SplitStatus::Ahead,
+                        },
+                        StateChange::EnterSplit {
+                            idx: self.current_split,
+                        },
+                    ];
                 }
             }
             Split if self.timer_state == TimerState::NotRunning => {
-				self.timer_state = TimerState::Running;
+                self.timer_state = TimerState::Running;
+                if self.run.offset().is_some() {
+                    return vec![StateChange::EnterOffset];
+                } else {
+                    return vec![StateChange::EnterSplit { idx: 0 }];
+                }
             }
             Reset => {
                 self.before_pause = 0;
@@ -134,6 +163,14 @@ impl RunState {
                 self.active_run_times = vec![];
                 self.current_split = 0;
                 self.timer_state = TimerState::NotRunning;
+                return vec![StateChange::Reset {offset: self.run.offset()}];
+            }
+            Comparison(n) => {
+				if n {
+					self.comparison.next();
+				} else {
+					self.comparison.prev();
+				}
             }
             _ => {}
         }
