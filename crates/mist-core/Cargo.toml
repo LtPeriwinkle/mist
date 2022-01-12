@@ -20,7 +20,7 @@ bg = ["config"]
 instant = ["libc"]
 
 [dependencies.ron]
-version = "0.6"
+version = "0.7"
 
 [dependencies.serde]
 version = "1.0"
