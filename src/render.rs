@@ -2,6 +2,7 @@
 use crate::panels::RenderPanel;
 use crate::splits::Split;
 use mist_core::config::{Config, Panel};
+use mist_core::timer::state::{RunUpdate, SplitStatus, StateChange};
 use mist_core::{timing, Run};
 use sdl2::get_error;
 #[cfg(feature = "bg")]
@@ -21,6 +22,10 @@ use std::cell::RefCell;
 use std::convert::TryInto;
 use std::rc::Rc;
 
+const ALL_CHARS: &str =
+    "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz~`!1@2#3$4%5^6&7*8(9)0{[}]?/+=|\\_-:;";
+const TIMER_CHARS: &str = "1234567890:.-";
+
 pub struct RenderState<'a> {
     run: Rc<RefCell<Run>>,
     canvas: WindowCanvas,
@@ -30,8 +35,20 @@ pub struct RenderState<'a> {
     splits: Vec<Split<'a>>,
     panels: Vec<RenderPanel<'a>>,
     map: FontMap<'a>,
+    time_str: String,
+    time_rounding: Option<u128>,
+    is_rounding: bool,
     timer_font: Font<'a, 'a>,
+    timer_height: u32,
     splits_font: Font<'a, 'a>,
+    splits_height: u32,
+    top_index: usize,
+    bottom_index: usize,
+    highlighted: usize,
+    current: usize,
+    max_splits: usize,
+    inline: bool,
+    status: SplitStatus,
     #[cfg(feature = "bg")]
     background: Background<'a>,
 }
@@ -92,25 +109,220 @@ impl<'a> RenderState<'a> {
             }
             ret
         };
+        let string_times: Vec<String> = timing::split_time_sum(run.borrow().pb_times())
+            .iter()
+            .map(|&t| {
+                if t == 0 {
+                    "-  ".into()
+                } else {
+                    timing::split_time_text(t)
+                }
+            })
+            .collect();
+        let splits: Vec<Split> = run
+            .borrow()
+            .splits()
+            .iter()
+            .enumerate()
+            .map(|(idx, name)| {
+                Split::new(
+                    render_white_text(name, &splits_font, &creator).unwrap(),
+                    render_white_text(string_times[idx], &splits_font, &creator).unwrap(),
+                    None,
+                    None,
+                )
+            })
+            .collect();
+        let splits_height = splits_font.size_of(ALL_CHARS).map_err(|_| get_error())?.1;
+        let timer_height =
+            timer_font.size_of(TIMER_CHARS).map_err(|_| get_error())?.1 + splits_height;
+        let bottom_index: usize;
+        let max_splits: usize;
+        let max_initial_splits: usize = ((canvas.viewport().height() - timer_height)
+            / ((splits_height * (1 + !config.layout().inline_splits as u32)) + 5))
+            as usize;
+        if splits.is_empty() {
+            max_splits = 0;
+            bottom_index = 0;
+        } else if max_initial_splits > splits.len() {
+            bottom_index = splits.len() - 1;
+            max_splits = splits.len();
+        } else {
+            max_splits = max_initial_splits;
+            bottom_index = max_initial_splits - 1;
+        }
+        let time_str: String;
+        if let Some(n) = run.borrow().offset() {
+            time_str = format!("-{}", timing::ms_to_readable(n, None));
+        } else {
+            time_str = "0.000".into();
+        }
         Ok(Self {
             run,
             canvas,
             creator,
             ttf,
             colors: config.color_list(),
+            splits,
             panels,
-            map: FontMap::generate(&timer_font, &creator, Color::WHITE)?,
+            map: FontMap::generate(&timer_font, creator, Color::WHITE)?,
+            time_str,
+            time_rounding: config.rounding(),
+            is_rounding: false,
             timer_font,
+            timer_height,
             splits_font,
+            splits_height,
+            top_index: 0,
+            bottom_index,
+            highlighted: usize::MAX,
+            current: 0,
+            max_splits,
+            inline: config.layout().inline_splits,
+            status: SplitStatus::None,
+            #[cfg(feature = "bg")]
             background: Background::load(config, canvas.viewport(), creator)?,
         })
+    }
+    pub fn update(&mut self, update: RunUpdate) {
+        if self.current >= self.top_index && self.current <= self.bottom_index {
+            self.highlighted = self.current - self.top_index;
+        } else {
+            self.highlighted = usize::MAX;
+        }
+        if update.status != self.status {
+            self.status = update.status;
+            let color = match self.status {
+                SplitStatus::None => (255, 255, 255),
+                SplitStatus::Ahead => self.colors[0],
+                SplitStatus::Behind => self.colors[1],
+                SplitStatus::Gaining => self.colors[2],
+                SplitStatus::Losing => self.colors[3],
+                SplitStatus::Gold => self.colors[4],
+            };
+            self.map = FontMap::generate(&self.splits_font, self.creator, color.into()).unwrap();
+        }
+        for change in update.change {
+            // todo handle offset
+            match change {
+                StateChange::Pause | StateChange::Finish { .. } => {
+                    self.is_rounding = true;
+                    self.highlighted = usize::MAX;
+                }
+                StateChange::Unpause { .. } => {
+                    self.is_rounding = false;
+                }
+                StateChange::EnterSplit { .. } => {
+                    self.is_rounding = false;
+                }
+                StateChange::ExitSplit { idx, status, time } => {
+                    // create diff textures and stuff
+                }
+                StateChange::EnterSplit { idx } => {
+                    self.current += 1;
+                }
+            }
+        }
+        self.time_str = timing::ms_to_readable(
+            update.time,
+            if self.is_rounding {
+                self.time_rounding
+            } else {
+                None
+            },
+        );
+    }
+    pub fn render(&mut self) -> Result<(), String> {
+        self.canvas.set_draw_color(self.colors[5]);
+        self.canvas.clear();
+        self.render_rows()?;
+        self.canvas.present();
+        Ok(())
+    }
+    fn render_rows(&mut self) -> Result<(), String> {
+        let on_screen = if self.max_splits > 0 {
+            &self.splits[self.top_index..=self.bottom_index]
+        } else {
+            &[]
+        };
+        let incr_height: i32 = (self.splits_height * (!self.inline as u32 + 1)) as i32;
+        let mut y = 0;
+        let mut row: Rect;
+        let window_width = self.canvas.viewport().width();
+        // draw each split name on the left of the screen
+        for (index, item) in on_screen.iter().enumerate() {
+            let TextureQuery { width, height, .. } = item.name().query();
+            // draw the blue highlight box before drawing the text for the split with index current
+            if index == self.highlighted {
+                self.canvas.set_draw_color(Color::BLUE);
+                self.canvas
+                    .fill_rect(Rect::new(0, y - 1, window_width, incr_height as u32 + 5))?;
+            }
+            row = Rect::new(0, y, width, height);
+            self.canvas.copy(&item.name(), None, Some(row))?;
+            let num_y = if !self.inline {
+                y + self.splits_height as i32
+            } else {
+                y
+            };
+            // if the split has a texture from an active run, draw it to reflect the current time
+            // otherwise draw the pb split time
+            let texinfo = match item.cur() {
+                Some(x) => {
+                    let tinfo = x.query();
+                    row = Rect::new(
+                        (window_width - tinfo.width) as i32,
+                        num_y,
+                        tinfo.width,
+                        tinfo.height,
+                    );
+                    self.canvas.copy(&x, None, Some(row))?;
+                    tinfo
+                }
+                None => {
+                    let tinfo = item.comp().query();
+                    row = Rect::new(
+                        (window_width - tinfo.width) as i32,
+                        num_y,
+                        tinfo.width,
+                        tinfo.height,
+                    );
+                    self.canvas.copy(&item.comp(), None, Some(row))?;
+                    tinfo
+                }
+            };
+            match item.diff() {
+                None => {}
+                Some(x) => {
+                    let TextureQuery {
+                        width: dw,
+                        height: dh,
+                        ..
+                    } = x.query();
+                    row = Rect::new(
+                        ((window_width - texinfo.width - 25) - dw) as i32,
+                        num_y,
+                        dw,
+                        dh,
+                    );
+                    self.canvas.copy(&x, None, Some(row))?;
+                }
+            }
+            self.canvas.set_draw_color(Color::GRAY);
+            // draw a line to separate between the rows
+            y += incr_height + 3;
+            self.canvas
+                .draw_line(Point::new(0, y), Point::new(window_width as i32, y))?;
+            y += 2;
+        }
+        Ok(())
     }
 }
 
 impl<'a> FontMap<'a> {
     fn generate(
         font: &Font<'a, 'a>,
-        creator: &'a TextureCreator<WindowContext>,
+        creator: TextureCreator<WindowContext>,
         color: Color,
     ) -> Result<Self, String> {
         let mut max = 0;
@@ -137,6 +349,7 @@ impl<'a> FontMap<'a> {
     }
 }
 
+#[cfg(feature = "bg")]
 impl Background<'_> {
     fn load(
         config: &Config,
