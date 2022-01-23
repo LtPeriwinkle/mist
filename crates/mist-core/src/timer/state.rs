@@ -1,8 +1,8 @@
 use crate::timer::comparison::Comparison as Comp;
 use crate::MistInstant;
 use crate::Run;
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct RunState {
     run: Rc<RefCell<Run>>,
@@ -58,16 +58,17 @@ pub enum StateChange {
     Reset {
         offset: Option<u128>,
     },
-    ComparisonChanged {}
+    ComparisonChanged {},
 }
 
 pub struct RunUpdate {
-    change: Vec<StateChange>,
-    time: u128,
-    status: SplitStatus,
+    pub change: Vec<StateChange>,
+    pub time: u128,
+    pub offset: bool,
+    pub status: SplitStatus,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum SplitStatus {
     None,
     Ahead,
@@ -102,11 +103,16 @@ impl RunState {
         RunUpdate {
             change: self.handle_scrq(rq, elapsed),
             time: (elapsed - self.start) + self.before_pause,
+            offset: false, // TODO
             status: self.run_status,
         }
     }
     fn calc_status(&self, elapsed: u128) -> SplitStatus {
-        if self.comparison == Comp::None {
+        if self.comparison == Comp::None
+            || self.timer_state == TimerState::Paused
+            || self.timer_state == TimerState::Finished
+            || self.timer_state == TimerState::NotRunning
+        {
             return SplitStatus::None;
         }
         let time = (elapsed - self.start) + self.before_pause;
@@ -208,7 +214,9 @@ impl RunState {
                         0
                     });
                 if time < self.run.borrow().gold_times()[self.current_split] {
-                    self.run.borrow_mut().set_gold_time(time, self.current_split);
+                    self.run
+                        .borrow_mut()
+                        .set_gold_time(time, self.current_split);
                     self.needs_save = true;
                 }
                 if self.current_split == self.run.borrow().pb_times().len() - 1 {
