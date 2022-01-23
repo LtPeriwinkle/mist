@@ -23,7 +23,7 @@ use std::convert::TryInto;
 use std::rc::Rc;
 
 const ALL_CHARS: &str =
-    "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz~`!1@2#3$4%5^6&7*8(9)0{[}]?/+=|\\_-:;";
+    "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz`1234567890[]~!@#$%^&*(){}',./=\\-;\"<>?+|_:";
 const TIMER_CHARS: &str = "1234567890:.-";
 
 pub struct RenderState<'a> {
@@ -184,6 +184,7 @@ impl<'a> RenderState<'a> {
             background: Background::load(config, canvas.viewport(), creator)?,
         })
     }
+
     pub fn update(&mut self, update: RunUpdate) {
         if self.current >= self.top_index && self.current <= self.bottom_index {
             self.highlighted = self.current - self.top_index;
@@ -216,10 +217,17 @@ impl<'a> RenderState<'a> {
                     self.is_rounding = false;
                 }
                 StateChange::ExitSplit { idx, status, time } => {
-                    // create diff textures and stuff
+                    let color = match status {
+                        SplitStatus::None => (255, 255, 255),
+                        SplitStatus::Ahead => self.colors[0],
+                        SplitStatus::Behind => self.colors[1],
+                        SplitStatus::Gaining => self.colors[2],
+                        SplitStatus::Losing => self.colors[3],
+                        SplitStatus::Gold => self.colors[4],
+                    };
                 }
                 StateChange::EnterSplit { idx } => {
-                    self.current += 1;
+                    self.current = idx;
                 }
             }
         }
@@ -232,13 +240,21 @@ impl<'a> RenderState<'a> {
             },
         );
     }
+
     pub fn render(&mut self) -> Result<(), String> {
         self.canvas.set_draw_color(self.colors[5]);
         self.canvas.clear();
+
+        #[cfg(feature = "bg")]
+        self.render_bg()?;
+
+        self.render_panels()?;
         self.render_rows()?;
+        self.render_time()?;
         self.canvas.present();
         Ok(())
     }
+
     fn render_rows(&mut self) -> Result<(), String> {
         let on_screen = if self.max_splits > 0 {
             &self.splits[self.top_index..=self.bottom_index]
@@ -291,22 +307,19 @@ impl<'a> RenderState<'a> {
                     tinfo
                 }
             };
-            match item.diff() {
-                None => {}
-                Some(x) => {
-                    let TextureQuery {
-                        width: dw,
-                        height: dh,
-                        ..
-                    } = x.query();
-                    row = Rect::new(
-                        ((window_width - texinfo.width - 25) - dw) as i32,
-                        num_y,
-                        dw,
-                        dh,
-                    );
-                    self.canvas.copy(&x, None, Some(row))?;
-                }
+            if let Some(x) = item.diff() {
+                let TextureQuery {
+                    width: dw,
+                    height: dh,
+                    ..
+                } = x.query();
+                row = Rect::new(
+                    ((window_width - texinfo.width - 25) - dw) as i32,
+                    num_y,
+                    dw,
+                    dh,
+                );
+                self.canvas.copy(&x, None, Some(row))?;
             }
             self.canvas.set_draw_color(Color::GRAY);
             // draw a line to separate between the rows
@@ -314,6 +327,72 @@ impl<'a> RenderState<'a> {
             self.canvas
                 .draw_line(Point::new(0, y), Point::new(window_width as i32, y))?;
             y += 2;
+        }
+        Ok(())
+    }
+
+    fn render_time(&mut self) -> Result<(), String> {
+        let coords = self.map.gen_str_coords(self.time_str);
+        let vp = self.canvas.viewport();
+        let h = vp.height();
+        let w = vp.width();
+        let font_y = self.timer_height - self.splits_height;
+        let mut src = Rect::new(0, 0, 0, font_y);
+        // multiply initial values by 8/10 so that the font is smaller
+        let mut dst = Rect::new(
+            0,
+            (h - (font_y * 8 / 10) - (self.splits_height * self.panels.len() as u32)) as i32 - 5,
+            0,
+            font_y * 8 / 10,
+        );
+        for (idx, (sx, sw, dx, dw)) in coords.iter().enumerate() {
+            src.set_x((*sx).try_into().unwrap());
+            src.set_width(*sw);
+            dst.set_x((w - *dx).try_into().unwrap());
+            dst.set_width(*dw);
+            if idx == 3 {
+                dst.set_y((h - font_y - (self.splits_height * self.panels.len() as u32)) as i32);
+                dst.set_height(font_y);
+            }
+            self.canvas.copy(&self.map.tex, Some(src), Some(dst))?;
+        }
+        Ok(())
+    }
+
+    fn render_panels(&mut self) -> Result<(), String> {
+        let mut num = 1;
+        for panel in self.panels {
+            let TextureQuery { width, height, .. } = panel.text().query();
+            self.canvas.copy(
+                panel.text(),
+                None,
+                Some(Rect::new(
+                    0,
+                    (self.canvas.viewport().height() - (num * height)) as i32,
+                    width,
+                    height,
+                )),
+            )?;
+            let TextureQuery { width, height, .. } = panel.time().query();
+            self.canvas.copy(
+                panel.time(),
+                None,
+                Some(Rect::new(
+                    (self.canvas.viewport().width() - width) as i32,
+                    (self.canvas.viewport().height() - (num * height)) as i32,
+                    width,
+                    height,
+                )),
+            )?;
+            num += 1;
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "bg")]
+    fn render_bg(&mut self) -> Result<(), String> {
+        if let Background::HasBackground { tex, rect } = self.background {
+            self.canvas.copy(&tex, None, rect)?;
         }
         Ok(())
     }
@@ -328,14 +407,15 @@ impl<'a> FontMap<'a> {
         let mut max = 0;
         let mut sum = 0;
         let mut coords = vec![0];
-        for chr in "-0123456789:.".chars() {
+        for chr in "-0123456789:. ".chars() {
             let temp = font.size_of(&chr.to_string()).map_err(|_| get_error())?.0;
             sum += temp;
             if temp > max {
                 max = temp
-            };
+            }
             coords.push(sum);
         }
+        coords.push(max);
         let sur = font
             .render("- 0 1 2 3 4 5 6 7 8 9 : .")
             .blended(color)
@@ -346,6 +426,47 @@ impl<'a> FontMap<'a> {
                 .map_err(|_| get_error())?,
             coords,
         })
+    }
+
+    fn gen_str_coords(&self, string: String) -> Vec<(u32, u32, u32, u32)> {
+        let mut coord_idx;
+        let mut ret: Vec<(u32, u32, u32, u32)> = vec![];
+        let mut x = 0;
+        let space = self.coords[14] - self.coords[13];
+        for (idx, chr) in string.chars().rev().enumerate() {
+            coord_idx = match chr {
+                '-' => 0,
+                '0' => 1,
+                '1' => 2,
+                '2' => 3,
+                '3' => 4,
+                '4' => 5,
+                '5' => 6,
+                '6' => 7,
+                '7' => 8,
+                '8' => 9,
+                '9' => 10,
+                ':' => 11,
+                '.' => 12,
+                _ => 0,
+            };
+            let width = self.coords[coord_idx + 1] - self.coords[coord_idx];
+            x += if chr == ':' || chr == '.' {
+                width
+            } else if idx < 4 {
+                self.coords[15] * 8 / 10
+            } else {
+                self.coords[15]
+            };
+            let tup = (
+                self.coords[coord_idx] + (coord_idx as u32 * space),
+                width,
+                x,
+                if idx < 4 { width * 8 / 10 } else { width },
+            );
+            ret.push(tup);
+        }
+        ret
     }
 }
 
@@ -416,188 +537,7 @@ impl Background<'_> {
     }
 }
 
-// Puts split name textures and their associated times into the SDL backbuffer
-// handles placing all the textures around the other ones and highlighting the active split based on the
-// index passed to it
-pub fn render_rows(
-    on_screen: &[Split],
-    canvas: &mut WindowCanvas,
-    (split_height, inline): (u32, bool),
-    current: usize,
-) -> Result<(), String> {
-    let incr_height: i32 = (split_height * (!inline as u32 + 1)) as i32;
-    let mut y = 0;
-    let mut row: Rect;
-    let window_width = canvas.viewport().width();
-    // draw each split name on the left of the screen
-    for (index, item) in on_screen.iter().enumerate() {
-        let TextureQuery { width, height, .. } = item.name().query();
-        // draw the blue highlight box before drawing the text for the split with index current
-        if index == current {
-            canvas.set_draw_color(Color::BLUE);
-            canvas.fill_rect(Rect::new(0, y - 1, window_width, incr_height as u32 + 5))?;
-        }
-        row = Rect::new(0, y, width, height);
-        canvas.copy(&item.name(), None, Some(row))?;
-        let num_y = if !inline { y + split_height as i32 } else { y };
-        // if the split has a texture from an active run, draw it to reflect the current time
-        // otherwise draw the pb split time
-        let texinfo = match item.cur() {
-            Some(x) => {
-                let tinfo = x.query();
-                row = Rect::new(
-                    (window_width - tinfo.width) as i32,
-                    num_y,
-                    tinfo.width,
-                    tinfo.height,
-                );
-                canvas.copy(&x, None, Some(row))?;
-                tinfo
-            }
-            None => {
-                let tinfo = item.comp().query();
-                row = Rect::new(
-                    (window_width - tinfo.width) as i32,
-                    num_y,
-                    tinfo.width,
-                    tinfo.height,
-                );
-                canvas.copy(&item.comp(), None, Some(row))?;
-                tinfo
-            }
-        };
-        match item.diff() {
-            None => {}
-            Some(x) => {
-                let TextureQuery {
-                    width: dw,
-                    height: dh,
-                    ..
-                } = x.query();
-                row = Rect::new(
-                    ((window_width - texinfo.width - 25) - dw) as i32,
-                    num_y,
-                    dw,
-                    dh,
-                );
-                canvas.copy(&x, None, Some(row))?;
-            }
-        }
-        canvas.set_draw_color(Color::GRAY);
-        // draw a line to separate between the rows
-        y += incr_height + 3;
-        canvas.draw_line(Point::new(0, y), Point::new(window_width as i32, y))?;
-        y += 2;
-    }
-    Ok(())
-}
-
-// Puts the big display timer at the bottom into the SDL backbuffer
-// cuts the individual characters out of the font map produced earlier
-// scales milliseconds down to look nicer
-pub fn render_time(
-    atlas: &Texture,
-    coords: &[(u32, u32, u32, u32)],
-    (font_y, splits_height, num_panels): (u32, u32, usize),
-    canvas: &mut WindowCanvas,
-) -> Result<(), String> {
-    let vp = canvas.viewport();
-    let h = vp.height();
-    let w = vp.width();
-    let mut src = Rect::new(0, 0, 0, font_y);
-    // multiply initial values by 8/10 so that the font is smaller
-    let mut dst = Rect::new(
-        0,
-        (h - (font_y * 8 / 10) - (splits_height * num_panels as u32)) as i32 - 5,
-        0,
-        font_y * 8 / 10,
-    );
-    for (idx, (sx, sw, dx, dw)) in coords.iter().enumerate() {
-        src.set_x((*sx).try_into().unwrap());
-        src.set_width(*sw);
-        dst.set_x((w - *dx).try_into().unwrap());
-        dst.set_width(*dw);
-        if idx == 3 {
-            dst.set_y((h - font_y - (splits_height * num_panels as u32)) as i32);
-            dst.set_height(font_y);
-        }
-        canvas.copy(atlas, Some(src), Some(dst))?;
-    }
-    Ok(())
-}
-
-pub fn get_coords(time_str: String, coords: &[u32]) -> Vec<(u32, u32, u32, u32)> {
-    let mut coord_idx;
-    let mut ret: Vec<(u32, u32, u32, u32)> = vec![];
-    let mut x = 0;
-    let space = coords[14] - coords[13];
-    for (idx, chr) in time_str.chars().rev().enumerate() {
-        coord_idx = match chr {
-            '-' => 0,
-            '0' => 1,
-            '1' => 2,
-            '2' => 3,
-            '3' => 4,
-            '4' => 5,
-            '5' => 6,
-            '6' => 7,
-            '7' => 8,
-            '8' => 9,
-            '9' => 10,
-            ':' => 11,
-            '.' => 12,
-            _ => 0,
-        };
-        let width = coords[coord_idx + 1] - coords[coord_idx];
-        x += if chr == ':' || chr == '.' {
-            width
-        } else if idx < 4 {
-            coords[15] * 8 / 10
-        } else {
-            coords[15]
-        };
-        let tup = (
-            coords[coord_idx] + (coord_idx as u32 * space),
-            width,
-            x,
-            if idx < 4 { width * 8 / 10 } else { width },
-        );
-        ret.push(tup);
-    }
-    ret
-}
-
-pub fn render_panels(panels: &[RenderPanel], canvas: &mut WindowCanvas) -> Result<(), String> {
-    let mut num = 1;
-    for panel in panels {
-        let TextureQuery { width, height, .. } = panel.text().query();
-        canvas.copy(
-            panel.text(),
-            None,
-            Some(Rect::new(
-                0,
-                (canvas.viewport().height() - (num * height)) as i32,
-                width,
-                height,
-            )),
-        )?;
-        let TextureQuery { width, height, .. } = panel.time().query();
-        canvas.copy(
-            panel.time(),
-            None,
-            Some(Rect::new(
-                (canvas.viewport().width() - width) as i32,
-                (canvas.viewport().height() - (num * height)) as i32,
-                width,
-                height,
-            )),
-        )?;
-        num += 1;
-    }
-    Ok(())
-}
-
-pub fn render_white_text<'a, T: ToString>(
+fn render_white_text<'a, T: ToString>(
     text: T,
     font: &sdl2::ttf::Font,
     creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>,
