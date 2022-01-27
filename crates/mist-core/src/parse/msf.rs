@@ -65,6 +65,7 @@ impl MsfParser {
             }
             for line in lines {
                 s.push_str(&line);
+                s.push('\n');
             }
             s
         };

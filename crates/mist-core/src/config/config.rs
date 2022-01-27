@@ -104,7 +104,7 @@ impl Config {
             .map_err(|e| e.to_string())?;
         let string = to_string_pretty(
             self,
-            PrettyConfig::new().with_extensions(Extensions::IMPLICIT_SOME),
+            PrettyConfig::new().extensions(Extensions::IMPLICIT_SOME),
         )
         .map_err(|e| e.to_string())?;
         file.write(&string.as_bytes()).map_err(|e| e.to_string())?;
