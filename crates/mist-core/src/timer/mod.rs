@@ -1,5 +1,8 @@
-pub mod run;
-pub mod comparison;
-pub mod timing;
+mod comparison;
+mod instant;
+mod run;
 pub mod state;
-pub mod instant;
+pub mod format;
+pub use comparison::Comparison;
+pub use instant::MistInstant;
+pub use run::Run;

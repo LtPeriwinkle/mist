@@ -5,7 +5,7 @@
 #[cfg(feature = "config")]
 use crate::config::Config;
 use crate::parse::MsfParser;
-use crate::Run;
+use crate::timer::Run;
 use std::fs::File;
 use std::io::{BufReader, Error};
 use tinyfiledialogs::{

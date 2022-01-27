@@ -1,6 +1,6 @@
-use crate::timer::comparison::Comparison as Comp;
-use crate::MistInstant;
-use crate::Run;
+use super::Comparison as Comp;
+use super::MistInstant;
+use super::Run;
 use std::cell::RefCell;
 use std::rc::Rc;
 

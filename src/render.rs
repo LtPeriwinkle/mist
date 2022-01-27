@@ -3,7 +3,7 @@ use crate::panels::RenderPanel;
 use crate::splits::Split;
 use mist_core::config::{Config, Panel};
 use mist_core::timer::state::{RunUpdate, SplitStatus, StateChange};
-use mist_core::{timing, Run};
+use mist_core::timer::{format, Run};
 use sdl2::get_error;
 #[cfg(feature = "bg")]
 use sdl2::gfx::rotozoom::RotozoomSurface;
@@ -98,7 +98,7 @@ impl<'a> RenderState<'a> {
                 };
                 let time = if let Panel::SumOfBest = panel {
                     let sob = run.borrow().gold_times().iter().sum::<u128>();
-                    timing::split_time_text(sob)
+                    format::split_time_text(sob)
                 } else {
                     "-  ".into()
                 };
@@ -109,13 +109,13 @@ impl<'a> RenderState<'a> {
             }
             ret
         };
-        let string_times: Vec<String> = timing::split_time_sum(run.borrow().pb_times())
+        let string_times: Vec<String> = format::split_time_sum(run.borrow().pb_times())
             .iter()
             .map(|&t| {
                 if t == 0 {
                     "-  ".into()
                 } else {
-                    timing::split_time_text(t)
+                    format::split_time_text(t)
                 }
             })
             .collect();
@@ -153,7 +153,7 @@ impl<'a> RenderState<'a> {
         }
         let time_str: String;
         if let Some(n) = run.borrow().offset() {
-            time_str = format!("-{}", timing::ms_to_readable(n, None));
+            time_str = format!("-{}", format::ms_to_readable(n, None));
         } else {
             time_str = "0.000".into();
         }
@@ -231,7 +231,7 @@ impl<'a> RenderState<'a> {
                 }
             }
         }
-        self.time_str = timing::ms_to_readable(
+        self.time_str = format::ms_to_readable(
             update.time,
             if self.is_rounding {
                 self.time_rounding
