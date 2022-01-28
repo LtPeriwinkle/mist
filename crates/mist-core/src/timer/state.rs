@@ -58,7 +58,9 @@ pub enum StateChange {
     Reset {
         offset: Option<u128>,
     },
-    ComparisonChanged {},
+    ComparisonChanged {
+        comp: Comp
+    },
 }
 
 pub struct RunUpdate {
@@ -108,11 +110,7 @@ impl RunState {
         }
     }
     fn calc_status(&self, elapsed: u128) -> SplitStatus {
-        if self.comparison == Comp::None
-            || self.timer_state == TimerState::Paused
-            || self.timer_state == TimerState::Finished
-            || self.timer_state == TimerState::NotRunning
-        {
+        if self.comparison == Comp::None || self.timer_state != TimerState::Running {
             return SplitStatus::None;
         }
         let time = (elapsed - self.start) + self.before_pause;
@@ -124,7 +122,11 @@ impl RunState {
                 SplitStatus::Behind
             }
         } else {
-            let buffer = self.run_diffs[self.current_split - 1];
+            let buffer = if self.current_split != 0 {
+                self.run_diffs[self.current_split - 1]
+            } else {
+                0
+            };
             let allowed = (match self.comparison {
                 Comp::PersonalBest => run.pb_times()[self.current_split],
                 Comp::Golds => run.gold_times()[self.current_split],
@@ -276,6 +278,7 @@ impl RunState {
                 } else {
                     self.comparison.prev();
                 }
+                return vec![StateChange::ComparisonChanged {comp: self.comparison}];
             }
             _ => {}
         }
