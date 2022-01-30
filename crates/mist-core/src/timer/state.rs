@@ -1,3 +1,4 @@
+use super::format;
 use super::Comparison as Comp;
 use super::MistInstant;
 use super::Run;
@@ -49,6 +50,7 @@ pub enum StateChange {
         idx: usize,
         /*name: String,*/ status: SplitStatus,
         time: u128,
+        diff: i128,
     },
     Pause,
     Unpause {
@@ -59,7 +61,7 @@ pub enum StateChange {
         offset: Option<u128>,
     },
     ComparisonChanged {
-        comp: Comp
+        comp: Comp,
     },
 }
 
@@ -221,18 +223,24 @@ impl RunState {
                         .set_gold_time(time, self.current_split);
                     self.needs_save = true;
                 }
+                let sum = format::split_time_sum(&self.run_times)[self.current_split];
+                let diff = sum as i128
+                    - format::split_time_sum(&self.run.borrow().pb_times())[self.current_split]
+                        as i128;
                 if self.current_split == self.run.borrow().pb_times().len() - 1 {
                     self.timer_state = TimerState::Finished;
                     if time < self.run.borrow().pb() {
                         self.needs_save = true;
-                        self.run.borrow_mut().set_pb(time);
-                        self.run.borrow_mut().set_pb_times(&self.run_times);
+                        let mut run = self.run.borrow_mut();
+                        run.set_pb(time);
+                        run.set_pb_times(&self.run_times);
                     }
                     return vec![
                         StateChange::ExitSplit {
                             idx: self.current_split,
-                            time: self.run_times[self.current_split],
                             status: self.run_status,
+                            time: self.run_times[self.current_split],
+                            diff,
                         },
                         StateChange::Finish,
                     ];
@@ -241,8 +249,9 @@ impl RunState {
                     return vec![
                         StateChange::ExitSplit {
                             idx: self.current_split - 1,
-                            time,
                             status: self.run_status,
+                            time,
+                            diff,
                         },
                         StateChange::EnterSplit {
                             idx: self.current_split,
@@ -278,7 +287,9 @@ impl RunState {
                 } else {
                     self.comparison.prev();
                 }
-                return vec![StateChange::ComparisonChanged {comp: self.comparison}];
+                return vec![StateChange::ComparisonChanged {
+                    comp: self.comparison,
+                }];
             }
             _ => {}
         }
