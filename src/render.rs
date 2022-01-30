@@ -349,6 +349,16 @@ impl<'a> RenderState<'a> {
         Ok(())
     }
 
+    pub fn scroll(&mut self, y: i32) {
+        if y == -1 && !self.splits.is_empty() && self.bottom_index < self.splits.len() - 1 {
+            self.bottom_index += 1;
+            self.top_index += 1;
+        } else if y == 1 && self.top_index != 0 {
+            self.bottom_index -= 1;
+            self.top_index -= 1;
+        }
+    }
+
     pub fn render(&mut self) -> Result<(), String> {
         self.canvas.set_draw_color(self.colors[5]);
         self.canvas.clear();
