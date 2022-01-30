@@ -103,8 +103,8 @@ impl<'a> RenderState<'a> {
                 } else {
                     "-  ".into()
                 };
-                let time_tex = render_white_text(&time, &splits_font, creator)?;
-                let text_tex = render_white_text(&text, &splits_font, creator)?;
+                let time_tex = render_text(&time, &splits_font, creator, Color::WHITE)?;
+                let text_tex = render_text(&text, &splits_font, creator, Color::WHITE)?;
                 let newpanel = RenderPanel::new(text_tex, time_tex, paneltype);
                 ret.push(newpanel);
             }
@@ -127,8 +127,8 @@ impl<'a> RenderState<'a> {
             .enumerate()
             .map(|(idx, name)| {
                 Split::new(
-                    render_white_text(name, &splits_font, creator).unwrap(),
-                    render_white_text(string_times[idx], &splits_font, creator).unwrap(),
+                    render_text(name, &splits_font, creator, Color::WHITE).unwrap(),
+                    render_text(string_times[idx], &splits_font, creator, Color::WHITE).unwrap(),
                     None,
                     None,
                 )
@@ -215,10 +215,12 @@ impl<'a> RenderState<'a> {
                 StateChange::Unpause { .. } => {
                     self.is_rounding = false;
                 }
-                StateChange::EnterSplit { .. } => {
-                    self.is_rounding = false;
-                }
-                StateChange::ExitSplit { idx, status, time } => {
+                StateChange::ExitSplit {
+                    idx,
+                    status,
+                    time,
+                    diff,
+                } => {
                     let color = match status {
                         SplitStatus::None => (255, 255, 255),
                         SplitStatus::Ahead => self.colors[0],
@@ -227,18 +229,38 @@ impl<'a> RenderState<'a> {
                         SplitStatus::Losing => self.colors[3],
                         SplitStatus::Gold => self.colors[4],
                     };
+                    let time_str = if self.run.borrow().pb_times()[self.current] == 0 {
+                        "-  ".into()
+                    } else {
+                        format::diff_text(diff)
+                    };
+                    self.splits[self.current].set_diff(Some(render_text(
+                        &time_str,
+                        &self.splits_font,
+                        self.creator,
+                        color.into(),
+                    )?));
+                    let time_str = format::split_time_text(time);
+                    self.splits[self.current].set_cur(Some(render_text(
+                        &time_str,
+                        &self.splits_font,
+                        self.creator,
+                        Color::WHITE,
+                    )?));
                 }
                 StateChange::EnterSplit { idx } => {
+                    self.is_rounding = false;
                     self.current = idx;
                 }
                 StateChange::ComparisonChanged { comp } => match comp {
                     Comparison::None => {
                         let mut i = 0;
                         while i < self.splits.len() {
-                            self.splits[i].set_comp(render_white_text(
+                            self.splits[i].set_comp(render_text(
                                 "-  ",
                                 &self.splits_font,
                                 self.creator,
+                                Color::WHITE,
                             )?);
                             i += 1;
                         }
@@ -277,10 +299,11 @@ impl<'a> RenderState<'a> {
                             .collect();
                         i = 0;
                         while i < self.splits.len() {
-                            self.splits[i].set_comp(render_white_text(
+                            self.splits[i].set_comp(render_text(
                                 &split_times_raw[i],
                                 &self.timer_font,
                                 self.creator,
+                                Color::WHITE,
                             )?);
                             i += 1;
                         }
@@ -303,10 +326,11 @@ impl<'a> RenderState<'a> {
                             .collect();
                         let mut i = 0;
                         while i < self.splits.len() {
-                            self.splits[i].set_comp(render_white_text(
+                            self.splits[i].set_comp(render_text(
                                 &split_times_raw[i],
                                 &self.timer_font,
                                 self.creator,
+                                Color::WHITE,
                             )?);
                             i += 1;
                         }
@@ -621,10 +645,11 @@ impl Background<'_> {
     }
 }
 
-fn render_white_text<'a, T: ToString>(
+fn render_text<'a, T: ToString>(
     text: T,
     font: &sdl2::ttf::Font,
     creator: sdl2::render::TextureCreator<sdl2::video::WindowContext>,
+    color: sdl2::pixels::Color,
 ) -> Result<Texture<'a>, String> {
     let sur = font
         .render(&text.to_string())
