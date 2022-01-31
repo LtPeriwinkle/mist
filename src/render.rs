@@ -158,6 +158,22 @@ impl<'a> RenderState<'a> {
         } else {
             time_str = "0.000".into();
         }
+        canvas
+            .window_mut()
+            .set_minimum_size(0, timer_height + 20 + (splits_height * panels.len() as u32))
+            .map_err(|_| get_error())?;
+        canvas
+            .window_mut()
+            .set_size(300, 500 + (splits_height * panels.len() as u32))
+            .map_err(|_| get_error())?;
+        canvas
+            .window_mut()
+            .set_title(&format!(
+                "mist: {} ({})",
+                run.borrow().game_title(),
+                run.borrow().category(),
+            ))
+            .map_err(|_| get_error())?;
         canvas.present();
         Ok(Self {
             run,
@@ -208,12 +224,52 @@ impl<'a> RenderState<'a> {
         for change in update.change {
             // todo handle offset
             match change {
-                StateChange::Pause | StateChange::Finish { .. } => {
+                StateChange::Pause => {
                     self.is_rounding = true;
                     self.highlighted = usize::MAX;
+                    self.canvas
+                        .window_mut()
+                        .set_title(&format!(
+                            "mist: {} ({}) [{}: {}] (paused)",
+                            self.run.borrow().game_title(),
+                            self.run.borrow().category(),
+                            self.current + 1,
+                            if !self.run.borrow().splits().is_empty() {
+                                &self.run.borrow().splits()[self.current]
+                            } else {
+                                ""
+                            }
+                        ))
+                        .map_err(|_| get_error())?;
+                }
+                StateChange::Finish { .. } => {
+                    self.is_rounding = true;
+                    self.highlighted = usize::MAX;
+                    self.canvas
+                        .window_mut()
+                        .set_title(&format!(
+                            "mist: {} ({})",
+                            self.run.borrow().game_title(),
+                            self.run.borrow().category(),
+                        ))
+                        .map_err(|_| get_error())?;
                 }
                 StateChange::Unpause { .. } => {
                     self.is_rounding = false;
+                    self.canvas
+                        .window_mut()
+                        .set_title(&format!(
+                            "mist: {} ({}) [{}: {}]",
+                            self.run.borrow().game_title(),
+                            self.run.borrow().category(),
+                            self.current + 1,
+                            if !self.run.borrow().splits().is_empty() {
+                                &self.run.borrow().splits()[self.current]
+                            } else {
+                                ""
+                            }
+                        ))
+                        .map_err(|_| get_error())?;
                 }
                 StateChange::ExitSplit {
                     idx,
@@ -251,18 +307,55 @@ impl<'a> RenderState<'a> {
                 StateChange::EnterSplit { idx } => {
                     self.is_rounding = false;
                     self.current = idx;
+                    self.canvas
+                        .window_mut()
+                        .set_title(&format!(
+                            "mist: {} ({}) [{}: {}]",
+                            self.run.borrow().game_title(),
+                            self.run.borrow().category(),
+                            self.current + 1,
+                            if !self.run.borrow().splits().is_empty() {
+                                &self.run.borrow().splits()[self.current]
+                            } else {
+                                ""
+                            }
+                        ))
+                        .map_err(|_| get_error())?;
+                }
+                StateChange::Reset { .. } => {
+                    self.current = 0;
+                    if self.max_splits != 0 {
+                        self.bottom_index = self.max_splits - 1;
+                    } else {
+                        self.bottom_index = 0;
+                    }
+                    if let Some(x) = self.run.borrow().offset() {
+                        self.time_str = format!("-{}", format::ms_to_readable(x, None));
+                    } else {
+                        self.time_str = "0.000".into();
+                    }
+                    for split in &mut self.splits {
+                        split.set_cur(None);
+                        split.set_diff(None);
+                    }
+                    self.canvas
+                        .window_mut()
+                        .set_title(&format!(
+                            "mist: {} ({})",
+                            self.run.borrow().game_title(),
+                            self.run.borrow().category(),
+                        ))
+                        .map_err(|_| get_error())?;
                 }
                 StateChange::ComparisonChanged { comp } => match comp {
                     Comparison::None => {
-                        let mut i = 0;
-                        while i < self.splits.len() {
-                            self.splits[i].set_comp(render_text(
+                        for split in &mut self.splits {
+                            split.set_comp(render_text(
                                 "-  ",
                                 &self.splits_font,
                                 self.creator,
                                 Color::WHITE,
                             )?);
-                            i += 1;
                         }
                     }
                     Comparison::Average => {
@@ -356,6 +449,54 @@ impl<'a> RenderState<'a> {
         } else if y == 1 && self.top_index != 0 {
             self.bottom_index -= 1;
             self.top_index -= 1;
+        }
+    }
+
+    pub fn win_resize(&mut self) {
+        let height = self.canvas.viewport().height();
+        let check_height = self.splits_height * (!self.inline as u32 + 1);
+        let check_timer_height =
+            self.timer_height + (self.splits_height * self.panels.len() as u32);
+        let rows_height = ((self.bottom_index - self.top_index) as u32 * (check_height + 5))
+            + (self.splits_height * self.panels.len() as u32)
+            + check_height;
+        // if there aren't any splits, we don't need to worry about changing the number of splits
+        if self.splits.len() != 0 {
+            // if there are too many splits, calculate how many and change indices
+            // otherwise if there are too few and there are enough to display more, change indices the other way
+            if height - check_timer_height < rows_height {
+                let diff = ((rows_height - (height - check_timer_height)) / check_height) as usize;
+                if self.max_splits > diff {
+                    self.max_splits -= diff;
+                } else {
+                    self.max_splits = 0;
+                }
+                if self.current > self.bottom_index - diff {
+                    self.top_index += diff;
+                    self.bottom_index = self.current;
+                } else if self.bottom_index > diff {
+                    self.bottom_index -= diff;
+                } else {
+                    self.bottom_index = 0;
+                }
+            } else if rows_height < height - self.timer_height {
+                let diff = (((height - self.timer_height) - rows_height) / check_height) as usize;
+                if self.current == self.bottom_index
+                    && self.current != self.splits.len() - 1
+                    && self.top_index >= diff
+                {
+                    self.top_index -= diff;
+                    self.max_splits += diff;
+                } else if self.bottom_index + diff > self.splits.len() - 1
+                    || self.max_splits + diff > self.splits.len()
+                {
+                    self.bottom_index = self.splits.len() - 1;
+                    self.max_splits = self.splits.len();
+                } else {
+                    self.max_splits += diff;
+                    self.bottom_index = self.max_splits - 1;
+                }
+            }
         }
     }
 
