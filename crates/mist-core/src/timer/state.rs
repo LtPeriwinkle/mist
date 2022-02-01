@@ -22,7 +22,7 @@ pub struct RunState {
 }
 
 #[derive(PartialEq)]
-pub enum TimerState {
+enum TimerState {
     Running,
     NotRunning,
     Paused,
@@ -34,6 +34,7 @@ pub enum StateChangeRequest {
     None,
     Pause,
     Split,
+    Skip,
     Reset,
     Comparison(bool),
 }
@@ -110,6 +111,12 @@ impl RunState {
             offset: false, // TODO
             status: self.run_status,
         }
+    }
+    pub fn needs_save(&self) -> bool {
+        self.needs_save
+    }
+    pub fn is_running(&self) -> bool {
+        self.timer_state == TimerState::Running
     }
     fn calc_status(&self, elapsed: u128) -> SplitStatus {
         if self.comparison == Comp::None || self.timer_state != TimerState::Running {
@@ -280,6 +287,35 @@ impl RunState {
                 return vec![StateChange::Reset {
                     offset: self.run.borrow().offset(),
                 }];
+            }
+            Skip if self.timer_state == TimerState::Running => {
+                self.run_times.push(0);
+                self.run_diffs.push(0);
+                if self.current_split == self.run.borrow().pb_times().len() - 1 {
+                    self.timer_state = TimerState::Finished;
+                    return vec![
+                        StateChange::ExitSplit {
+                            idx: self.current_split,
+                            status: self.run_status,
+                            time: 0,
+                            diff: 0,
+                        },
+                        StateChange::Finish,
+                    ];
+                } else {
+                    self.current_split += 1;
+                    return vec![
+                        StateChange::ExitSplit {
+                            idx: self.current_split - 1,
+                            status: self.run_status,
+                            time: 0,
+                            diff: 0,
+                        },
+                        StateChange::EnterSplit {
+                            idx: self.current_split,
+                        },
+                    ];
+                }
             }
             Comparison(n) => {
                 if n {
