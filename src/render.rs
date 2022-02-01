@@ -290,19 +290,28 @@ impl<'a> RenderState<'a> {
                     } else {
                         format::diff_text(diff)
                     };
-                    self.splits[self.current].set_diff(Some(render_text(
-                        &time_str,
-                        &self.splits_font,
-                        self.creator,
-                        color.into(),
-                    )?));
-                    let time_str = format::split_time_text(time);
-                    self.splits[self.current].set_cur(Some(render_text(
-                        &time_str,
-                        &self.splits_font,
-                        self.creator,
-                        Color::WHITE,
-                    )?));
+                    if time != 0 {
+                        self.splits[self.current].set_diff(Some(render_text(
+                            &time_str,
+                            &self.splits_font,
+                            self.creator,
+                            color.into(),
+                        )?));
+                        let time_str = format::split_time_text(time);
+                        self.splits[self.current].set_cur(Some(render_text(
+                            &time_str,
+                            &self.splits_font,
+                            self.creator,
+                            Color::WHITE,
+                        )?));
+                    } else {
+                        self.splits[self.current].set_cur(Some(render_text(
+                            "-  ",
+                            &self.splits_font,
+                            self.creator,
+                            Color::WHITE,
+                        )?));
+                    }
                 }
                 StateChange::EnterSplit { idx } => {
                     self.is_rounding = false;
