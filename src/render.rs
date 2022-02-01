@@ -330,6 +330,11 @@ impl<'a> RenderState<'a> {
                             }
                         ))
                         .map_err(|_| get_error())?;
+                    if self.current > self.bottom_index && self.bottom_index + 1 < self.splits.len()
+                    {
+                        self.bottom_index += 1;
+                        self.top_index += 1;
+                    }
                 }
                 StateChange::Reset { .. } => {
                     self.current = 0;
@@ -523,7 +528,7 @@ impl<'a> RenderState<'a> {
         Ok(())
     }
 
-    pub fn recreate(&mut self) -> Result<(), String> {
+    pub fn reload_run(&mut self) -> Result<(), String> {
         let string_times: Vec<String> = format::split_time_sum(self.run.borrow().pb_times())
             .iter()
             .map(|&t| {
@@ -577,6 +582,11 @@ impl<'a> RenderState<'a> {
             self.max_splits = max_initial_splits;
             self.bottom_index = max_initial_splits - 1;
         }
+        Ok(())
+    }
+
+    pub fn reload_config(&mut self, config: &Config) -> Result<(), String> {
+        *self = Self::new(self.run, self.canvas, config)?;
         Ok(())
     }
 
