@@ -139,7 +139,7 @@ impl<'a> RenderState<'a> {
             timer_font.size_of(TIMER_CHARS).map_err(|_| get_error())?.1 + splits_height;
         let bottom_index: usize;
         let max_splits: usize;
-        let max_initial_splits: usize = ((canvas.viewport().height() - timer_height)
+        let max_initial_splits = ((canvas.viewport().height() - timer_height)
             / ((splits_height * (1 + !config.layout().inline_splits as u32)) + 5))
             as usize;
         if splits.is_empty() {
@@ -511,6 +511,63 @@ impl<'a> RenderState<'a> {
         self.render_rows()?;
         self.render_time()?;
         self.canvas.present();
+        Ok(())
+    }
+
+    pub fn recreate(&mut self) -> Result<(), String> {
+        let string_times: Vec<String> = format::split_time_sum(self.run.borrow().pb_times())
+            .iter()
+            .map(|&t| {
+                if t == 0 {
+                    "-  ".into()
+                } else {
+                    format::split_time_text(t)
+                }
+            })
+            .collect();
+        self.splits = self
+            .run
+            .borrow()
+            .splits()
+            .iter()
+            .enumerate()
+            .map(|(idx, name)| {
+                Split::new(
+                    render_text(name, &self.splits_font, self.creator, Color::WHITE).unwrap(),
+                    render_text(
+                        string_times[idx],
+                        &self.splits_font,
+                        self.creator,
+                        Color::WHITE,
+                    )
+                    .unwrap(),
+                    None,
+                    None,
+                )
+            })
+            .collect();
+        if let Some(x) = self.run.borrow().offset() {
+            self.time_str = format!("-{}", format::ms_to_readable(x, None));
+        } else {
+            self.time_str = "0.000".into();
+        }
+        self.top_index = 0;
+        self.highlighted = usize::MAX;
+        self.current = 0;
+        self.status = SplitStatus::None;
+        let max_initial_splits = ((self.canvas.viewport().height() - self.timer_height)
+            / ((self.splits_height * (1 + !self.inline as u32)) + 5))
+            as usize;
+        if self.splits.is_empty() {
+            self.max_splits = 0;
+            self.bottom_index = 0;
+        } else if max_initial_splits > self.splits.len() {
+            self.max_splits = self.splits.len();
+            self.bottom_index = self.splits.len() - 1;
+        } else {
+            self.max_splits = max_initial_splits;
+            self.bottom_index = max_initial_splits - 1;
+        }
         Ok(())
     }
 
