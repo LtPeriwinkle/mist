@@ -1,18 +1,18 @@
 use sdl2::render::Texture;
 
-pub struct Split<'a> {
-    diff: Option<Texture<'a>>,
-    name: Texture<'a>,
-    comp: Texture<'a>,
-    current: Option<Texture<'a>>,
+pub struct Split {
+    diff: Option<Texture>,
+    name: Texture,
+    comp: Texture,
+    current: Option<Texture>,
 }
 
-impl<'a> Split<'a> {
+impl Split {
     pub fn new(
-        name: Texture<'a>,
-        comp: Texture<'a>,
-        diff: Option<Texture<'a>>,
-        current: Option<Texture<'a>>,
+        name: Texture,
+        comp: Texture,
+        diff: Option<Texture>,
+        current: Option<Texture>,
     ) -> Self {
         Self {
             diff,
@@ -27,19 +27,30 @@ impl<'a> Split<'a> {
     pub fn comp(&self) -> &Texture {
         &self.comp
     }
-    pub fn set_comp(&mut self, tex: Texture<'a>) {
-        self.comp = tex;
-    }
     pub fn cur(&self) -> &Option<Texture> {
         &self.current
     }
-    pub fn set_cur(&mut self, cur: Option<Texture<'a>>) {
+    pub fn diff(&self) -> &Option<Texture> {
+        &self.diff
+    }
+    // Have to destroy the textures or else we will eat all the memory.
+    // No setting textures after the canvas is dead, I guess? Not that there's any reason to do that anyway...
+    pub fn set_comp(&mut self, tex: Texture) {
+        unsafe {
+            sdl2::sys::SDL_DestroyTexture(self.comp.raw());
+        }
+        self.comp = tex;
+    }
+    pub fn set_cur(&mut self, cur: Option<Texture>) {
+        self.current.as_ref().map(|c| unsafe {
+            sdl2::sys::SDL_DestroyTexture(c.raw());
+        });
         self.current = cur;
     }
-    pub fn set_diff(&mut self, texture: Option<Texture<'a>>) {
+    pub fn set_diff(&mut self, texture: Option<Texture>) {
+        self.diff.as_ref().map(|d| unsafe {
+            sdl2::sys::SDL_DestroyTexture(d.raw());
+        });
         self.diff = texture;
-    }
-    pub fn diff(&self) -> &Option<Texture<'a>> {
-        &self.diff
     }
 }

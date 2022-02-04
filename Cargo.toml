@@ -20,7 +20,7 @@ icon = ["sdl2/image"]
 [dependencies.sdl2]
 version = "0.34"
 default-features = false
-features = ["ttf"]
+features = ["ttf", "unsafe_textures"]
 
 [dependencies.mist-core]
 version = "0.9"
