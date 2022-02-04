@@ -101,12 +101,15 @@ impl RunState {
             needs_save: false,
         }
     }
-    pub fn update(&mut self, rq: StateChangeRequest) -> RunUpdate {
+    pub fn update(&mut self, rq: &[StateChangeRequest]) -> RunUpdate {
         // TODO logic for checking offset stuff
         let elapsed = self.timer.elapsed().as_millis();
         self.run_status = self.calc_status(elapsed);
         RunUpdate {
-            change: self.handle_scrq(rq, elapsed),
+            change: rq.iter().fold(Vec::new(), |mut vec, request| {
+                vec.append(&mut self.handle_scrq(request, elapsed));
+                vec
+            }),
             time: (elapsed - self.start) + self.before_pause,
             offset: false, // TODO
             status: self.run_status,
@@ -182,7 +185,7 @@ impl RunState {
             }
         }
     }
-    fn handle_scrq(&mut self, rq: StateChangeRequest, elapsed: u128) -> Vec<StateChange> {
+    fn handle_scrq(&mut self, rq: &StateChangeRequest, elapsed: u128) -> Vec<StateChange> {
         use StateChangeRequest::*;
         match rq {
             Pause
@@ -318,7 +321,7 @@ impl RunState {
                 }
             }
             Comparison(n) => {
-                if n {
+                if *n {
                     self.comparison.next();
                 } else {
                     self.comparison.prev();
