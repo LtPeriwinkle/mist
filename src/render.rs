@@ -128,13 +128,7 @@ impl<'a> RenderState<'a> {
             .map(|(idx, name)| {
                 Split::new(
                     render_text(name, &splits_font, &creator, Color::WHITE).unwrap(),
-                    render_text(
-                        string_times[idx].clone(),
-                        &splits_font,
-                        &creator,
-                        Color::WHITE,
-                    )
-                    .unwrap(),
+                    render_text(&string_times[idx], &splits_font, &creator, Color::WHITE).unwrap(),
                     None,
                     None,
                 )
@@ -158,12 +152,11 @@ impl<'a> RenderState<'a> {
             max_splits = max_initial_splits;
             bottom_index = max_initial_splits - 1;
         }
-        let time_str: String;
-        if let Some(n) = run.borrow().offset() {
-            time_str = format!("-{}", format::ms_to_readable(n, None));
+        let time_str = if let Some(n) = run.borrow().offset() {
+            format!("-{}", format::ms_to_readable(n, None))
         } else {
-            time_str = "0.000".into();
-        }
+            "0.000".into()
+        };
         canvas
             .window_mut()
             .set_minimum_size(0, timer_height + 20 + (splits_height * panels.len() as u32))
@@ -620,7 +613,7 @@ impl<'a> RenderState<'a> {
                 Split::new(
                     render_text(name, &self.splits_font, &self.creator, Color::WHITE).unwrap(),
                     render_text(
-                        string_times[idx],
+                        &string_times[idx],
                         &self.splits_font,
                         &self.creator,
                         Color::WHITE,
