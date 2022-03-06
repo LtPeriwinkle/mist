@@ -244,6 +244,7 @@ dependencies = [
 name = "mist"
 version = "1.14.0"
 dependencies = [
+ "lazy_static",
  "mist-core",
  "sdl2",
 ]

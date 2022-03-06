@@ -26,11 +26,10 @@ const ALL_CHARS: &str =
     "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz`1234567890[]~!@#$%^&*(){}',./=\\-;\"<>?+|_:";
 const TIMER_CHARS: &str = "1234567890:.-";
 
-pub struct RenderState<'a> {
+pub struct RenderState<'a, 'b> {
     run: Rc<RefCell<Run>>,
     canvas: WindowCanvas,
     creator: TextureCreator<WindowContext>,
-    ttf: Sdl2TtfContext,
     colors: [(u8, u8, u8); 6],
     splits: Vec<Split>,
     panels: Vec<RenderPanel>,
@@ -38,9 +37,9 @@ pub struct RenderState<'a> {
     time_str: String,
     time_rounding: Option<u128>,
     is_rounding: bool,
-    timer_font: Font<'a, 'a>,
+    timer_font: Font<'b, 'a>,
     timer_height: u32,
-    splits_font: Font<'a, 'a>,
+    splits_font: Font<'b, 'a>,
     splits_height: u32,
     top_index: usize,
     bottom_index: usize,
@@ -64,19 +63,23 @@ struct FontMap {
     coords: Vec<u32>,
 }
 
-impl<'a> RenderState<'a> {
+// wish i did not have to do this
+lazy_static::lazy_static! {
+    static ref TTF: Sdl2TtfContext = ttf::init().unwrap();
+}
+
+impl<'a, 'b> RenderState<'a, 'b> {
     pub fn new(
         run: Rc<RefCell<Run>>,
         mut canvas: WindowCanvas,
         config: &Config,
     ) -> Result<Self, String> {
         canvas.clear();
-        let ttf = ttf::init().map_err(|_| get_error())?;
         let creator = canvas.texture_creator();
         let rw = RWops::from_file(config.tfont().get_path()?, "r")?;
-        let timer_font = ttf.load_font_from_rwops(rw, config.fsize().0)?;
+        let timer_font = TTF.load_font_from_rwops(rw, config.fsize().0)?;
         let rw = RWops::from_file(config.sfont().get_path()?, "r")?;
-        let splits_font = ttf.load_font_from_rwops(rw, config.fsize().1)?;
+        let splits_font = TTF.load_font_from_rwops(rw, config.fsize().1)?;
         let panels = {
             let mut ret = vec![];
             for panel in config.panels() {
@@ -176,7 +179,6 @@ impl<'a> RenderState<'a> {
         canvas.present();
         Ok(Self {
             run,
-            ttf,
             colors: config.color_list(),
             splits,
             panels,
@@ -218,7 +220,7 @@ impl<'a> RenderState<'a> {
                 SplitStatus::Losing => self.colors[3],
                 SplitStatus::Gold => self.colors[4],
             };
-            self.map = FontMap::generate(&self.splits_font, &self.creator, color.into()).unwrap();
+            self.map = FontMap::generate(&self.timer_font, &self.creator, color.into()).unwrap();
         }
         if self.status != SplitStatus::None {
             for panel in &mut self.panels {
