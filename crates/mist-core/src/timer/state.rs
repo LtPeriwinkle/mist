@@ -30,6 +30,7 @@ enum TimerState {
     Finished,
 }
 
+#[derive(Debug)]
 pub enum StateChangeRequest {
     None,
     Pause,
@@ -40,6 +41,7 @@ pub enum StateChangeRequest {
 }
 
 // commented items will be used for plugins later
+#[derive(Debug)]
 pub enum StateChange {
     None,
     EnterOffset, /*{amt: u128}*/
@@ -73,7 +75,7 @@ pub struct RunUpdate {
     pub status: SplitStatus,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum SplitStatus {
     None,
     Ahead,
@@ -104,14 +106,24 @@ impl RunState {
     pub fn update(&mut self, rq: &[StateChangeRequest]) -> RunUpdate {
         // TODO logic for checking offset stuff
         let elapsed = self.timer.elapsed().as_millis();
-        self.run_status = self.calc_status(elapsed);
+        let time = (elapsed - self.start) + self.before_pause;
+        let mut change = rq.iter().fold(Vec::new(), |mut vec, request| {
+            vec.append(&mut self.handle_scrq(request, elapsed));
+            vec
+        });
+        if self.timer_state == TimerState::Offset
+            && self.run.borrow().offset().unwrap() <= elapsed - self.start
+        {
+            self.timer_state = TimerState::Running;
+            self.start = elapsed;
+            self.split = elapsed;
+            change.push(StateChange::EnterSplit { idx: 0 });
+        }
+        self.calc_status(elapsed);
         RunUpdate {
-            change: rq.iter().fold(Vec::new(), |mut vec, request| {
-                vec.append(&mut self.handle_scrq(request, elapsed));
-                vec
-            }),
-            time: (elapsed - self.start) + self.before_pause,
-            offset: false, // TODO
+            change,
+            time,
+            offset: self.timer_state == TimerState::Offset,
             status: self.run_status,
         }
     }
@@ -121,17 +133,18 @@ impl RunState {
     pub fn is_running(&self) -> bool {
         self.timer_state == TimerState::Running
     }
-    fn calc_status(&self, elapsed: u128) -> SplitStatus {
+    fn calc_status(&mut self, elapsed: u128) {
         if self.comparison == Comp::None || self.timer_state != TimerState::Running {
-            return SplitStatus::None;
+            self.run_status = SplitStatus::None;
+            return;
         }
-        let time = (elapsed - self.start) + self.before_pause;
         let run = self.run.borrow();
         if run.pb_times().len() == 0 {
+            let time = (elapsed - self.start) + self.before_pause;
             if time < run.pb() {
-                SplitStatus::Ahead
+                self.run_status = SplitStatus::Ahead;
             } else {
-                SplitStatus::Behind
+                self.run_status = SplitStatus::Behind;
             }
         } else {
             let buffer = if self.current_split != 0 {
@@ -153,34 +166,38 @@ impl RunState {
                     }
                 }
                 _ => unreachable!(),
-            }) as i128
-                - buffer;
+            }) as i128;
+            if allowed == 0 {
+                self.run_status = SplitStatus::Ahead;
+                return;
+            }
+            let allowed = allowed - buffer;
             let time = ((elapsed - self.split) + self.before_pause_split) as i128;
             // if the last split was ahead of comparison split
             if buffer < 0 {
                 // if the runner has spent more time than allowed they have to be behind
                 if time > allowed {
-                    SplitStatus::Behind
+                    self.run_status = SplitStatus::Behind;
                 // if they have spent less than the time it would take to become behind but more time than they took in the pb,
                 // then they are losing time but still ahead. default color for this is lightish green like LiveSplit
                 } else if time < allowed && time > allowed + buffer {
-                    SplitStatus::Losing
+                    self.run_status = SplitStatus::Losing;
                 // if neither of those are true the runner must be ahead
                 } else {
-                    SplitStatus::Ahead
+                    self.run_status = SplitStatus::Ahead;
                 }
             // if last split was behind comparison split
             } else {
                 // if the runner has gone over the amount of time they should take but are still on better pace than
                 // last split then they are making up time. a sort of light red color like livesplit
                 if time > allowed && time < allowed + buffer {
-                    SplitStatus::Gaining
+                    self.run_status = SplitStatus::Gaining;
                 // if they are behind both the allowed time and their current pace they must be behind
                 } else if time > allowed && time > allowed + buffer {
-                    SplitStatus::Behind
+                    self.run_status = SplitStatus::Behind;
                 // even if the last split was behind, often during part of the split the runner could finish it and come out ahead
                 } else {
-                    SplitStatus::Ahead
+                    self.run_status = SplitStatus::Ahead;
                 }
             }
         }
@@ -193,6 +210,7 @@ impl RunState {
                     || self.timer_state == TimerState::Offset =>
             {
                 self.timer_state = TimerState::Paused;
+                println!("a {elapsed}");
                 self.before_pause = (elapsed - self.start) + self.before_pause;
                 self.before_pause_split = (elapsed - self.split) + self.before_pause_split;
                 return vec![StateChange::Pause];
@@ -208,6 +226,8 @@ impl RunState {
             Split if self.timer_state == TimerState::Running => {
                 // TODO run updates/save file updates etc
                 let time = (elapsed - self.split) + self.before_pause_split;
+                self.split = elapsed;
+                self.before_pause_split = 0;
                 self.run_times.push(time);
                 self.run_diffs
                     .push(if self.comparison == Comp::PersonalBest {
@@ -227,10 +247,13 @@ impl RunState {
                     } else {
                         0
                     });
-                if time < self.run.borrow().gold_times()[self.current_split] {
+                if time < self.run.borrow().gold_times()[self.current_split]
+                    || self.run.borrow().gold_times()[self.current_split] == 0
+                {
                     self.run
                         .borrow_mut()
                         .set_gold_time(time, self.current_split);
+                    self.run_status = SplitStatus::Gold;
                     self.needs_save = true;
                 }
                 let sum = format::split_time_sum(&self.run_times)[self.current_split];
@@ -239,12 +262,13 @@ impl RunState {
                         as i128;
                 if self.current_split == self.run.borrow().pb_times().len() - 1 {
                     self.timer_state = TimerState::Finished;
-                    if time < self.run.borrow().pb() {
+                    if time < self.run.borrow().pb() || self.run.borrow().pb() == 0 {
                         self.needs_save = true;
                         let mut run = self.run.borrow_mut();
                         run.set_pb(time);
                         run.set_pb_times(&self.run_times);
                     }
+                    println!("{:?}", self.run_times);
                     return vec![
                         StateChange::ExitSplit {
                             idx: self.current_split,
@@ -270,6 +294,9 @@ impl RunState {
                 }
             }
             Split if self.timer_state == TimerState::NotRunning => {
+                println!("starting...");
+                self.start = elapsed;
+                self.split = elapsed;
                 if self.run.borrow().offset().is_some() {
                     self.timer_state = TimerState::Offset;
                     return vec![StateChange::EnterOffset];
