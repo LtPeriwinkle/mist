@@ -42,15 +42,19 @@ impl Split {
         self.comp = tex;
     }
     pub fn set_cur(&mut self, cur: Option<Texture>) {
-        self.current.as_ref().map(|c| unsafe {
-            sdl2::sys::SDL_DestroyTexture(c.raw());
-        });
+        if let Some(c) = self.current.as_ref() {
+            unsafe {
+                sdl2::sys::SDL_DestroyTexture(c.raw());
+            }
+        };
         self.current = cur;
     }
     pub fn set_diff(&mut self, texture: Option<Texture>) {
-        self.diff.as_ref().map(|d| unsafe {
-            sdl2::sys::SDL_DestroyTexture(d.raw());
-        });
+        if let Some(d) = self.diff.as_ref() {
+            unsafe {
+                sdl2::sys::SDL_DestroyTexture(d.raw());
+            }
+        };
         self.diff = texture;
     }
 }

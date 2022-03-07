@@ -110,7 +110,7 @@ impl<'a, 'b> App<'a, 'b> {
 
         // framerate cap timer
         let mut frame_time: Instant;
-        let mut binds = Keybinds::from_raw(&self.config.binds())?;
+        let mut binds = Keybinds::from_raw(self.config.binds())?;
         let mut state_change_queue = vec![];
         let mut update: RunUpdate;
 

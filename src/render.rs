@@ -561,12 +561,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 } else {
                     self.bottom_index = self.splits.len() - 1;
                 }
+            } else if self.bottom_index + diff < self.splits.len() - 1 {
+                self.bottom_index += diff;
             } else {
-                if self.bottom_index + diff < self.splits.len() - 1 {
-                    self.bottom_index += diff;
-                } else {
-                    self.bottom_index = self.splits.len() - 1;
-                }
+                self.bottom_index = self.splits.len() - 1;
             }
         } else if y - bottom_height < all_rows_height {
             let diff = ((all_rows_height - (y - bottom_height)) / self.splits_height) as usize + 1;
@@ -660,7 +658,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
     }
 
     pub fn reload_config(self, config: &Config) -> Result<Self, String> {
-        Ok(Self::new(self.run, self.canvas, config)?)
+        Self::new(self.run, self.canvas, config)
     }
 
     fn update_highlighted(&mut self) {
@@ -692,7 +690,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     .fill_rect(Rect::new(0, y - 1, window_width, incr_height as u32 + 5))?;
             }
             row = Rect::new(0, y, width, height);
-            self.canvas.copy(&item.name(), None, Some(row))?;
+            self.canvas.copy(item.name(), None, Some(row))?;
             let num_y = if !self.inline {
                 y + self.splits_height as i32
             } else {
@@ -700,7 +698,9 @@ impl<'a, 'b> RenderState<'a, 'b> {
             };
             // if the split has a texture from an active run, draw it to reflect the current time
             // otherwise draw the pb split time
-            let texinfo = match item.cur() {
+            let TextureQuery {
+                width: tinfo_width, ..
+            } = match item.cur() {
                 Some(x) => {
                     let tinfo = x.query();
                     row = Rect::new(
@@ -709,7 +709,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         tinfo.width,
                         tinfo.height,
                     );
-                    self.canvas.copy(&x, None, Some(row))?;
+                    self.canvas.copy(x, None, Some(row))?;
                     tinfo
                 }
                 None => {
@@ -720,7 +720,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         tinfo.width,
                         tinfo.height,
                     );
-                    self.canvas.copy(&item.comp(), None, Some(row))?;
+                    self.canvas.copy(item.comp(), None, Some(row))?;
                     tinfo
                 }
             };
@@ -731,12 +731,12 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     ..
                 } = x.query();
                 row = Rect::new(
-                    ((window_width - texinfo.width - 25) - dw) as i32,
+                    ((window_width - tinfo_width - 25) - dw) as i32,
                     num_y,
                     dw,
                     dh,
                 );
-                self.canvas.copy(&x, None, Some(row))?;
+                self.canvas.copy(x, None, Some(row))?;
             }
             self.canvas.set_draw_color(Color::GRAY);
             // draw a line to separate between the rows
@@ -845,7 +845,7 @@ impl FontMap {
         })
     }
 
-    fn gen_str_coords(&self, string: &String) -> Vec<(u32, u32, u32, u32)> {
+    fn gen_str_coords(&self, string: &str) -> Vec<(u32, u32, u32, u32)> {
         let mut coord_idx;
         let mut ret: Vec<(u32, u32, u32, u32)> = vec![];
         let mut x = 0;
@@ -954,7 +954,7 @@ impl Background {
     }
 }
 
-fn render_text<'a, T: ToString>(
+fn render_text<T: ToString>(
     text: T,
     font: &sdl2::ttf::Font,
     creator: &sdl2::render::TextureCreator<sdl2::video::WindowContext>,
