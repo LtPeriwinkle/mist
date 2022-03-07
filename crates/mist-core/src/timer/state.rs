@@ -183,6 +183,7 @@ impl RunState {
             }
             let allowed = allowed - buffer;
             let time = ((elapsed - self.split) + self.before_pause_split) as i128;
+            println!("{time} {allowed} {buffer}");
             // if the last split was ahead of comparison split
             if buffer < 0 {
                 // if the runner has spent more time than allowed they have to be behind
@@ -240,19 +241,18 @@ impl RunState {
                 self.run_times.push(time);
                 self.run_diffs
                     .push(if self.comparison == Comp::PersonalBest {
-                        self.run.borrow().pb_times()[self.current_split] as i128 - time as i128
+                        time as i128 - self.run.borrow().pb_times()[self.current_split] as i128
                     } else if self.comparison == Comp::Golds {
-                        self.run.borrow().gold_times()[self.current_split] as i128 - time as i128
+                        time as i128 - self.run.borrow().gold_times()[self.current_split] as i128
                     } else if self.comparison == Comp::Average {
                         let sum = self.run.borrow().sum_times()[self.current_split];
-                        (sum.1 / {
+                        time as i128 - (sum.1 / {
                             if sum.0 == 0 {
                                 1
                             } else {
                                 sum.0
                             }
                         }) as i128
-                            - time as i128
                     } else {
                         0
                     });
