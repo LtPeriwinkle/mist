@@ -19,6 +19,7 @@ pub struct RunState {
     start: u128,
     current_split: usize,
     needs_save: bool,
+    set_times: bool,
 }
 
 #[derive(PartialEq)]
@@ -101,16 +102,24 @@ impl RunState {
             start: 0,
             current_split: 0,
             needs_save: false,
+            set_times: false,
         }
     }
     pub fn update(&mut self, rq: &[StateChangeRequest]) -> RunUpdate {
-        // TODO logic for checking offset stuff
         let elapsed = self.timer.elapsed().as_millis();
         let time = (elapsed - self.start) + self.before_pause;
+
+        // have to set pb times here or else the renderer sees them too early...
+        if self.set_times {
+            self.run.borrow_mut().set_pb_times(&self.run_times);
+            self.set_times = false;
+        }
+
         let mut change = rq.iter().fold(Vec::new(), |mut vec, request| {
             vec.append(&mut self.handle_scrq(request, elapsed));
             vec
         });
+
         if self.timer_state == TimerState::Offset
             && self.run.borrow().offset().unwrap() <= elapsed - self.start
         {
@@ -119,6 +128,7 @@ impl RunState {
             self.split = elapsed;
             change.push(StateChange::EnterSplit { idx: 0 });
         }
+
         self.calc_status(elapsed);
         RunUpdate {
             change,
@@ -210,7 +220,6 @@ impl RunState {
                     || self.timer_state == TimerState::Offset =>
             {
                 self.timer_state = TimerState::Paused;
-                println!("a {elapsed}");
                 self.before_pause = (elapsed - self.start) + self.before_pause;
                 self.before_pause_split = (elapsed - self.split) + self.before_pause_split;
                 return vec![StateChange::Pause];
@@ -265,10 +274,9 @@ impl RunState {
                     if time < self.run.borrow().pb() || self.run.borrow().pb() == 0 {
                         self.needs_save = true;
                         let mut run = self.run.borrow_mut();
+                        self.set_times = true;
                         run.set_pb(time);
-                        run.set_pb_times(&self.run_times);
                     }
-                    println!("{:?}", self.run_times);
                     return vec![
                         StateChange::ExitSplit {
                             idx: self.current_split,
@@ -284,7 +292,7 @@ impl RunState {
                         StateChange::ExitSplit {
                             idx: self.current_split - 1,
                             status: self.run_status,
-                            time,
+                            time: self.run_times[self.current_split - 1],
                             diff,
                         },
                         StateChange::EnterSplit {
