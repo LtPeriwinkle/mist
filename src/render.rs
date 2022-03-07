@@ -407,6 +407,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 }
                 StateChange::Reset { .. } => {
                     self.current = 0;
+                    self.highlighted = usize::MAX;
                     if self.max_splits != 0 {
                         self.bottom_index = self.max_splits - 1;
                     } else {
@@ -421,6 +422,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         split.set_cur(None);
                         split.set_diff(None);
                     }
+                    self.is_rounding = true;
                     self.canvas
                         .window_mut()
                         .set_title(&format!(
@@ -518,7 +520,6 @@ impl<'a, 'b> RenderState<'a, 'b> {
             }
         }
         if !self.is_rounding {
-            println!("{}", update.time);
             if update.offset {
                 self.time_str = format!(
                     "-{}",
