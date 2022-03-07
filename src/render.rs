@@ -185,7 +185,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             map: FontMap::generate(&timer_font, &creator, Color::WHITE)?,
             time_str,
             time_rounding: config.rounding(),
-            is_rounding: false,
+            is_rounding: true,
             timer_font,
             timer_height,
             splits_font,
@@ -205,11 +205,6 @@ impl<'a, 'b> RenderState<'a, 'b> {
     }
 
     pub fn update(&mut self, update: RunUpdate) -> Result<(), String> {
-        if self.current >= self.top_index && self.current <= self.bottom_index {
-            self.highlighted = self.current - self.top_index;
-        } else {
-            self.highlighted = usize::MAX;
-        }
         if update.status != self.status {
             self.status = update.status;
             let color = match self.status {
@@ -274,12 +269,15 @@ impl<'a, 'b> RenderState<'a, 'b> {
             }
         }
         for change in update.change {
+            println!("{:?}", change);
             // todo handle offset
             match change {
                 StateChange::Pause => {
                     let r = self.run.borrow();
                     self.is_rounding = true;
                     self.highlighted = usize::MAX;
+                    println!("{}", update.time);
+                    self.time_str = format::ms_to_readable(update.time, self.time_rounding);
                     self.canvas
                         .window_mut()
                         .set_title(&format!(
@@ -401,6 +399,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         self.bottom_index += 1;
                         self.top_index += 1;
                     }
+                    if self.current >= self.top_index && self.current <= self.bottom_index {
+                        self.highlighted = self.current - self.top_index;
+                    } else {
+                        self.highlighted = usize::MAX;
+                    }
                 }
                 StateChange::Reset { .. } => {
                     self.current = 0;
@@ -473,7 +476,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         while i < self.splits.len() {
                             self.splits[i].set_comp(render_text(
                                 &split_times_raw[i],
-                                &self.timer_font,
+                                &self.splits_font,
                                 &self.creator,
                                 Color::WHITE,
                             )?);
@@ -500,7 +503,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         while i < self.splits.len() {
                             self.splits[i].set_comp(render_text(
                                 &split_times_raw[i],
-                                &self.timer_font,
+                                &self.splits_font,
                                 &self.creator,
                                 Color::WHITE,
                             )?);
@@ -508,17 +511,23 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         }
                     }
                 },
+                StateChange::EnterOffset => {
+                    self.is_rounding = false;
+                }
                 _ => {}
             }
         }
-        self.time_str = format::ms_to_readable(
-            update.time,
-            if self.is_rounding {
-                self.time_rounding
+        if !self.is_rounding {
+            println!("{}", update.time);
+            if update.offset {
+                self.time_str = format!(
+                    "-{}",
+                    format::ms_to_readable(self.run.borrow().offset().unwrap() - update.time, None)
+                );
             } else {
-                None
-            },
-        );
+                self.time_str = format::ms_to_readable(update.time, None);
+            }
+        }
         Ok(())
     }
 
@@ -529,6 +538,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
         } else if y == 1 && self.top_index != 0 {
             self.bottom_index -= 1;
             self.top_index -= 1;
+        }
+        if self.current >= self.top_index && self.current <= self.bottom_index {
+            self.highlighted = self.current - self.top_index;
+        } else {
+            self.highlighted = usize::MAX;
         }
     }
 
