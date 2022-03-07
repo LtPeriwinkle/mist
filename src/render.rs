@@ -138,8 +138,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             })
             .collect();
         let splits_height = splits_font.size_of(ALL_CHARS).map_err(|_| get_error())?.1;
-        let timer_height =
-            timer_font.size_of(TIMER_CHARS).map_err(|_| get_error())?.1 + splits_height;
+        let timer_height = timer_font.size_of(TIMER_CHARS).map_err(|_| get_error())?.1;
         let bottom_index: usize;
         let max_splits: usize;
         let max_initial_splits = ((canvas.viewport().height() - timer_height)
@@ -377,33 +376,31 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     }
                 }
                 StateChange::EnterSplit { idx } => {
-                    let r = self.run.borrow();
                     self.is_rounding = false;
                     self.current = idx;
-                    self.canvas
-                        .window_mut()
-                        .set_title(&format!(
-                            "mist: {} ({}) [{}: {}]",
-                            r.game_title(),
-                            r.category(),
-                            self.current + 1,
-                            if !r.splits().is_empty() {
-                                &r.splits()[self.current]
-                            } else {
-                                ""
-                            }
-                        ))
-                        .map_err(|_| get_error())?;
+                    {
+                        let r = self.run.borrow();
+                        self.canvas
+                            .window_mut()
+                            .set_title(&format!(
+                                "mist: {} ({}) [{}: {}]",
+                                r.game_title(),
+                                r.category(),
+                                self.current + 1,
+                                if !r.splits().is_empty() {
+                                    &r.splits()[self.current]
+                                } else {
+                                    ""
+                                }
+                            ))
+                            .map_err(|_| get_error())?;
+                    }
                     if self.current > self.bottom_index && self.bottom_index + 1 < self.splits.len()
                     {
                         self.bottom_index += 1;
                         self.top_index += 1;
                     }
-                    if self.current >= self.top_index && self.current <= self.bottom_index {
-                        self.highlighted = self.current - self.top_index;
-                    } else {
-                        self.highlighted = usize::MAX;
-                    }
+                    self.update_highlighted();
                 }
                 StateChange::Reset { .. } => {
                     self.current = 0;
@@ -540,59 +537,55 @@ impl<'a, 'b> RenderState<'a, 'b> {
             self.bottom_index -= 1;
             self.top_index -= 1;
         }
-        if self.current >= self.top_index && self.current <= self.bottom_index {
-            self.highlighted = self.current - self.top_index;
-        } else {
-            self.highlighted = usize::MAX;
-        }
+        self.update_highlighted();
     }
 
-    pub fn win_resize(&mut self) {
-        let height = self.canvas.viewport().height();
-        let check_height = self.splits_height * (!self.inline as u32 + 1);
-        let check_timer_height =
-            self.timer_height + (self.splits_height * self.panels.len() as u32);
-        let rows_height = ((self.bottom_index - self.top_index) as u32 * (check_height + 5))
-            + (self.splits_height * self.panels.len() as u32)
-            + check_height;
-        // if there aren't any splits, we don't need to worry about changing the number of splits
-        if self.splits.len() != 0 {
-            // if there are too many splits, calculate how many and change indices
-            // otherwise if there are too few and there are enough to display more, change indices the other way
-            if height - check_timer_height < rows_height {
-                let diff = ((rows_height - (height - check_timer_height)) / check_height) as usize;
-                if self.max_splits > diff {
-                    self.max_splits -= diff;
+    pub fn win_resize(&mut self, y: u32) {
+        let row_height = self.splits_height + 5;
+        let all_rows_height = row_height * self.max_splits as u32;
+        let bottom_height = self.timer_height + (self.splits_height * self.panels.len() as u32);
+        if y - bottom_height > all_rows_height + row_height {
+            let diff = (((y - bottom_height) - all_rows_height) / self.splits_height) as usize;
+            if self.max_splits + diff < self.splits.len() {
+                self.max_splits += diff;
+            } else {
+                self.max_splits = self.splits.len();
+            }
+            if self.top_index > diff {
+                self.top_index -= diff;
+            } else if self.top_index != 0 {
+                let bottom_change = diff - self.top_index;
+                self.top_index = 0;
+                if self.bottom_index + bottom_change < self.splits.len() - 1 {
+                    self.bottom_index += bottom_change;
                 } else {
-                    self.max_splits = 0;
-                }
-                if self.current > self.bottom_index - diff {
-                    self.top_index += diff;
-                    self.bottom_index = self.current;
-                } else if self.bottom_index > diff {
-                    self.bottom_index -= diff;
-                } else {
-                    self.bottom_index = 0;
-                }
-            } else if rows_height < height - self.timer_height {
-                let diff = (((height - self.timer_height) - rows_height) / check_height) as usize;
-                if self.current == self.bottom_index
-                    && self.current != self.splits.len() - 1
-                    && self.top_index >= diff
-                {
-                    self.top_index -= diff;
-                    self.max_splits += diff;
-                } else if self.bottom_index + diff > self.splits.len() - 1
-                    || self.max_splits + diff > self.splits.len()
-                {
                     self.bottom_index = self.splits.len() - 1;
-                    self.max_splits = self.splits.len();
+                }
+            } else {
+                if self.bottom_index + diff < self.splits.len() - 1 {
+                    self.bottom_index += diff;
                 } else {
-                    self.max_splits += diff;
-                    self.bottom_index = self.max_splits - 1;
+                    self.bottom_index = self.splits.len() - 1;
                 }
             }
+        } else if y - bottom_height < all_rows_height {
+            let diff = ((all_rows_height - (y - bottom_height)) / self.splits_height) as usize + 1;
+            if self.max_splits > diff {
+                self.max_splits -= diff;
+            } else {
+                self.max_splits = 0;
+                self.top_index = 0;
+                self.bottom_index = 0;
+                self.update_highlighted();
+                return;
+            }
+            if self.bottom_index - diff > self.top_index {
+                self.bottom_index -= diff;
+            } else {
+                self.bottom_index = self.top_index;
+            }
         }
+        self.update_highlighted();
     }
 
     pub fn render(&mut self) -> Result<(), String> {
@@ -668,6 +661,15 @@ impl<'a, 'b> RenderState<'a, 'b> {
 
     pub fn reload_config(self, config: &Config) -> Result<Self, String> {
         Ok(Self::new(self.run, self.canvas, config)?)
+    }
+
+    fn update_highlighted(&mut self) {
+        if !self.is_rounding && self.current >= self.top_index && self.current <= self.bottom_index
+        {
+            self.highlighted = self.current - self.top_index;
+        } else {
+            self.highlighted = usize::MAX;
+        }
     }
 
     fn render_rows(&mut self) -> Result<(), String> {
@@ -751,7 +753,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
         let vp = self.canvas.viewport();
         let h = vp.height();
         let w = vp.width();
-        let font_y = self.timer_height - self.splits_height;
+        let font_y = self.timer_height;
         let mut src = Rect::new(0, 0, 0, font_y);
         // multiply initial values by 8/10 so that the font is smaller
         let mut dst = Rect::new(

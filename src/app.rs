@@ -204,10 +204,10 @@ impl<'a, 'b> App<'a, 'b> {
                     }
 
                     Event::Window {
-                        win_event: WindowEvent::Resized(..),
+                        win_event: WindowEvent::Resized(_, y),
                         ..
                     } => {
-                        self.ren_state.win_resize();
+                        self.ren_state.win_resize(y as u32);
                     }
                     _ => {}
                 }
