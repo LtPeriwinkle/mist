@@ -360,7 +360,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             &self.creator,
                             color.into(),
                         )?));
-                        let time_str = format::split_time_text(time);
+                        let time_str = format::split_time_text(update.time);
                         self.splits[self.current].set_cur(Some(render_text(
                             &time_str,
                             &self.splits_font,
