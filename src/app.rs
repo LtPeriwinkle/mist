@@ -1,17 +1,16 @@
-// app struct and its functions, one of which is the application mainloop
-use sdl2::event::{Event, WindowEvent};
-use sdl2::get_error;
-#[cfg(feature = "icon")]
-use sdl2::image::LoadSurface;
-use sdl2::keyboard::Keycode;
-use sdl2::surface::Surface;
-
 use std::cell::RefCell;
 use std::fs::File;
 use std::io::BufReader;
 use std::rc::Rc;
 use std::thread;
 use std::time::{Duration, Instant};
+
+use sdl2::event::{Event, WindowEvent};
+use sdl2::get_error;
+#[cfg(feature = "icon")]
+use sdl2::image::LoadSurface;
+use sdl2::keyboard::Keycode;
+use sdl2::surface::Surface;
 
 use mist_core::{
     config::Config,
@@ -26,7 +25,6 @@ use mist_core::{
 use crate::keybinds::Keybinds;
 use crate::render::RenderState;
 
-// struct that holds information about the running app and its state
 pub struct App<'a, 'b> {
     _context: sdl2::Sdl,
     run: Rc<RefCell<Run>>,
@@ -36,10 +34,10 @@ pub struct App<'a, 'b> {
     ev_pump: sdl2::EventPump,
     msf: MsfParser,
 }
+static ONE_SIXTIETH: Duration = Duration::new(0, 1_000_000_000 / 60);
 
 impl<'a, 'b> App<'a, 'b> {
     pub fn init(context: sdl2::Sdl) -> Result<Self, String> {
-        // sdl setup boilerplate
         let video = context.video()?;
         let mut window = video
             .window("mist", 300, 500)
@@ -94,7 +92,6 @@ impl<'a, 'b> App<'a, 'b> {
             run,
         };
 
-        // try to use the filepath specified in the config file
         Ok(app)
     }
 
@@ -111,37 +108,15 @@ impl<'a, 'b> App<'a, 'b> {
             }
         };
 
-        //let mut offset = self.run.offset();
-        //// if there is an offset, display it properly
-        //if let Some(x) = offset {
-        //    self.state = TimerState::NotRunning {
-        //        time_str: format!("-{}", timing::ms_to_readable(x, None)),
-        //    };
-        //}
-
         // framerate cap timer
         let mut frame_time: Instant;
-        // this one should be a static but duration isnt allowed to be static apparently
-        let one_sixtieth = Duration::new(0, 1_000_000_000 / 60);
-        // set when a run ends and is a pb to signal for a pop-up window to ask if the user wants to save
         let mut binds = Keybinds::from_raw(&self.config.binds())?;
         let mut state_change_queue = vec![];
         let mut update: RunUpdate;
 
         // main loop
         'running: loop {
-            // start measuring the time this loop pass took
             frame_time = Instant::now();
-            // if the timer is doing an offset, make sure it should still be negative
-            // if it shouldnt, convert to running state
-            //if let TimerState::OffsetCountdown { amt } = self.state {
-            //    elapsed = self.timer.elapsed().as_millis();
-            //    if amt <= elapsed - start_ticks {
-            //        self.state = TimerState::Running { timestamp: elapsed };
-            //        split_ticks = elapsed;
-            //        start_ticks = elapsed;
-            //    }
-            //}
             // repeat stuff in here for every event that occured between frames
             // in order to properly respond to them
             for event in self.ev_pump.poll_iter() {
@@ -210,12 +185,6 @@ impl<'a, 'b> App<'a, 'b> {
                                 }
                                 self.run_state = RunState::new(Rc::clone(&self.run));
                                 self.ren_state.reload_run()?;
-                                // if there is an offset, display it properly
-                                //if let Some(x) = offset {
-                                //    self.state = TimerState::NotRunning {
-                                //        time_str: format!("-{}", timing::ms_to_readable(x, None)),
-                                //    };
-                                //}
                             }
                         } else if k == binds.skip_split {
                             state_change_queue.push(StateChangeRequest::Skip);
@@ -233,7 +202,7 @@ impl<'a, 'b> App<'a, 'b> {
                             }
                         }
                     }
-                    // handle vertical window resize by changing number of splits
+
                     Event::Window {
                         win_event: WindowEvent::Resized(..),
                         ..
@@ -243,19 +212,17 @@ impl<'a, 'b> App<'a, 'b> {
                     _ => {}
                 }
             }
-            //old_color = color;
             update = self.run_state.update(&state_change_queue[..]);
             state_change_queue.clear();
             self.ren_state.update(update)?;
             self.ren_state.render()?;
-            if Instant::now().duration_since(frame_time) <= one_sixtieth {
+            if Instant::now().duration_since(frame_time) <= ONE_SIXTIETH {
                 thread::sleep(
                     // if the entire loop pass was completed in under 1/60 second, delay to keep the framerate at ~60fps
-                    one_sixtieth - Instant::now().duration_since(frame_time),
+                    ONE_SIXTIETH - Instant::now().duration_since(frame_time),
                 );
             }
         }
-        // after the loop is exited then save the config file
         self.config.save()?;
         // if splits were updated, prompt user to save the split file
         if (self.run_state.needs_save() || no_file) && dialogs::save_check() {
