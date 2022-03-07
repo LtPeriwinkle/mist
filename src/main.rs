@@ -23,7 +23,7 @@ fn main() {
     let context = sdl2::init().unwrap_or_else(|err| {
         error(&err);
     });
-    let mut app = App::init(context).unwrap_or_else(|err| {
+    let app = App::init(context).unwrap_or_else(|err| {
         error(&err);
     });
     app.run().unwrap_or_else(|err| {
