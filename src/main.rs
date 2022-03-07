@@ -4,12 +4,10 @@
 #![windows_subsystem = "windows"]
 
 mod app;
-mod comparison;
 mod keybinds;
 mod panels;
 mod render;
 mod splits;
-mod state;
 use app::App;
 use mist_core::dialogs::error;
 

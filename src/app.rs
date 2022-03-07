@@ -61,7 +61,6 @@ impl<'a, 'b> App<'a, 'b> {
         let run = Rc::new(RefCell::new(if let Some(x) = config.file() {
             let f = File::open(x).map_err(|e| e.to_string())?;
             let reader = BufReader::new(f);
-            println!("{}", x);
             msf.parse(reader)?
         } else {
             match dialogs::open_run() {
@@ -85,7 +84,7 @@ impl<'a, 'b> App<'a, 'b> {
                 run.borrow().category(),
             ))
             .map_err(|_| get_error())?;
-        let mut app = App {
+        let app = App {
             _context: context,
             ren_state: RenderState::new(Rc::clone(&run), canvas, &config)?,
             run_state: RunState::new(Rc::clone(&run)),
@@ -219,7 +218,6 @@ impl<'a, 'b> App<'a, 'b> {
                                 //}
                             }
                         } else if k == binds.skip_split {
-                            println!("skip split pushed");
                             state_change_queue.push(StateChangeRequest::Skip);
                         } else if k == binds.load_config {
                             match dialogs::open_config() {
@@ -246,7 +244,6 @@ impl<'a, 'b> App<'a, 'b> {
                 }
             }
             //old_color = color;
-            println!("{:?}", state_change_queue);
             update = self.run_state.update(&state_change_queue[..]);
             state_change_queue.clear();
             self.ren_state.update(update)?;
