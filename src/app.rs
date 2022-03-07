@@ -97,15 +97,12 @@ impl<'a, 'b> App<'a, 'b> {
 
     pub fn run(mut self) -> Result<(), String> {
         let no_file: bool;
-        let mut path = match self.config.file() {
-            Some(p) => {
-                no_file = false;
-                p.to_owned()
-            }
-            None => {
-                no_file = true;
-                "".to_owned()
-            }
+        let mut path = if let Some(p) = self.config.file() {
+            no_file = false;
+            p.clone()
+        } else {
+            no_file = true;
+            "".to_owned()
         };
 
         // framerate cap timer

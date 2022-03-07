@@ -284,10 +284,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             r.game_title(),
                             r.category(),
                             self.current + 1,
-                            if !r.splits().is_empty() {
-                                &r.splits()[self.current]
-                            } else {
+                            if r.splits().is_empty() {
                                 ""
+                            } else {
+                                &r.splits()[self.current]
                             }
                         ))
                         .map_err(|_| get_error())?;
@@ -314,10 +314,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             r.game_title(),
                             r.category(),
                             self.current + 1,
-                            if !r.splits().is_empty() {
-                                &r.splits()[self.current]
-                            } else {
+                            if r.splits().is_empty() {
                                 ""
+                            } else {
+                                &r.splits()[self.current]
                             }
                         ))
                         .map_err(|_| get_error())?;
@@ -341,7 +341,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                                         &self.splits_font,
                                         &self.creator,
                                         Color::WHITE,
-                                    )?)
+                                    )?);
                                 }
                             }
                             self.colors[4]
@@ -352,7 +352,14 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     } else {
                         format::diff_text(diff)
                     };
-                    if time != 0 {
+                    if time == 0 {
+                        self.splits[self.current].set_cur(Some(render_text(
+                            "-  ",
+                            &self.splits_font,
+                            &self.creator,
+                            Color::WHITE,
+                        )?));
+                    } else {
                         self.splits[self.current].set_diff(Some(render_text(
                             &time_str,
                             &self.splits_font,
@@ -362,13 +369,6 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         let time_str = format::split_time_text(update.time);
                         self.splits[self.current].set_cur(Some(render_text(
                             &time_str,
-                            &self.splits_font,
-                            &self.creator,
-                            Color::WHITE,
-                        )?));
-                    } else {
-                        self.splits[self.current].set_cur(Some(render_text(
-                            "-  ",
                             &self.splits_font,
                             &self.creator,
                             Color::WHITE,
@@ -387,10 +387,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
                                 r.game_title(),
                                 r.category(),
                                 self.current + 1,
-                                if !r.splits().is_empty() {
-                                    &r.splits()[self.current]
-                                } else {
+                                if r.splits().is_empty() {
                                     ""
+                                } else {
+                                    &r.splits()[self.current]
                                 }
                             ))
                             .map_err(|_| get_error())?;
@@ -405,10 +405,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 StateChange::Reset { .. } => {
                     self.current = 0;
                     self.highlighted = usize::MAX;
-                    if self.max_splits != 0 {
-                        self.bottom_index = self.max_splits - 1;
-                    } else {
+                    if self.max_splits == 0 {
                         self.bottom_index = 0;
+                    } else {
+                        self.bottom_index = self.max_splits - 1;
                     }
                     if let Some(x) = self.run.borrow().offset() {
                         self.time_str = format!("-{}", format::ms_to_readable(x, None));
@@ -484,8 +484,8 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     }
                     c => {
                         let split_times = match c {
-                            Comparison::PersonalBest => self.run.borrow().pb_times().to_owned(),
-                            Comparison::Golds => self.run.borrow().gold_times().to_owned(),
+                            Comparison::PersonalBest => self.run.borrow().pb_times().clone(),
+                            Comparison::Golds => self.run.borrow().gold_times().clone(),
                             _ => unreachable!(),
                         };
                         let split_times_raw: Vec<String> = format::split_time_sum(&split_times)
@@ -611,27 +611,20 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 }
             })
             .collect();
-        self.splits = self
-            .run
-            .borrow()
-            .splits()
-            .iter()
-            .enumerate()
-            .map(|(idx, name)| {
-                Split::new(
-                    render_text(name, &self.splits_font, &self.creator, Color::WHITE).unwrap(),
-                    render_text(
-                        &string_times[idx],
-                        &self.splits_font,
-                        &self.creator,
-                        Color::WHITE,
-                    )
-                    .unwrap(),
-                    None,
-                    None,
-                )
-            })
-            .collect();
+        self.splits = vec![];
+        for (idx, name) in self.run.borrow().splits().iter().enumerate() {
+            self.splits.push(Split::new(
+                render_text(name, &self.splits_font, &self.creator, Color::WHITE)?,
+                render_text(
+                    &string_times[idx],
+                    &self.splits_font,
+                    &self.creator,
+                    Color::WHITE,
+                )?,
+                None,
+                None,
+            ));
+        }
         if let Some(x) = self.run.borrow().offset() {
             self.time_str = format!("-{}", format::ms_to_readable(x, None));
         } else {
@@ -691,10 +684,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
             }
             row = Rect::new(0, y, width, height);
             self.canvas.copy(item.name(), None, Some(row))?;
-            let num_y = if !self.inline {
-                y + self.splits_height as i32
-            } else {
+            let num_y = if self.inline {
                 y
+            } else {
+                y + self.splits_height as i32
             };
             // if the split has a texture from an active run, draw it to reflect the current time
             // otherwise draw the pb split time
@@ -828,18 +821,18 @@ impl FontMap {
             let temp = font.size_of(&chr.to_string()).map_err(|_| get_error())?.0;
             sum += temp;
             if temp > max {
-                max = temp
+                max = temp;
             }
             coords.push(sum);
         }
         coords.push(max);
-        let sur = font
+        let surface = font
             .render("- 0 1 2 3 4 5 6 7 8 9 : .")
             .blended(color)
             .map_err(|_| get_error())?;
         Ok(Self {
             tex: creator
-                .create_texture_from_surface(&sur)
+                .create_texture_from_surface(&surface)
                 .map_err(|_| get_error())?,
             coords,
         })
@@ -895,7 +888,7 @@ impl Background {
         creator: &TextureCreator<WindowContext>,
     ) -> Result<Self, String> {
         let bg: Option<Surface> = match config.img() {
-            Some(ref p) => Some(Surface::from_file(&p)?),
+            Some(p) => Some(Surface::from_file(&p)?),
             None => None,
         };
         if let Some(x) = bg {
