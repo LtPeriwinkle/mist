@@ -268,7 +268,6 @@ impl<'a, 'b> RenderState<'a, 'b> {
             }
         }
         for change in update.change {
-            println!("{:?}", change);
             // todo handle offset
             match change {
                 StateChange::Pause => {
@@ -541,11 +540,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
     }
 
     pub fn win_resize(&mut self, y: u32) {
-        let row_height = self.splits_height + 5;
+        let row_height = self.splits_height + 5 + (!self.inline as u32 * self.splits_height);
         let all_rows_height = row_height * self.max_splits as u32;
         let bottom_height = self.timer_height + (self.splits_height * self.panels.len() as u32);
         if y - bottom_height > all_rows_height + row_height {
-            let diff = (((y - bottom_height) - all_rows_height) / self.splits_height) as usize;
+            let diff = (((y - bottom_height) - all_rows_height) / row_height) as usize;
             if self.max_splits + diff < self.splits.len() {
                 self.max_splits += diff;
             } else {
@@ -567,7 +566,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 self.bottom_index = self.splits.len() - 1;
             }
         } else if y - bottom_height < all_rows_height {
-            let diff = ((all_rows_height - (y - bottom_height)) / self.splits_height) as usize + 1;
+            let diff = ((all_rows_height - (y - bottom_height)) / row_height) as usize + 1;
             if self.max_splits > diff {
                 self.max_splits -= diff;
             } else {
