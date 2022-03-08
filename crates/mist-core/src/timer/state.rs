@@ -13,6 +13,7 @@ pub struct RunState {
     comparison: Comp,
     run_times: Vec<u128>,
     run_diffs: Vec<i128>,
+    sum_comp_times: Vec<u128>,
     before_pause: u128,
     before_pause_split: u128,
     split: u128,
@@ -88,6 +89,7 @@ pub enum SplitStatus {
 
 impl RunState {
     pub fn new(run: Rc<RefCell<Run>>) -> Self {
+        let sum_comp_times = format::split_time_sum(run.borrow().pb_times());
         Self {
             run,
             timer: MistInstant::now(),
@@ -96,6 +98,7 @@ impl RunState {
             run_status: SplitStatus::None,
             run_times: vec![],
             run_diffs: vec![],
+            sum_comp_times,
             before_pause: 0,
             before_pause_split: 0,
             split: 0,
@@ -162,27 +165,13 @@ impl RunState {
             } else {
                 0
             };
-            let allowed = (match self.comparison {
-                Comp::PersonalBest => run.pb_times()[self.current_split],
-                Comp::Golds => run.gold_times()[self.current_split],
-                Comp::Average => {
-                    let sum = run.sum_times()[self.current_split];
-                    sum.1 / {
-                        if sum.0 == 0 {
-                            1
-                        } else {
-                            sum.0
-                        }
-                    }
-                }
-                _ => unreachable!(),
-            }) as i128;
+            let allowed = self.sum_comp_times[self.current_split] as i128;
             if allowed == 0 {
                 self.run_status = SplitStatus::Ahead;
                 return;
             }
             let allowed = allowed - buffer;
-            let time = ((elapsed - self.split) + self.before_pause_split) as i128;
+            let time = ((elapsed - self.start) + self.before_pause) as i128;
             // if the last split was ahead of comparison split
             if buffer < 0 {
                 // if the runner has spent more time than allowed they have to be behind
@@ -327,6 +316,8 @@ impl RunState {
             Skip if self.timer_state == TimerState::Running => {
                 self.run_times.push(0);
                 self.run_diffs.push(0);
+                self.split = elapsed;
+                self.before_pause_split = 0;
                 if self.current_split == self.run.borrow().pb_times().len() - 1 {
                     self.timer_state = TimerState::Finished;
                     return vec![
@@ -358,6 +349,20 @@ impl RunState {
                     self.comparison.next();
                 } else {
                     self.comparison.prev();
+                }
+                match self.comparison {
+                    Comp::PersonalBest => {
+                        self.sum_comp_times = format::split_time_sum(self.run.borrow().pb_times());
+                    }
+                    Comp::Golds => {
+                        self.sum_comp_times = format::split_time_sum(self.run.borrow().gold_times());
+                    }
+                    Comp::Average => {
+                        self.sum_comp_times = format::split_time_sum(&self.run.borrow().sum_times().iter().map(|&(n, t)| if n != 0 {t / n} else {t}).collect())
+                    }
+                    Comp::None => {
+                        self.sum_comp_times = vec![0; self.run.borrow().pb_times().len()];
+                    }
                 }
                 return vec![StateChange::ComparisonChanged {
                     comp: self.comparison,
