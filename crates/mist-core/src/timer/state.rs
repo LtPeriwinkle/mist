@@ -183,7 +183,6 @@ impl RunState {
             }
             let allowed = allowed - buffer;
             let time = ((elapsed - self.split) + self.before_pause_split) as i128;
-            println!("{time} {allowed} {buffer}");
             // if the last split was ahead of comparison split
             if buffer < 0 {
                 // if the runner has spent more time than allowed they have to be behind
@@ -302,7 +301,6 @@ impl RunState {
                 }
             }
             Split if self.timer_state == TimerState::NotRunning => {
-                println!("starting...");
                 self.start = elapsed;
                 self.split = elapsed;
                 if self.run.borrow().offset().is_some() {
