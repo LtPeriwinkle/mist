@@ -268,13 +268,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
             }
         }
         for change in update.change {
-            // todo handle offset
             match change {
                 StateChange::Pause => {
                     let r = self.run.borrow();
                     self.is_rounding = true;
                     self.highlighted = usize::MAX;
-                    println!("{}", update.time);
                     self.time_str = format::ms_to_readable(update.time, self.time_rounding);
                     self.canvas
                         .window_mut()
@@ -525,6 +523,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 self.time_str = format::ms_to_readable(update.time, None);
             }
         }
+        self.update_highlighted();
         Ok(())
     }
 
