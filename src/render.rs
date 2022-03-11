@@ -37,7 +37,7 @@ pub struct RenderState<'a, 'b> {
     map: FontMap,
     time_str: String,
     time_rounding: Option<u128>,
-    is_rounding: bool,
+    is_running: bool,
     timer_font: Font<'b, 'a>,
     timer_height: u32,
     splits_font: Font<'b, 'a>,
@@ -185,7 +185,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             map: FontMap::generate(&timer_font, &creator, Color::WHITE)?,
             time_str,
             time_rounding: config.rounding(),
-            is_rounding: true,
+            is_running: true,
             timer_font,
             timer_height,
             splits_font,
@@ -272,7 +272,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             match change {
                 StateChange::Pause => {
                     let r = self.run.borrow();
-                    self.is_rounding = true;
+                    self.is_running = false;
                     self.highlighted = usize::MAX;
                     self.time_str = format::ms_to_readable(update.time, self.time_rounding);
                     self.canvas
@@ -291,7 +291,8 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         .map_err(|_| get_error())?;
                 }
                 StateChange::Finish { .. } => {
-                    self.is_rounding = true;
+                    self.is_running = false;
+                    self.time_str = format::ms_to_readable(update.time, self.time_rounding);
                     self.highlighted = usize::MAX;
                     self.canvas
                         .window_mut()
@@ -304,7 +305,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 }
                 StateChange::Unpause { .. } => {
                     let r = self.run.borrow();
-                    self.is_rounding = false;
+                    self.is_running = true;
                     self.canvas
                         .window_mut()
                         .set_title(&format!(
@@ -374,7 +375,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     }
                 }
                 StateChange::EnterSplit { idx } => {
-                    self.is_rounding = false;
+                    self.is_running = true;
                     // if we just unsplitted, remove the old textures
                     if idx < self.current {
                         self.splits[idx].set_cur(None);
@@ -424,7 +425,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         split.set_cur(None);
                         split.set_diff(None);
                     }
-                    self.is_rounding = true;
+                    self.is_running = false;
                     self.canvas
                         .window_mut()
                         .set_title(&format!(
@@ -516,12 +517,12 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     }
                 },
                 StateChange::EnterOffset => {
-                    self.is_rounding = false;
+                    self.is_running = true;
                 }
                 _ => {}
             }
         }
-        if !self.is_rounding {
+        if self.is_running {
             if update.offset {
                 self.time_str = format!(
                     "-{}",
@@ -661,8 +662,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
     }
 
     fn update_highlighted(&mut self) {
-        if !self.is_rounding && self.current >= self.top_index && self.current <= self.bottom_index
-        {
+        if self.is_running && self.current >= self.top_index && self.current <= self.bottom_index {
             self.highlighted = self.current - self.top_index;
         } else {
             self.highlighted = usize::MAX;
