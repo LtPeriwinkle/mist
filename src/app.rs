@@ -10,6 +10,7 @@ use sdl2::get_error;
 #[cfg(feature = "icon")]
 use sdl2::image::LoadSurface;
 use sdl2::keyboard::Keycode;
+#[cfg(feature = "icon")]
 use sdl2::surface::Surface;
 
 use mist_core::{

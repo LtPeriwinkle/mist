@@ -15,6 +15,7 @@ use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::{Texture, TextureCreator, TextureQuery, WindowCanvas};
 use sdl2::rwops::RWops;
+#[cfg(feature = "bg")]
 use sdl2::surface::Surface;
 use sdl2::ttf::{self, Font, Sdl2TtfContext};
 use sdl2::video::WindowContext;
