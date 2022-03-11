@@ -38,6 +38,7 @@ pub enum StateChangeRequest {
     None,
     Pause,
     Split,
+    Unsplit,
     Skip,
     Reset,
     Comparison(bool),
@@ -226,18 +227,18 @@ impl RunState {
             }
             Split if self.timer_state == TimerState::Running => {
                 // TODO run updates/save file updates etc
+                let time = (elapsed - self.split) + self.before_pause_split;
                 self.split = elapsed;
                 self.before_pause_split = 0;
-                self.run_times.push(self.time);
+                self.run_times.push(time);
                 self.run_diffs
                     .push(if self.comparison == Comp::PersonalBest {
-                        self.time as i128 - self.run.borrow().pb_times()[self.current_split] as i128
+                        time as i128 - self.run.borrow().pb_times()[self.current_split] as i128
                     } else if self.comparison == Comp::Golds {
-                        self.time as i128
-                            - self.run.borrow().gold_times()[self.current_split] as i128
+                        time as i128 - self.run.borrow().gold_times()[self.current_split] as i128
                     } else if self.comparison == Comp::Average {
                         let sum = self.run.borrow().sum_times()[self.current_split];
-                        self.time as i128
+                        time as i128
                             - (sum.1 / {
                                 if sum.0 == 0 {
                                     1
@@ -248,12 +249,12 @@ impl RunState {
                     } else {
                         0
                     });
-                if self.time < self.run.borrow().gold_times()[self.current_split]
+                if time < self.run.borrow().gold_times()[self.current_split]
                     || self.run.borrow().gold_times()[self.current_split] == 0
                 {
                     self.run
                         .borrow_mut()
-                        .set_gold_time(self.time, self.current_split);
+                        .set_gold_time(time, self.current_split);
                     self.run_status = SplitStatus::Gold;
                     self.needs_save = true;
                 }
@@ -302,6 +303,16 @@ impl RunState {
                     self.timer_state = TimerState::Running;
                     return vec![StateChange::EnterSplit { idx: 0 }];
                 }
+            }
+            Unsplit if self.timer_state == TimerState::Running && self.current_split != 0 => {
+                self.current_split -= 1;
+                self.before_pause_split = 0;
+                self.split -= self.run_times[self.current_split];
+                self.run_diffs.pop();
+                self.run_times.pop();
+                return vec![StateChange::EnterSplit {
+                    idx: self.current_split,
+                }];
             }
             Reset => {
                 self.before_pause = 0;
