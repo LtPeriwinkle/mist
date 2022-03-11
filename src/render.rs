@@ -374,6 +374,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 }
                 StateChange::EnterSplit { idx } => {
                     self.is_rounding = false;
+                    // if we just unsplitted, remove the old textures
+                    if idx < self.current {
+                        self.splits[idx].set_cur(None);
+                        self.splits[idx].set_diff(None);
+                    }
                     self.current = idx;
                     {
                         let r = self.run.borrow();
@@ -392,10 +397,12 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             ))
                             .map_err(|_| get_error())?;
                     }
-                    if self.current > self.bottom_index && self.bottom_index + 1 < self.splits.len()
-                    {
-                        self.bottom_index += 1;
-                        self.top_index += 1;
+                    if self.current > self.bottom_index {
+                        self.top_index += self.current - self.bottom_index;
+                        self.bottom_index = self.current;
+                    } else if self.current < self.top_index {
+                        self.bottom_index -= self.top_index - self.current;
+                        self.top_index = self.current;
                     }
                     self.update_highlighted();
                 }

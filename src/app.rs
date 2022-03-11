@@ -148,6 +148,8 @@ impl<'a, 'b> App<'a, 'b> {
                             state_change_queue.push(StateChangeRequest::Comparison(false));
                         } else if k == binds.next_comp {
                             state_change_queue.push(StateChangeRequest::Comparison(true));
+                        } else if k == binds.un_split {
+                            state_change_queue.push(StateChangeRequest::Unsplit);
                         } else if k == binds.load_splits {
                             // only allow opening a new file if the timer is not running
                             if !self.run_state.is_running() {
