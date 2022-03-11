@@ -1,4 +1,11 @@
-use fltk::{app, button, dialog, draw, enums::{FrameType, Font, Color, Align}, input, prelude::*, table, window::*};
+use fltk::{
+    app, button, dialog, draw,
+    enums::{Align, Color, Font, FrameType},
+    input,
+    prelude::*,
+    table,
+    window::*,
+};
 use lazy_static::lazy_static;
 use mist_core::{parse::LssParser, parse::MsfParser, timing::ms_to_readable, Run};
 use regex::Regex;
@@ -46,17 +53,9 @@ fn str_to_ms(tm: String) -> u128 {
     let mut ms: u128 = 0;
     if HOURS.is_match(&tm) {
         let caps = HOURS.captures_iter(&tm).next().unwrap();
-        ms = (caps[1].parse::<u128>()
-            .unwrap()
-            * 3600000)
-            + (caps[2]
-                .parse::<u128>()
-                .unwrap()
-                * 60000)
-            + (caps[3]
-                .parse::<u128>()
-                .unwrap()
-                * 1000)
+        ms = (caps[1].parse::<u128>().unwrap() * 3600000)
+            + (caps[2].parse::<u128>().unwrap() * 60000)
+            + (caps[3].parse::<u128>().unwrap() * 1000)
             + caps
                 .get(4)
                 .map_or("0", |m| m.as_str())
@@ -64,14 +63,8 @@ fn str_to_ms(tm: String) -> u128 {
                 .unwrap();
     } else if MINS.is_match(&tm) {
         let caps = MINS.captures_iter(&tm).next().unwrap();
-        ms = (caps[1]
-            .parse::<u128>()
-            .unwrap()
-            * 60000)
-            + (caps[2]
-                .parse::<u128>()
-                .unwrap()
-                * 1000)
+        ms = (caps[1].parse::<u128>().unwrap() * 60000)
+            + (caps[2].parse::<u128>().unwrap() * 1000)
             + caps
                 .get(3)
                 .map_or("0", |m| m.as_str())
@@ -79,7 +72,12 @@ fn str_to_ms(tm: String) -> u128 {
                 .unwrap();
     } else if SECS.is_match(&tm) {
         let caps = SECS.captures_iter(&tm).next().unwrap();
-        ms = (caps[1].parse::<u128>().unwrap() * 1000) + caps.get(2).map_or("0", |m| m.as_str()).parse::<u128>().unwrap();
+        ms = (caps[1].parse::<u128>().unwrap() * 1000)
+            + caps
+                .get(2)
+                .map_or("0", |m| m.as_str())
+                .parse::<u128>()
+                .unwrap();
     }
     return ms;
 }
@@ -121,7 +119,7 @@ fn main() {
         .with_label("mist split editor");
     let mut table = table::Table::new(5, 85, 503, 550, "");
     let og_len: i32 = RUN.lock().unwrap().splits().len().try_into().unwrap();
-    let og_len = if og_len == 0 {1} else {og_len};
+    let og_len = if og_len == 0 { 1 } else { og_len };
     table.set_rows(og_len);
     table.set_row_header(true);
     table.set_cols(3);
@@ -139,8 +137,8 @@ fn main() {
     win.make_resizable(false);
     win.end();
     win.show();
-    cat_inp.set_callback(|inp| {RUN.lock().unwrap().set_category(inp.value())});
-    title_inp.set_callback(|inp| {RUN.lock().unwrap().set_game_title(inp.value())});
+    cat_inp.set_callback(|inp| RUN.lock().unwrap().set_category(inp.value()));
+    title_inp.set_callback(|inp| RUN.lock().unwrap().set_game_title(inp.value()));
     cat_inp.set_value(RUN.lock().unwrap().category());
     title_inp.set_value(RUN.lock().unwrap().game_title());
     let mut tbl = table.clone();
