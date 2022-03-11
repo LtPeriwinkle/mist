@@ -249,6 +249,11 @@ impl RunState {
                     } else {
                         0
                     });
+                let mut sum = self.run.borrow().sum_times()[self.current_split];
+                sum.0 += 1;
+                sum.1 += time;
+                self.run.borrow_mut().set_sum_time(sum, self.current_split);
+                self.needs_save = true;
                 if time < self.run.borrow().gold_times()[self.current_split]
                     || self.run.borrow().gold_times()[self.current_split] == 0
                 {
@@ -256,7 +261,6 @@ impl RunState {
                         .borrow_mut()
                         .set_gold_time(time, self.current_split);
                     self.run_status = SplitStatus::Gold;
-                    self.needs_save = true;
                 }
                 let sum = format::split_time_sum(&self.run_times)[self.current_split];
                 let diff = sum as i128
@@ -265,7 +269,6 @@ impl RunState {
                 if self.current_split == self.run.borrow().pb_times().len() - 1 {
                     self.timer_state = TimerState::Finished;
                     if self.time < self.run.borrow().pb() || self.run.borrow().pb() == 0 {
-                        self.needs_save = true;
                         self.set_times = true;
                         self.run.borrow_mut().set_pb(self.time);
                     }
