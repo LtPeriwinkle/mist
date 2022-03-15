@@ -13,8 +13,7 @@ use mist_core::dialogs::error;
 
 fn main() {
     std::panic::set_hook(Box::new(|info| {
-        let out = format!("{}", info);
-        let out = out.replace('\'', "").replace('"', "");
+        let out = info.to_string();
         println!("{}", out);
         error(&out);
     }));
