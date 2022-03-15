@@ -185,7 +185,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             map: FontMap::generate(&timer_font, &creator, Color::WHITE)?,
             time_str,
             time_rounding: config.rounding(),
-            is_running: true,
+            is_running: false,
             timer_font,
             timer_height,
             splits_font,
