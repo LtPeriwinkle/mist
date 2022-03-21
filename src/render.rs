@@ -237,25 +237,21 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         if self.splits.len() > 1
                             && self.run.borrow().pb_times()[self.current] != 0 =>
                     {
-                        let tm = update.time;
-                        let time = if !*golds {
-                            if tm < self.run.borrow().pb_times()[self.current] {
-                                format::diff_text(
-                                    -((self.run.borrow().pb_times()[self.current] - tm) as i128),
-                                )
-                            } else {
-                                format::diff_text(
-                                    (tm - self.run.borrow().pb_times()[self.current]) as i128,
-                                )
-                            }
-                        } else if tm < self.run.borrow().gold_times()[self.current] {
-                            format::diff_text(
-                                -((self.run.borrow().gold_times()[self.current] - tm) as i128),
-                            )
+                        let compare_time: u128 = if *golds {
+                            self.run.borrow().gold_times()[..=self.current].iter().sum()
                         } else {
-                            format::diff_text(
-                                (tm - self.run.borrow().gold_times()[self.current]) as i128,
-                            )
+                            self.run.borrow().pb_times()[..=self.current].iter().sum()
+                        };
+                        let time = if !*golds {
+                            if update.time < compare_time {
+                                format::diff_text(-((compare_time - update.time) as i128))
+                            } else {
+                                format::diff_text((update.time - compare_time) as i128)
+                            }
+                        } else if update.time < compare_time {
+                            format::diff_text(-((compare_time - update.time) as i128))
+                        } else {
+                            format::diff_text((update.time - compare_time) as i128)
                         };
                         panel.set_time(render_text(
                             time,
@@ -424,6 +420,16 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     for split in &mut self.splits {
                         split.set_cur(None);
                         split.set_diff(None);
+                    }
+                    for panel in &mut self.panels {
+                        if !matches!(panel.panel_type(), Panel::SumOfBest) {
+                            panel.set_time(render_text(
+                                "-  ",
+                                &self.splits_font,
+                                &self.creator,
+                                Color::WHITE,
+                            )?);
+                        }
                     }
                     self.is_running = false;
                     self.canvas
