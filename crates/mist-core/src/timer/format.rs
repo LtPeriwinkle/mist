@@ -46,16 +46,14 @@ pub fn ms_to_readable(mut ms: u128, round: Option<u128>) -> String {
 ///
 /// Truncates decimals at the tenths place.
 pub fn diff_text(mut ms: i128) -> String {
-    let pre: char;
-    if ms < 0 {
+    let pre: char = if ms < 0 {
         ms *= -1;
-        pre = '-';
+        '-'
     } else {
-        pre = '+';
-    }
+        '+'
+    };
     let mut tenths = ms / 100;
-    let mut full_s: i128;
-    full_s = tenths / 10;
+    let mut full_s = tenths / 10;
     tenths -= full_s * 10;
     if full_s >= 60 {
         let mut min = full_s / 60;

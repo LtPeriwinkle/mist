@@ -160,7 +160,7 @@ impl RunState {
             return;
         }
         let run = self.run.borrow();
-        if run.pb_times().len() == 0 {
+        if run.pb_times().is_empty() {
             if self.time < run.pb() {
                 self.run_status = SplitStatus::Ahead;
             } else {
@@ -217,7 +217,7 @@ impl RunState {
             {
                 self.timer_state = TimerState::Paused;
                 self.before_pause = self.time;
-                self.before_pause_split = (elapsed - self.split) + self.before_pause_split;
+                self.before_pause_split += elapsed - self.split;
                 return vec![StateChange::Pause];
             }
             Pause if self.timer_state == TimerState::Paused => {
@@ -263,7 +263,7 @@ impl RunState {
                 }
                 let sum = format::split_time_sum(&self.run_times)[self.current_split];
                 let diff = sum as i128
-                    - format::split_time_sum(&self.run.borrow().pb_times())[self.current_split]
+                    - format::split_time_sum(self.run.borrow().pb_times())[self.current_split]
                         as i128;
                 if self.current_split == self.run.borrow().pb_times().len() - 1 {
                     {
