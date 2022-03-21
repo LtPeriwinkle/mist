@@ -75,6 +75,7 @@ pub enum StateChange {
 
 pub struct RunUpdate {
     pub change: Vec<StateChange>,
+    pub split_time: u128,
     pub time: u128,
     pub offset: bool,
     pub status: SplitStatus,
@@ -143,6 +144,7 @@ impl RunState {
         self.calc_status();
         RunUpdate {
             change,
+            split_time: (elapsed - self.split) + self.before_pause_split,
             time: self.time,
             offset: self.timer_state == TimerState::Offset,
             status: self.run_status,
@@ -310,6 +312,7 @@ impl RunState {
             Split if self.timer_state == TimerState::NotRunning => {
                 self.start = elapsed;
                 self.split = elapsed;
+                self.time = 0;
                 if self.run.borrow().offset().is_some() {
                     self.timer_state = TimerState::Offset;
                     return vec![StateChange::EnterOffset];
