@@ -238,20 +238,20 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             && self.run.borrow().pb_times()[self.current] != 0 =>
                     {
                         let compare_time: u128 = if *golds {
-                            self.run.borrow().gold_times()[..=self.current].iter().sum()
+                            self.run.borrow().gold_times()[self.current]
                         } else {
-                            self.run.borrow().pb_times()[..=self.current].iter().sum()
+                            self.run.borrow().pb_times()[self.current]
                         };
                         let time = if !*golds {
-                            if update.time < compare_time {
-                                format::diff_text(-((compare_time - update.time) as i128))
+                            if update.split_time < compare_time {
+                                format::diff_text(-((compare_time - update.split_time) as i128))
                             } else {
-                                format::diff_text((update.time - compare_time) as i128)
+                                format::diff_text((update.split_time - compare_time) as i128)
                             }
-                        } else if update.time < compare_time {
-                            format::diff_text(-((compare_time - update.time) as i128))
+                        } else if update.split_time < compare_time {
+                            format::diff_text(-((compare_time - update.split_time) as i128))
                         } else {
-                            format::diff_text((update.time - compare_time) as i128)
+                            format::diff_text((update.split_time - compare_time) as i128)
                         };
                         panel.set_time(render_text(
                             time,
