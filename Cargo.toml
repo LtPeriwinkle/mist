@@ -1,13 +1,15 @@
 [package]
 name = "mist"
-version = "1.14.0"
+version = "1.15.0"
 authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
-include = ["assets/", "assets/*", "src/*.rs"]
 edition = "2018"
 description = "minimal, improved speedrun timer"
 readme = "README.md"
 repository = "https://github.com/LtPeriwinkle/mist"
 license = "MIT OR Apache-2.0"
+
+[workspace]
+members = ["crates/mist-core/", "crates/mist-split-tool/"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -18,10 +20,13 @@ bg = ["sdl2/gfx", "sdl2/image", "mist-core/bg"]
 icon = ["sdl2/image"]
 
 [dependencies.sdl2]
-version = "0.34"
+version = "0.35"
 default-features = false
-features = ["ttf"]
+features = ["ttf", "unsafe_textures"]
 
 [dependencies.mist-core]
-version = "0.9"
-path = "./crates/mist-core/"
+version = "0.10"
+path = "crates/mist-core/"
+
+[dependencies.lazy_static]
+version = "1.4"

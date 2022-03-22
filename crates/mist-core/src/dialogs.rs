@@ -5,7 +5,7 @@
 #[cfg(feature = "config")]
 use crate::config::Config;
 use crate::parse::MsfParser;
-use crate::run::Run;
+use crate::timer::Run;
 use std::fs::File;
 use std::io::{BufReader, Error};
 use tinyfiledialogs::{
@@ -27,6 +27,7 @@ pub fn save_check() -> bool {
         YesNo::No => false,
     }
 }
+
 /// Open a file select dialog box.
 ///
 /// Box title will be `title`. `filter` should be formatted like `*.msf` to filter for msf file extensions etc.
@@ -125,6 +126,7 @@ pub fn open_config() -> Result<Option<Config>, String> {
 ///
 /// Only used at the top level of the call stack in mist. Do not go using this in places.
 pub fn error(err: &str) -> ! {
-    message_box_ok("Error", err, MessageBoxIcon::Error);
+    let err = err.replace('\'', "").replace('"', "");
+    message_box_ok("Error", &err, MessageBoxIcon::Error);
     std::process::exit(1)
 }

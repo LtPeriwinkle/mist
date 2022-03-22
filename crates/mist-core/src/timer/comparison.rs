@@ -1,4 +1,4 @@
-// timer comparison types
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Comparison {
     Average,
     PersonalBest,

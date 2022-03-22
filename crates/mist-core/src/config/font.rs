@@ -26,9 +26,9 @@ impl Font {
             };
             let res = cache.query(&pat);
             if let Some(font) = res {
-                return Ok(font.path.clone());
+                Ok(font.path.clone())
             } else {
-                return Err("Could not find system font".to_owned());
+                Err("Could not find system font".to_owned())
             }
         }
     }

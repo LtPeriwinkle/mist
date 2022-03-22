@@ -54,8 +54,8 @@ impl Config {
             .create(true)
             .open("assets/mist.cfg")
             .map_err(|e| e.to_string())?;
-        let cfg: Self = from_reader(&file).unwrap_or(Config::default());
-        return Ok(cfg);
+        let cfg: Self = from_reader(&file).unwrap_or_default();
+        Ok(cfg)
     }
     /// Get the split file from the Config. Returns None if no file set.
     pub fn file(&self) -> Option<&String> {
@@ -72,7 +72,7 @@ impl Config {
         self.img_scaled
     }
     /// Set the split file path to a new one.
-    pub fn set_file(&mut self, file: &String) {
+    pub fn set_file(&mut self, file: &str) {
         self.def_file = Some(file.to_owned());
     }
     /// Get the Font used for the display timer.
@@ -107,7 +107,7 @@ impl Config {
             PrettyConfig::new().extensions(Extensions::IMPLICIT_SOME),
         )
         .map_err(|e| e.to_string())?;
-        file.write(&string.as_bytes()).map_err(|e| e.to_string())?;
+        file.write(string.as_bytes()).map_err(|e| e.to_string())?;
         Ok(())
     }
     /// Get the keybinds in string form as names of keys.

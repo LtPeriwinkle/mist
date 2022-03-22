@@ -1,6 +1,8 @@
 # Changelog
 ### next
 - fix the display of CurrentSplitDiff when golds is false
+- Wow, this ended up being the state machine update also.
+- Adds unsplitting support
 
 ### 1.14.0
 - use a custom implementation of `Instant`
