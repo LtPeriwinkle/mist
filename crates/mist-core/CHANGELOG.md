@@ -1,4 +1,9 @@
 ## mist-core changelog
+### 0.10.0
+- Brand new state system (wow)
+- Reorganized modules: `Run`, `RunState`, `MistInstant` etc all live in `timer` module
+- Fix single-line comments in split files
+
 ### 0.9.0
 - implement a custom `Instant` to measure time across system suspends
 

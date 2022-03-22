@@ -1,6 +1,6 @@
 [package]
 name = "mist"
-version = "1.14.0"
+version = "1.15.0"
 authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
 edition = "2018"
 description = "minimal, improved speedrun timer"
@@ -25,7 +25,7 @@ default-features = false
 features = ["ttf", "unsafe_textures"]
 
 [dependencies.mist-core]
-version = "0.9"
+version = "0.10"
 path = "crates/mist-core/"
 
 [dependencies.lazy_static]
