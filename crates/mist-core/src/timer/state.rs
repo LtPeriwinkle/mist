@@ -327,6 +327,7 @@ impl RunState {
                 self.split -= self.run_times[self.current_split];
                 self.run_diffs[self.current_split] = 0;
                 self.run_times[self.current_split] = 0;
+                self.run_golds[self.current_split] = false;
                 return vec![StateChange::EnterSplit {
                     idx: self.current_split,
                 }];
