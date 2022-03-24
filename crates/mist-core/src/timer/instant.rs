@@ -71,7 +71,7 @@ mod inner {
         }
 
         impl MistInstant {
-            /// Create a MistInstant referring to the point in time that is 'now'.
+            /// Create a [`MistInstant`] referring to the point in time that is 'now'.
             pub fn now() -> Self {
                 extern "C" {
                     fn mach_continuous_time() -> u64;
@@ -156,7 +156,7 @@ mod inner {
         }
 
         impl MistInstant {
-            /// Create a MistInstant referring to the point in time that is 'now'.
+            /// Create a [`MistInstant`] referring to the point in time that is 'now'.
             pub fn now() -> Self {
                 Self {
                     t: now(libc::CLOCK_BOOTTIME),
@@ -193,7 +193,7 @@ mod inner {
         }
     }
     impl platform::MistInstant {
-        /// Find the amount of time that has passed since this MistInstant was created.
+        /// Find the amount of time that has passed since this [`MistInstant`] was created.
         pub fn elapsed(&self) -> std::time::Duration {
             Self::now() - *self
         }

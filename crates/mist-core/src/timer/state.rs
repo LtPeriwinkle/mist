@@ -1,3 +1,5 @@
+//! Internal state of mist.
+
 use super::format;
 use super::Comparison as Comp;
 use super::MistInstant;
@@ -5,6 +7,10 @@ use super::Run;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+/// The state of the loaded run.
+///
+/// This holds everything needed for timekeeping, updating the state of the run (e.g. paused/running),
+/// keeping comparisons, and storing times.
 pub struct RunState {
     run: Rc<RefCell<Run>>,
     timer: MistInstant,
@@ -34,36 +40,55 @@ enum TimerState {
     Finished,
 }
 
+/// A request to the [`RunState`] to change its state.
 #[derive(Debug)]
 pub enum StateChangeRequest {
+    /// No request.
     None,
+    /// Pause the timer.
     Pause,
+    /// Start the timer, advance a split, or stop the timer.
     Split,
+    /// Undo a split, returning to the previous one.
     Unsplit,
+    /// Skip a split, leaving it with no time.
     Skip,
+    /// Set the timer back to the beginning.
     Reset,
+    /// Change the comparison. `true` for next, `false` for prev.
     Comparison(bool),
 }
 
 // commented items will be used for plugins later
+/// A single change in state.
 #[derive(Debug)]
 pub enum StateChange {
+    /// No change.
     None,
+    /// Start the timer in an offset.
     EnterOffset, /*{amt: u128}*/
+    /// Start timing forwards after an offset.
     ExitOffset,
+    /// Start a split.
     EnterSplit {
+        /// Index of split that was entered.
         idx: usize, /*name: String, pb: u128, gold: u128 */
     },
+    /// Finish a split.
     ExitSplit {
+        /// Index of split that was finished.
         idx: usize,
         /*name: String,*/ status: SplitStatus,
+        /// Amount of time spent on split.
         time: u128,
+        /// Difference from comparison.
         diff: i128,
     },
     Pause,
     Unpause {
         status: SplitStatus,
     },
+    /// Exited the last split, so the run is over.
     Finish,
     Reset {
         offset: Option<u128>,
@@ -73,25 +98,46 @@ pub enum StateChange {
     },
 }
 
+/// Update returned from the [`RunState`].
+///
+/// One of these is returned every frame when [`update`](RunState::update) is called.
+/// Since there could be multiple requests in one frame, and each request can cause
+/// multiple state changes (e.g. [`ExitSplit`](StateChange::ExitSplit) and [`EnterSplit`](StateChange::EnterSplit)),
+/// a [`Vec`] is used to store the state changes.
 pub struct RunUpdate {
+    /// All changes in state that occurred during a call to [`update`](RunState::update).
     pub change: Vec<StateChange>,
+    /// Amount of time that has passed in the current split.
     pub split_time: u128,
+    /// Amount of time that has passed in the run as a whole.
     pub time: u128,
+    /// Whether the run is in an offset or not.
     pub offset: bool,
+    /// Whether run is ahead, behind, etc.
     pub status: SplitStatus,
 }
 
+/// Status of an active run.
+///
+/// Usually corresponds to colors in the renderer.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum SplitStatus {
+    /// Timer is not running or no comparison.
     None,
+    /// Runner is faster than comparison.
     Ahead,
+    /// Runner is behind comparison but could save time.
     Gaining,
+    /// Runner completed a split at their fastest time.
     Gold,
+    /// Runner is slower than comparison.
     Behind,
+    /// Runner is ahead of comparison, but is too slow to maintain previous pace.
     Losing,
 }
 
 impl RunState {
+    /// Create a new [`RunState`].
     pub fn new(run: Rc<RefCell<Run>>) -> Self {
         let sum_comp_times = format::split_time_sum(run.borrow().pb_times());
         let len = run.borrow().pb_times().len();
@@ -115,6 +161,14 @@ impl RunState {
             set_times: false,
         }
     }
+
+    /// Update the [`RunState`].
+    ///
+    /// Because multiple inputs can occur in the same frame, multiple state changes can be requested.
+    /// This handles all of them at once, and returns a [`RunUpdate`]. Also handles updating timing,
+    /// setting times to a [`Run`] once they are solidified, running offsets, etc. Prevents
+    /// illegal state changes from occurring by ignoring the request and returning [`StateChange::None`] in
+    /// the [`RunUpdate`]
     pub fn update(&mut self, rq: &[StateChangeRequest]) -> RunUpdate {
         let elapsed = self.timer.elapsed().as_millis();
         if self.timer_state == TimerState::Running {
@@ -150,12 +204,17 @@ impl RunState {
             status: self.run_status,
         }
     }
+
+    /// Whether the [`Run`] has been changed and needs to be saved.
     pub fn needs_save(&self) -> bool {
         self.needs_save
     }
+
+    /// Whether the timer is currently running.
     pub fn is_running(&self) -> bool {
         self.timer_state == TimerState::Running
     }
+
     fn calc_status(&mut self) {
         if self.comparison == Comp::None || self.timer_state != TimerState::Running {
             self.run_status = SplitStatus::None;
@@ -210,6 +269,7 @@ impl RunState {
             }
         }
     }
+
     fn handle_scrq(&mut self, rq: &StateChangeRequest, elapsed: u128) -> Vec<StateChange> {
         use StateChangeRequest::*;
         match rq {

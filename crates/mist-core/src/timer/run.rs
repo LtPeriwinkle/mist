@@ -14,7 +14,7 @@ pub struct Run {
 }
 
 impl Run {
-    /// Create a run with all empty fields.
+    /// Create a [`Run`] with all empty fields.
     pub fn empty() -> Self {
         Run {
             game_title: "".to_owned(),
@@ -27,6 +27,7 @@ impl Run {
             sum_times: vec![],
         }
     }
+    /// Create a new [`Run`].
     pub fn new<S>(
         game_title: S,
         category: S,
@@ -80,13 +81,13 @@ impl Run {
         &self.gold_times
     }
     /// Returns tuples of attempt count and total number of milliseconds spent for each split.
-    /// First element is attempt count and second is the total time.
     ///
-    /// Useful for calculating averages.
+    /// First element is attempt count and second is the total time;
+    /// useful for calculating averages.
     pub fn sum_times(&self) -> &Vec<(u128, u128)> {
         &self.sum_times
     }
-    /// Sets the game title field.
+    /// Sets the game title.
     pub fn set_game_title<S>(&mut self, new: S)
     where
         S: ToString,
@@ -120,7 +121,7 @@ impl Run {
     pub fn set_gold_times(&mut self, new: &[u128]) {
         self.gold_times = new.to_owned();
     }
-    /// Set a single gold time, specified by `idx`
+    /// Set a single gold time, specified by `idx`.
     pub fn set_gold_time(&mut self, idx: usize, new: u128) {
         self.gold_times[idx] = new;
     }

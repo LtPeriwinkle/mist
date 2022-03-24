@@ -1,3 +1,4 @@
+//! Everything related to timing in mist
 mod comparison;
 pub mod format;
 mod instant;

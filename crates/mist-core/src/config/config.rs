@@ -1,4 +1,3 @@
-// handle configuration of color and font path
 use super::Font;
 use super::KeybindsRaw;
 use super::LayoutOpts;
@@ -43,7 +42,7 @@ pub struct Config {
 }
 
 impl Config {
-    /// Attempts to open and parse mist's default config
+    /// Attempts to open and parse mist's default config.
     ///
     /// If a Config cannot be parsed, returns the default.
     /// Only will return `Err` if it cannot read/write to the config file.

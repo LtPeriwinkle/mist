@@ -1,3 +1,4 @@
+/// What a run is comparing to.
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Comparison {
     Average,
@@ -7,6 +8,7 @@ pub enum Comparison {
 }
 
 impl Comparison {
+    /// Switch to the next comparison.
     pub fn next(&mut self) {
         match self {
             Comparison::Average => {
@@ -23,6 +25,8 @@ impl Comparison {
             }
         }
     }
+
+    /// Switch to the previous comparison.
     pub fn prev(&mut self) {
         match self {
             Comparison::Average => {

@@ -32,15 +32,17 @@ impl Into<Run> for LegacyRun {
     }
 }
 
-/// Parses the version and [`Run`] from a mist split file (msf)
+/// Parses the version and [`Run`] from a mist split file (msf).
 pub struct MsfParser {}
 
 impl MsfParser {
     pub const VERSION: u8 = 1;
-    /// Create a new MsfParser.
+
+    /// Create a new [`MsfParser`].
     pub fn new() -> Self {
         MsfParser {}
     }
+
     /// Attempt to parse a [`Run`] from the given reader. Reader must implement [`BufRead`].
     ///
     /// If the file does not specify version in the first line, it is assumed to be a legacy (i.e. not up to date) run
@@ -78,6 +80,7 @@ impl MsfParser {
         });
         Ok(run)
     }
+
     /// Write the given run to the given writer.
     pub fn write<W: Write>(&self, run: &Run, mut writer: W) -> Result<(), String> {
         let run = self.run_sanity(run.clone());

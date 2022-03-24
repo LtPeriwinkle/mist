@@ -52,7 +52,7 @@ fn try_again() -> bool {
     }
 }
 
-/// Get the path of an msf file to use
+/// Get the path of an msf file to use.
 ///
 /// Returns [`None`] if the user cancels the dialog box
 pub fn get_run_path() -> Option<String> {
