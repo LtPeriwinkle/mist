@@ -255,7 +255,7 @@ impl RunState {
                 let mut sum = self.run.borrow().sum_times()[self.current_split];
                 sum.0 += 1;
                 sum.1 += time;
-                self.run.borrow_mut().set_sum_time(sum, self.current_split);
+                self.run.borrow_mut().set_sum_time(self.current_split, sum);
                 self.needs_save = true;
                 if time < self.run.borrow().gold_times()[self.current_split]
                     || self.run.borrow().gold_times()[self.current_split] == 0
@@ -277,7 +277,7 @@ impl RunState {
                             .filter(|(_, &i)| i)
                             .map(|(idx, _)| idx)
                         {
-                            run.set_gold_time(self.run_times[idx], idx);
+                            run.set_gold_time(idx, self.run_times[idx]);
                         }
                     }
                     self.timer_state = TimerState::Finished;
@@ -400,7 +400,7 @@ impl RunState {
                                 .sum_times()
                                 .iter()
                                 .map(|&(n, t)| if n != 0 { t / n } else { t })
-                                .collect(),
+                                .collect::<Vec<_>>(),
                         )
                     }
                     Comp::None => {

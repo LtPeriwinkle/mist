@@ -32,10 +32,10 @@ impl Run {
         category: S,
         offset: Option<u128>,
         pb: u128,
-        splits: &Vec<String>,
-        pb_times: &Vec<u128>,
-        gold_times: &Vec<u128>,
-        sum_times: &Vec<(u128, u128)>,
+        splits: &[String],
+        pb_times: &[u128],
+        gold_times: &[u128],
+        sum_times: &[(u128, u128)],
     ) -> Self
     where
         S: ToString,
@@ -109,28 +109,28 @@ impl Run {
         self.pb = new;
     }
     /// Set the names of all splits.
-    pub fn set_splits(&mut self, new: &Vec<String>) {
+    pub fn set_splits(&mut self, new: &[String]) {
         self.splits = new.to_owned();
     }
     /// Set the times for each split that were achieved on the current pb.
-    pub fn set_pb_times(&mut self, new: &Vec<u128>) {
+    pub fn set_pb_times(&mut self, new: &[u128]) {
         self.pb_times = new.to_owned();
     }
     /// Set the best time for each split.
-    pub fn set_gold_times(&mut self, new: &Vec<u128>) {
+    pub fn set_gold_times(&mut self, new: &[u128]) {
         self.gold_times = new.to_owned();
     }
     /// Set a single gold time, specified by `idx`
-    pub fn set_gold_time(&mut self, new: u128, idx: usize) {
+    pub fn set_gold_time(&mut self, idx: usize, new: u128) {
         self.gold_times[idx] = new;
     }
     /// Set the attempt count and total time for all splits.
     /// First element is number of attempts of that split and second is the total time.
-    pub fn set_sum_times(&mut self, new: &Vec<(u128, u128)>) {
+    pub fn set_sum_times(&mut self, new: &[(u128, u128)]) {
         self.sum_times = new.to_owned();
     }
     /// Set the attempt count and total for one split, specified by `idx`.
-    pub fn set_sum_time(&mut self, new: (u128, u128), idx: usize) {
+    pub fn set_sum_time(&mut self, idx: usize, new: (u128, u128)) {
         self.sum_times[idx] = new
     }
 }

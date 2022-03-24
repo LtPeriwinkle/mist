@@ -102,7 +102,7 @@ pub fn split_time_text(ms: u128) -> String {
 /// Returns a Vec with the sums of every element up to that point in it.
 ///
 /// For example, input of [6, 7, 8] returns [6, 13, 21].
-pub fn split_time_sum(ms_vec: &Vec<u128>) -> Vec<u128> {
+pub fn split_time_sum(ms_vec: &[u128]) -> Vec<u128> {
     let mut total = 0;
     let mut vec = vec![];
     for num in ms_vec {
