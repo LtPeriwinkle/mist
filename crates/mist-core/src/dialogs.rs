@@ -4,10 +4,7 @@
 //! in a terminal if none of the dialog APIs it's expecting are available.
 #[cfg(feature = "config")]
 use crate::config::Config;
-use crate::parse::MsfParser;
-use crate::timer::Run;
 use std::fs::File;
-use std::io::{BufReader, Error};
 use tinyfiledialogs::{
     message_box_ok, message_box_yes_no, open_file_dialog, save_file_dialog_with_filter,
     MessageBoxIcon, YesNo,
@@ -55,40 +52,14 @@ fn try_again() -> bool {
     }
 }
 
-/// Function to both select a file and parse it to a [`Run`].
+/// Get the path of an msf file to use
 ///
-/// # Errors
-///
-/// * If the file cannot be read or there is another fs error.
-///
-/// # Nones
-///
-/// * If the user does not select a file.
-/// * If the file selected cannot be parsed into a [`Run`].
-pub fn open_run() -> Result<Option<(Run, String)>, Error> {
-    loop {
-        match get_file("Open split file", "*.msf") {
-            Some(ref p) => {
-                let f = File::open(p)?;
-                let reader = BufReader::new(f);
-                let parser = MsfParser::new();
-                match parser.parse(reader) {
-                    Ok(r) => {
-                        return Ok(Some((r, p.to_owned())));
-                    }
-                    Err(_) => {
-                        if !try_again() {
-                            return Ok(None);
-                        }
-                    }
-                }
-            }
-            None => return Ok(None),
-        }
-    }
+/// Returns [`None`] if the user cancels the dialog box
+pub fn get_run_path() -> Option<String> {
+    get_file("Open split file", "*.msf")
 }
 
-/// Similar to [`open_run`] but returns a [`Config`] instead.
+/// Gets the path of a [`Config`] and attempts to parse it.
 ///
 /// # Errors
 ///
