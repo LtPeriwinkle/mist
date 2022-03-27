@@ -5,6 +5,7 @@ use super::Comparison as Comp;
 use super::MistInstant;
 use super::Run;
 use std::cell::RefCell;
+use std::ops::{Sub, SubAssign};
 use std::rc::Rc;
 
 /// The state of the loaded run.
@@ -17,8 +18,8 @@ pub struct RunState {
     timer_state: TimerState,
     run_status: SplitStatus,
     comparison: Comp,
-    run_times: Vec<u128>,
-    run_diffs: Vec<i128>,
+    run_times: Vec<TimeType<u128>>,
+    run_diffs: Vec<TimeType<i128>>,
     run_golds: Vec<bool>,
     sum_comp_times: Vec<u128>,
     before_pause: u128,
@@ -29,6 +30,50 @@ pub struct RunState {
     current_split: usize,
     needs_save: bool,
     set_times: bool,
+}
+
+#[derive(PartialEq, Copy, Clone)]
+enum TimeType<T: Copy> {
+    Skipped(T),
+    NotSkipped(T),
+}
+
+use TimeType::*;
+
+impl TimeType<u128> {
+    fn val(self) -> u128 {
+        if let NotSkipped(x) = self {
+            x
+        } else {
+            0
+        }
+    }
+    fn raw(self) -> u128 {
+        let (Skipped(x) | NotSkipped(x)) = self;
+        x
+    }
+}
+impl TimeType<i128> {
+    fn val(self) -> i128 {
+        if let NotSkipped(x) = self {
+            x
+        } else {
+            0
+        }
+    }
+    fn raw(self) -> i128 {
+        let (Skipped(x) | NotSkipped(x)) = self;
+        x
+    }
+}
+
+impl<T: Sub<Output = T> + Copy> SubAssign<T> for TimeType<T> {
+    fn sub_assign(&mut self, other: T) {
+        match self {
+            &mut Skipped(x) => *self = Skipped(x - other),
+            &mut NotSkipped(x) => *self = NotSkipped(x - other),
+        }
+    }
 }
 
 #[derive(PartialEq)]
@@ -147,8 +192,8 @@ impl RunState {
             timer_state: TimerState::NotRunning,
             comparison: Comp::PersonalBest,
             run_status: SplitStatus::None,
-            run_times: vec![0; len],
-            run_diffs: vec![0; len],
+            run_times: vec![NotSkipped(0); len],
+            run_diffs: vec![NotSkipped(0); len],
             run_golds: vec![false; len],
             sum_comp_times,
             before_pause: 0,
@@ -177,7 +222,9 @@ impl RunState {
 
         // have to set pb times here or else the renderer sees them too early...
         if self.set_times {
-            self.run.borrow_mut().set_pb_times(&self.run_times);
+            self.run
+                .borrow_mut()
+                .set_pb_times(&self.run_times.iter().map(|t| t.val()).collect::<Vec<_>>()[..]);
             self.set_times = false;
         }
 
@@ -229,7 +276,7 @@ impl RunState {
             }
         } else {
             let buffer = if self.current_split != 0 {
-                self.run_diffs[self.current_split - 1]
+                self.run_diffs[self.current_split - 1].raw()
             } else {
                 0
             };
@@ -294,24 +341,25 @@ impl RunState {
                 let time = (elapsed - self.split) + self.before_pause_split;
                 self.split = elapsed;
                 self.before_pause_split = 0;
-                self.run_times[self.current_split] = time;
-                self.run_diffs[self.current_split] = if self.comparison == Comp::PersonalBest {
-                    time as i128 - self.run.borrow().pb_times()[self.current_split] as i128
-                } else if self.comparison == Comp::Golds {
-                    time as i128 - self.run.borrow().gold_times()[self.current_split] as i128
-                } else if self.comparison == Comp::Average {
-                    let sum = self.run.borrow().sum_times()[self.current_split];
-                    time as i128
-                        - (sum.1 / {
-                            if sum.0 == 0 {
-                                1
-                            } else {
-                                sum.0
-                            }
-                        }) as i128
-                } else {
-                    0
-                };
+                self.run_times[self.current_split] = NotSkipped(time);
+                self.run_diffs[self.current_split] =
+                    NotSkipped(if self.comparison == Comp::PersonalBest {
+                        time as i128 - self.run.borrow().pb_times()[self.current_split] as i128
+                    } else if self.comparison == Comp::Golds {
+                        time as i128 - self.run.borrow().gold_times()[self.current_split] as i128
+                    } else if self.comparison == Comp::Average {
+                        let sum = self.run.borrow().sum_times()[self.current_split];
+                        time as i128
+                            - (sum.1 / {
+                                if sum.0 == 0 {
+                                    1
+                                } else {
+                                    sum.0
+                                }
+                            }) as i128
+                    } else {
+                        0
+                    });
                 let mut sum = self.run.borrow().sum_times()[self.current_split];
                 sum.0 += 1;
                 sum.1 += time;
@@ -323,7 +371,9 @@ impl RunState {
                     self.run_golds[self.current_split] = true;
                     self.run_status = SplitStatus::Gold;
                 }
-                let sum = format::split_time_sum(&self.run_times)[self.current_split];
+                let sum = format::split_time_sum(
+                    &self.run_times.iter().map(|t| t.raw()).collect::<Vec<_>>()[..],
+                )[self.current_split];
                 let diff = sum as i128
                     - format::split_time_sum(self.run.borrow().pb_times())[self.current_split]
                         as i128;
@@ -337,7 +387,7 @@ impl RunState {
                             .filter(|(_, &i)| i)
                             .map(|(idx, _)| idx)
                         {
-                            run.set_gold_time(idx, self.run_times[idx]);
+                            run.set_gold_time(idx, self.run_times[idx].val());
                         }
                     }
                     self.timer_state = TimerState::Finished;
@@ -349,7 +399,7 @@ impl RunState {
                         StateChange::ExitSplit {
                             idx: self.current_split,
                             status: self.run_status,
-                            time: self.run_times[self.current_split],
+                            time: self.run_times[self.current_split].val(),
                             diff,
                         },
                         StateChange::Finish,
@@ -360,7 +410,7 @@ impl RunState {
                         StateChange::ExitSplit {
                             idx: self.current_split - 1,
                             status: self.run_status,
-                            time: self.run_times[self.current_split - 1],
+                            time: self.run_times[self.current_split - 1].val(),
                             diff,
                         },
                         StateChange::EnterSplit {
@@ -384,9 +434,9 @@ impl RunState {
             Unsplit if self.timer_state == TimerState::Running && self.current_split != 0 => {
                 self.current_split -= 1;
                 self.before_pause_split = 0;
-                self.split -= self.run_times[self.current_split];
-                self.run_diffs[self.current_split] = 0;
-                self.run_times[self.current_split] = 0;
+                self.split -= self.run_times[self.current_split].raw();
+                self.run_diffs[self.current_split] = NotSkipped(0);
+                self.run_times[self.current_split] = NotSkipped(0);
                 self.run_golds[self.current_split] = false;
                 return vec![StateChange::EnterSplit {
                     idx: self.current_split,
@@ -398,8 +448,8 @@ impl RunState {
                 self.split = 0;
                 self.start = 0;
                 let len = self.run.borrow().pb_times().len();
-                self.run_diffs = vec![0; len];
-                self.run_times = vec![0; len];
+                self.run_diffs = vec![NotSkipped(0); len];
+                self.run_times = vec![NotSkipped(0); len];
                 self.run_golds = vec![false; len];
                 self.current_split = 0;
                 self.timer_state = TimerState::NotRunning;
@@ -408,8 +458,26 @@ impl RunState {
                 }];
             }
             Skip if self.timer_state == TimerState::Running => {
-                self.run_times[self.current_split] = 0;
-                self.run_diffs[self.current_split] = 0;
+                let time = (elapsed - self.split) + self.before_pause_split;
+                self.run_times[self.current_split] = Skipped(time);
+                self.run_diffs[self.current_split] =
+                    Skipped(if self.comparison == Comp::PersonalBest {
+                        time as i128 - self.run.borrow().pb_times()[self.current_split] as i128
+                    } else if self.comparison == Comp::Golds {
+                        time as i128 - self.run.borrow().gold_times()[self.current_split] as i128
+                    } else if self.comparison == Comp::Average {
+                        let sum = self.run.borrow().sum_times()[self.current_split];
+                        time as i128
+                            - (sum.1 / {
+                                if sum.0 == 0 {
+                                    1
+                                } else {
+                                    sum.0
+                                }
+                            }) as i128
+                    } else {
+                        0
+                    });
                 self.split = elapsed;
                 self.before_pause_split = 0;
                 if self.current_split == self.run.borrow().pb_times().len() - 1 {
