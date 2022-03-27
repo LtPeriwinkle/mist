@@ -40,7 +40,8 @@ pub fn get_save_as() -> Option<String> {
     save_file_dialog_with_filter("Save as:", "", &["*.msf"], "mist split files")
 }
 
-fn try_again() -> bool {
+/// Ask the user if they want to try another file.
+pub fn try_again() -> bool {
     match message_box_yes_no(
         "File parse failed",
         "File parse failed. Do you want to try another?",
