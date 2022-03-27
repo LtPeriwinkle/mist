@@ -10,11 +10,12 @@ use std::fs::OpenOptions;
 use std::io::Write;
 
 #[derive(Serialize, Deserialize, Debug)]
-#[cfg(feature = "bg")]
 /// Configuration of mist.
 pub struct Config {
     def_file: Option<String>,
+    #[cfg(feature = "bg")]
     img_file: Option<String>,
+    #[cfg(feature = "bg")]
     img_scaled: bool,
     colors: [(u8, u8, u8); 6],
     frame_rounding: Option<u128>,
@@ -22,22 +23,6 @@ pub struct Config {
     panels: Vec<Panel>,
     t_font: Font,
     s_font: Font,
-    font_size: (u16, u16),
-    binds: KeybindsRaw,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[cfg(not(feature = "bg"))]
-/// Configuration of mist.
-pub struct Config {
-    def_file: Option<String>,
-    colors: [(u8, u8, u8); 6],
-    frame_rounding: Option<u128>,
-    layout: LayoutOpts,
-    panels: Vec<Panel>,
-    t_font: Font,
-    s_font: Font,
-    font_size: (u16, u16),
     binds: KeybindsRaw,
 }
 
@@ -82,10 +67,6 @@ impl Config {
     pub fn sfont(&self) -> &Font {
         &self.s_font
     }
-    /// Get the tuple of font sizes for the timer and split fonts respectively.
-    pub fn fsize(&self) -> (u16, u16) {
-        self.font_size
-    }
     /// Get the list of colors to be used for the timer.
     pub fn color_list(&self) -> [(u8, u8, u8); 6] {
         self.colors
@@ -128,12 +109,13 @@ impl Config {
     }
 }
 
-#[cfg(feature = "bg")]
 impl Default for Config {
     fn default() -> Config {
         Config {
             def_file: None,
+            #[cfg(feature = "bg")]
             img_file: None,
+            #[cfg(feature = "bg")]
             img_scaled: false,
             colors: [
                 (0, 255, 0),
@@ -148,30 +130,6 @@ impl Default for Config {
             panels: vec![],
             t_font: Font::timer_default(),
             s_font: Font::splits_default(),
-            font_size: (60, 25),
-            binds: KeybindsRaw::default(),
-        }
-    }
-}
-#[cfg(not(feature = "bg"))]
-impl Default for Config {
-    fn default() -> Config {
-        Config {
-            def_file: None,
-            colors: [
-                (0, 255, 0),
-                (255, 0, 0),
-                (255, 90, 90),
-                (135, 255, 125),
-                (255, 255, 0),
-                (0, 0, 0),
-            ],
-            frame_rounding: Some(30),
-            layout: LayoutOpts::default(),
-            panels: vec![],
-            t_font: Font::timer_default(),
-            s_font: Font::splits_default(),
-            font_size: (60, 25),
             binds: KeybindsRaw::default(),
         }
     }
