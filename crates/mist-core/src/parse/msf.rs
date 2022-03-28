@@ -16,18 +16,60 @@ struct LegacyRun {
     gold_times: Vec<u128>,
 }
 
+#[derive(Deserialize)]
+struct RunV1 {
+    game_title: String,
+    category: String,
+    offset: Option<u128>,
+    pb: u128,
+    splits: Vec<String>,
+    pb_times: Vec<u128>,
+    gold_times: Vec<u128>,
+    sum_times: Vec<(u128, u128)>,
+}
+
 impl Into<Run> for LegacyRun {
     fn into(self) -> Run {
-        let sums: Vec<_> = self.pb_times.iter().map(|val| (1u128, *val)).collect();
         Run::new(
             self.category,
             self.game_title,
-            self.offset,
-            self.pb,
+            self.offset.into(),
+            self.pb.into(),
             &self.splits,
-            &self.pb_times,
-            &self.gold_times,
-            &sums,
+            &self.pb_times.iter().map(|&t| t.into()).collect::<Vec<_>>(),
+            &self
+                .gold_times
+                .iter()
+                .map(|&t| t.into())
+                .collect::<Vec<_>>(),
+            &self
+                .pb_times
+                .iter()
+                .map(|&t| (1u128, t.into()))
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+impl Into<Run> for RunV1 {
+    fn into(self) -> Run {
+        Run::new(
+            self.category,
+            self.game_title,
+            self.offset.into(),
+            self.pb.into(),
+            &self.splits,
+            &self.pb_times.iter().map(|&t| t.into()).collect::<Vec<_>>(),
+            &self
+                .gold_times
+                .iter()
+                .map(|&t| t.into())
+                .collect::<Vec<_>>(),
+            &self
+                .sum_times
+                .iter()
+                .map(|&(n, t)| (n, t.into()))
+                .collect::<Vec<_>>(),
         )
     }
 }
@@ -71,13 +113,13 @@ impl MsfParser {
             }
             s
         };
-        let run = self.run_sanity(if version == 0 {
-            from_str::<LegacyRun>(&data)
+        let run = match version {
+            1 => from_str::<RunV1>(&data).map_err(|e| e.to_string())?.into(),
+            2 => from_str::<Run>(&data).map_err(|e| e.to_string())?,
+            _ => from_str::<LegacyRun>(&data)
                 .map_err(|e| e.to_string())?
-                .into()
-        } else {
-            from_str(&data).map_err(|e| e.to_string())?
-        });
+                .into(),
+        };
         Ok(run)
     }
 
