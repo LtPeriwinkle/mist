@@ -20,22 +20,25 @@ fn str_to_ms(tm: &str) -> u128 {
 /// Attempts to retrieve the relevant information from LiveSplit's XML-based split file
 /// in order to construct a mist [`Run`]. Any info that cannot be retrieved is zeroed.
 pub struct LssParser {
-    reader: BufReader<File>,
+    filename: String,
 }
 
 impl LssParser {
     /// Create a new [`LssParser`] from a [`BufReader`].
-    pub fn new(reader: BufReader<File>) -> Self {
-        LssParser { reader }
+    pub fn new(filename: String) -> Self {
+        Self { filename }
     }
+
     /// Retrieve the information from the reader to create a [`Run`].
     ///
     /// Returns a [`Run`] with all of the fields that were found filled in. This can return an empty [`Run`] if the LiveSplit file
     /// was malformed or missing information.
-    pub fn parse(&mut self) -> Run {
+    pub fn parse(&mut self) -> Result<Run, String> {
         let mut run = Run::empty();
 
-        let mut reader = Reader::from_reader(&mut self.reader);
+        let f = File::open(&self.filename).map_err(|e| e.to_string())?;
+        let mut reader = BufReader::new(f);
+        let mut reader = Reader::from_reader(&mut reader);
         reader.check_end_names(false);
 
         let mut buffer = vec![];
@@ -91,22 +94,25 @@ impl LssParser {
                     _ => {}
                 },
                 Ok(Event::End(ref e)) => match e.name() {
-                    b"SplitTime" => match str_to_ms(&time_str) {
-                        0 => {}
-                        t => {
+                    b"SplitTime" => {
+                        let t = str_to_ms(&time_str);
+                        if t != 0 {
                             pb_times.push(t.into());
                             pb += t;
                         }
-                    },
-                    b"BestSegmentTime" => match str_to_ms(&time_str) {
-                        0 => {}
-                        t => {
-                            gold_times.push(t.into());
+                    }
+                    b"BestSegmentTime" => {
+                        let t = str_to_ms(&time_str);
+                        if t != 0 {
+                            gold_times.push(t.into())
                         }
-                    },
+                    }
                     b"Time" => {
-                        segment_sum.0 += 1;
-                        segment_sum.1 += str_to_ms(&time_str);
+                        let t = str_to_ms(&time_str);
+                        if t != 0 {
+                            segment_sum.0 += 1;
+                            segment_sum.1 += t;
+                        }
                     }
                     b"SegmentHistory" => {
                         sum_times.push((segment_sum.0, segment_sum.1.into()));
@@ -122,6 +128,6 @@ impl LssParser {
         run.set_sum_times(&sum_times);
         run.set_splits(&splits);
         run.set_pb(pb.into());
-        run
+        Ok(super::sanify_run(&run))
     }
 }

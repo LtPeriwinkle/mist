@@ -2,7 +2,8 @@ use crate::timer::Run;
 use ron::de::from_str;
 use ron::ser::{to_writer_pretty, PrettyConfig};
 use serde::Deserialize;
-use std::io::{BufRead, Write};
+use std::fs::File;
+use std::io::{BufRead, BufReader, Write};
 use std::str::FromStr;
 
 #[derive(Deserialize)]
@@ -75,12 +76,14 @@ impl Into<Run> for RunV1 {
 }
 
 /// Parses the version and [`Run`] from a mist split file (msf).
-pub struct MsfParser {}
+pub struct MsfParser {
+    filename: String,
+}
 
 impl MsfParser {
     /// Create a new [`MsfParser`].
-    pub fn new() -> Self {
-        MsfParser {}
+    pub fn new(filename: String) -> Self {
+        Self { filename }
     }
 
     /// Attempt to parse a [`Run`] from the given reader. Reader must implement [`BufRead`].
@@ -92,8 +95,9 @@ impl MsfParser {
     ///
     /// * If the reader cannot be read from or is empty.
     /// * If a [`Run`] (legacy or otherwise) cannot be parsed from the reader.
-    pub fn parse<R: BufRead>(&self, reader: R) -> Result<Run, String> {
-        let mut lines = reader.lines().map(|l| l.unwrap());
+    pub fn parse(&self) -> Result<Run, String> {
+        let f = File::open(&self.filename).map_err(|e| e.to_string())?;
+        let mut lines = BufReader::new(f).lines().map(|l| l.unwrap());
         // TODO: better error handling
         let ver_info = String::from_str(&lines.next().ok_or("Input was empty.")?).unwrap();
         let version: u32 = match ver_info.rsplit_once(' ') {
@@ -122,32 +126,12 @@ impl MsfParser {
     }
 
     /// Write the given run to the given writer.
-    pub fn write<W: Write>(&self, run: &Run, mut writer: W) -> Result<(), String> {
-        let run = self.run_sanity(run.clone());
-        writer.write(b"version 2\n").map_err(|e| e.to_string())?;
-        to_writer_pretty(&mut writer, &run, PrettyConfig::new()).map_err(|e| e.to_string())?;
+    pub fn write<W: Write>(&mut self, run: &Run) -> Result<(), String> {
+        let run = super::sanify_run(run);
+        let mut file = File::create(&self.filename).map_err(|e| e.to_string())?;
+        file.write(b"version 2\n").map_err(|e| e.to_string())?;
+        to_writer_pretty(&mut file, &run, PrettyConfig::new()).map_err(|e| e.to_string())?;
         Ok(())
-    }
-
-    fn run_sanity(&self, run: Run) -> Run {
-        let mut run = run;
-        let len = run.splits().len();
-        let mut golds = run.gold_times().to_owned();
-        let mut times = run.pb_times().to_owned();
-        let mut sums = run.sum_times().to_owned();
-        if golds.len() < len {
-            golds.resize_with(len, Default::default);
-            run.set_gold_times(&golds);
-        }
-        if times.len() < len {
-            times.resize_with(len, Default::default);
-            run.set_pb_times(&times);
-        }
-        if sums.len() < len {
-            sums.resize_with(len, Default::default);
-            run.set_sum_times(&sums);
-        }
-        run
     }
 }
 
