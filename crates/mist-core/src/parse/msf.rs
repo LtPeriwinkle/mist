@@ -3,7 +3,7 @@ use ron::de::from_str;
 use ron::ser::{to_writer_pretty, PrettyConfig};
 use serde::Deserialize;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::str::FromStr;
 
 #[derive(Deserialize)]
@@ -86,18 +86,22 @@ impl MsfParser {
         Self { filename }
     }
 
-    /// Attempt to parse a [`Run`] from the given reader. Reader must implement [`BufRead`].
+    /// Attempt to parse a [`Run`] from the file stored in the [`MsfParser`]
     ///
     /// If the file does not specify version in the first line, it is assumed to be a legacy (i.e. not up to date) run
     /// and is treated as such. Runs converted from legacy runs will have the new field(s) filled but zeroed.
     ///
     /// # Errors
     ///
-    /// * If the reader cannot be read from or is empty.
-    /// * If a [`Run`] (legacy or otherwise) cannot be parsed from the reader.
+    /// * If the file cannot be read from or is empty.
+    /// * If a [`Run`] (legacy or otherwise) cannot be parsed from the file.
     pub fn parse(&self) -> Result<Run, String> {
         let f = File::open(&self.filename).map_err(|e| e.to_string())?;
-        let mut lines = BufReader::new(f).lines().map(|l| l.unwrap());
+        self.parse_impl(BufReader::new(f))
+    }
+
+    fn parse_impl<R: Read>(&self, reader: BufReader<R>) -> Result<Run, String> {
+        let mut lines = reader.lines().map(|l| l.unwrap());
         // TODO: better error handling
         let ver_info = String::from_str(&lines.next().ok_or("Input was empty.")?).unwrap();
         let version: u32 = match ver_info.rsplit_once(' ') {
@@ -124,8 +128,7 @@ impl MsfParser {
         };
         Ok(run)
     }
-
-    /// Write the given run to the given writer.
+    /// Write the given run to the file stored in the [`MsfParser`].
     pub fn write<W: Write>(&mut self, run: &Run) -> Result<(), String> {
         let run = super::sanify_run(run);
         let mut file = File::create(&self.filename).map_err(|e| e.to_string())?;
@@ -138,7 +141,43 @@ impl MsfParser {
 #[cfg(test)]
 mod tests {
     use super::*;
-    const V1RUN: &[u8] = b"version 1\n
+    use crate::timer::TimeType::{self, *};
+
+    const V2_RUN: &[u8] = b"version 2\n
+        (
+            game_title: \"test\",
+            category: \"test\",
+            offset: Time(200),
+            pb: Time(1234),
+            splits: [\"test\"],
+            pb_times: [Skipped(1234)],
+            gold_times: [Time(1234)],
+            sum_times: [(2, None)],
+        )";
+
+    #[test]
+    fn test_parse_v2() {
+        let reader = std::io::BufReader::new(V2_RUN);
+        let parser = MsfParser::new("".into());
+        let run = parser.parse_impl(reader);
+        println!("{:?}", run);
+        assert!(run.is_ok());
+        let run = run.unwrap();
+        assert!(
+            run == Run::new(
+                "test",
+                "test",
+                Time(200),
+                Time(1234),
+                &["test".into()],
+                &[Skipped(1234)],
+                &[Time(1234)],
+                &[(2, TimeType::None)]
+            )
+        );
+    }
+
+    const V1_RUN: &[u8] = b"version 1\n
         (
             game_title: \"test\",
             category: \"test\",
@@ -149,16 +188,30 @@ mod tests {
             gold_times: [1234],
             sum_times: [(2, 2480)],
         )";
+
     #[test]
-    fn test_parse() {
-        let reader = std::io::BufReader::new(V1RUN);
-        let parser = MsfParser::new();
-        let run = parser.parse(reader);
+    fn test_parse_v1() {
+        let reader = std::io::BufReader::new(V1_RUN);
+        let parser = MsfParser::new("".into());
+        let run = parser.parse_impl(reader);
         println!("{:?}", run);
         assert!(run.is_ok());
+        let run = run.unwrap();
+        assert!(
+            run == Run::new(
+                "test",
+                "test",
+                Time(200),
+                Time(1234),
+                &["test".into()],
+                &[Time(1234)],
+                &[Time(1234)],
+                &[(2, Time(2480))]
+            )
+        );
     }
 
-    const LEGACYRUN: &[u8] = b"(
+    const LEGACY_RUN: &[u8] = b"(
         game_title: \"test\",
         category: \"test\",
         offset: Some(200),
@@ -170,10 +223,23 @@ mod tests {
 
     #[test]
     fn test_parse_legacy() {
-        let reader = std::io::BufReader::new(LEGACYRUN);
-        let parser = MsfParser::new();
-        let run = parser.parse(reader);
+        let reader = std::io::BufReader::new(LEGACY_RUN);
+        let parser = MsfParser::new("".into());
+        let run = parser.parse_impl(reader);
         assert!(run.is_ok());
+        let run = run.unwrap();
+        assert!(
+            run == Run::new(
+                "test",
+                "test",
+                Time(200),
+                Time(1234),
+                &["test".into()],
+                &[Time(1234)],
+                &[Time(1234)],
+                &[(1, Time(1234))]
+            )
+        );
     }
 
     const INSANE_RUN: &[u8] = b"version 1\n
@@ -191,12 +257,22 @@ mod tests {
     #[test]
     fn test_sanity_check() {
         let reader = std::io::BufReader::new(INSANE_RUN);
-        let parser = MsfParser::new();
-        let run = parser.parse(reader);
+        let parser = MsfParser::new("".into());
+        let run = parser.parse_impl(reader);
         assert!(run.is_ok());
-        let run = run.unwrap();
-        assert_eq!(run.gold_times().to_owned(), vec![1234, 0]);
-        assert_eq!(run.pb_times().to_owned(), vec![1234, 0]);
-        assert_eq!(run.sum_times().to_owned(), vec![(2, 1234), (0, 0)]);
+        let run = crate::parse::sanify_run(&run.unwrap());
+        assert!(
+            run == Run::new(
+                "test",
+                "test",
+                Time(200),
+                Time(1234),
+                &["test".into(), "test2".into()],
+                &[Time(1234), TimeType::None],
+                &[Time(1234), TimeType::None],
+                &[(2, Time(1234)), (0, TimeType::None)]
+            )
+        );
+        //assert_eq!(run.sum_times().to_owned(), vec![(2, 1234), (0, 0)]);
     }
 }

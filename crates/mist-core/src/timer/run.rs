@@ -1,7 +1,7 @@
 use super::TimeType;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 /// Holds information about a speedrun and a user's times.
 pub struct Run {
     game_title: String,
