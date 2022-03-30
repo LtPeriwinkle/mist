@@ -51,11 +51,7 @@ impl TimeType {
         }
     }
     pub fn is_time(self) -> bool {
-        if let TimeType::Time(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, TimeType::Time(_))
     }
     pub fn is_none(self) -> bool {
         self == TimeType::None
@@ -91,9 +87,9 @@ impl DiffType {
 
 impl SubAssign<u128> for TimeType {
     fn sub_assign(&mut self, other: u128) {
-        match self {
-            &mut TimeType::Skipped(x) => *self = TimeType::Skipped(x - other),
-            &mut TimeType::Time(x) => *self = TimeType::Time(x - other),
+        match *self {
+            TimeType::Skipped(x) => *self = TimeType::Skipped(x - other),
+            TimeType::Time(x) => *self = TimeType::Time(x - other),
             _ => {} // just don't subtract nones :)
         }
     }
@@ -101,10 +97,10 @@ impl SubAssign<u128> for TimeType {
 
 impl AddAssign<u128> for TimeType {
     fn add_assign(&mut self, other: u128) {
-        match self {
-            &mut TimeType::Skipped(x) => *self = TimeType::Skipped(x + other),
-            &mut TimeType::Time(x) => *self = TimeType::Time(x + other),
-            &mut TimeType::None => *self = TimeType::Time(other),
+        match *self {
+            TimeType::Skipped(x) => *self = TimeType::Skipped(x + other),
+            TimeType::Time(x) => *self = TimeType::Time(x + other),
+            TimeType::None => *self = TimeType::Time(other),
         }
     }
 }

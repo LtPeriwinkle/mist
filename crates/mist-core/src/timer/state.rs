@@ -296,9 +296,11 @@ impl RunState {
                 self.run_times[self.current_split] = TimeType::Time(time);
                 self.run_diffs[self.current_split] =
                     DiffType::Time(if self.comparison == Comp::PersonalBest {
-                        (time - self.run.borrow().pb_times()[self.current_split].val()) as i128
+                        time as i128
+                            - self.run.borrow().pb_times()[self.current_split].val() as i128
                     } else if self.comparison == Comp::Golds {
-                        (time - self.run.borrow().gold_times()[self.current_split].val()) as i128
+                        time as i128
+                            - self.run.borrow().gold_times()[self.current_split].val() as i128
                     } else if self.comparison == Comp::Average {
                         let sum = self.run.borrow().sum_times()[self.current_split];
                         time as i128
@@ -324,7 +326,7 @@ impl RunState {
                     self.run_status = SplitStatus::Gold;
                 }
                 let sum = format::split_time_sum(
-                    &self.run_times.iter().map(|t| t.raw()).collect::<Vec<_>>()[..],
+                    &self.run_times.iter().map(|t| t.raw()).collect::<Vec<_>>(),
                 )[self.current_split];
                 let diff = sum as i128
                     - format::split_time_sum(&self.run.borrow().pb_times_u128())[self.current_split]
@@ -415,9 +417,11 @@ impl RunState {
                 self.run_times[self.current_split] = TimeType::Skipped(time);
                 self.run_diffs[self.current_split] =
                     DiffType::Skipped(if self.comparison == Comp::PersonalBest {
-                        (time - self.run.borrow().pb_times()[self.current_split].val()) as i128
+                        time as i128
+                            - self.run.borrow().pb_times()[self.current_split].val() as i128
                     } else if self.comparison == Comp::Golds {
-                        (time - self.run.borrow().gold_times()[self.current_split].val()) as i128
+                        time as i128
+                            - self.run.borrow().gold_times()[self.current_split].val() as i128
                     } else if self.comparison == Comp::Average {
                         let sum = self.run.borrow().sum_times()[self.current_split];
                         (time

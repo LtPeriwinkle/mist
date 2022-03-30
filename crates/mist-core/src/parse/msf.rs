@@ -78,8 +78,6 @@ impl Into<Run> for RunV1 {
 pub struct MsfParser {}
 
 impl MsfParser {
-    pub const VERSION: u8 = 1;
-
     /// Create a new [`MsfParser`].
     pub fn new() -> Self {
         MsfParser {}
@@ -126,7 +124,7 @@ impl MsfParser {
     /// Write the given run to the given writer.
     pub fn write<W: Write>(&self, run: &Run, mut writer: W) -> Result<(), String> {
         let run = self.run_sanity(run.clone());
-        writer.write(b"version 1\n").map_err(|e| e.to_string())?;
+        writer.write(b"version 2\n").map_err(|e| e.to_string())?;
         to_writer_pretty(&mut writer, &run, PrettyConfig::new()).map_err(|e| e.to_string())?;
         Ok(())
     }
