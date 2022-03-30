@@ -1,29 +1,31 @@
-use crate::run::Run;
+use crate::timer::Run;
 use quick_xml::{events::Event, Reader};
-use std::io::BufRead;
+use std::fs::File;
+use std::io::BufReader;
 
-fn str_to_ms(tm: &String) -> u128 {
-    if tm == "00:00:00" || tm == "" {
-        return 0;
+fn str_to_ms(tm: &str) -> u128 {
+    if tm == "00:00:00" || tm.is_empty() {
+        0
+    } else {
+        let hr = &tm[0..2].parse::<u128>().unwrap();
+        let min = &tm[3..5].parse::<u128>().unwrap();
+        let sec = &tm[6..8].parse::<u128>().unwrap();
+        let ms = &tm[9..12].parse::<u128>().unwrap();
+        ms + (sec * 1000) + (min * 60000) + (hr * 3600000)
     }
-    let hr = &tm[0..2].parse::<u128>().unwrap();
-    let min = &tm[3..5].parse::<u128>().unwrap();
-    let sec = &tm[6..8].parse::<u128>().unwrap();
-    let ms = &tm[9..12].parse::<u128>().unwrap();
-    return ms + (sec * 1000) + (min * 60000) + (hr * 3600000);
 }
 
 /// Constructs a [`Run`] from a LiveSplit split file.
 ///
 /// Attempts to retrieve the relevant information from LiveSplit's XML-based split file
 /// in order to construct a mist [`Run`]. Any info that cannot be retrieved is zeroed.
-pub struct LssParser<R: BufRead> {
-    reader: R,
+pub struct LssParser {
+    reader: BufReader<File>,
 }
 
-impl<R: BufRead> LssParser<R> {
-    /// Create a new LssParser from the reader. Reader must implement [`BufRead`].
-    pub fn new(reader: R) -> Self {
+impl LssParser {
+    /// Create a new [`LssParser`] from a [`BufReader`].
+    pub fn new(reader: BufReader<File>) -> Self {
         LssParser { reader }
     }
     /// Retrieve the information from the reader to create a [`Run`].
@@ -53,37 +55,35 @@ impl<R: BufRead> LssParser<R> {
                         run.set_game_title(
                             reader
                                 .read_text(b"GameName", &mut buffer2)
-                                .unwrap_or("".to_owned()),
+                                .unwrap_or_else(|_| "".to_owned()),
                         );
                     }
                     b"CategoryName" => {
                         run.set_category(
                             reader
                                 .read_text(b"CategoryName", &mut buffer2)
-                                .unwrap_or("".to_owned()),
+                                .unwrap_or_else(|_| "".to_owned()),
                         );
                     }
                     b"Offset" => {
                         let mut off_str = reader
                             .read_text(b"Offset", &mut buffer2)
-                            .unwrap_or("".to_owned());
+                            .unwrap_or_else(|_| "".to_owned());
                         off_str.remove(0);
-                        match str_to_ms(&off_str) {
-                            0 => {}
-                            t => run.set_offset(Some(t)),
-                        }
+                        let t = str_to_ms(&off_str);
+                        run.set_offset(t.into());
                     }
                     b"Name" => {
                         splits.push(
                             reader
                                 .read_text(b"Name", &mut buffer2)
-                                .unwrap_or("".to_owned()),
+                                .unwrap_or_else(|_| "".to_owned()),
                         );
                     }
                     b"RealTime" => {
                         time_str = reader
                             .read_text(b"RealTime", &mut buffer2)
-                            .unwrap_or("".to_owned());
+                            .unwrap_or_else(|_| "".to_owned());
                     }
                     b"SegmentHistory" => {
                         segment_sum = (0, 0);
@@ -94,14 +94,14 @@ impl<R: BufRead> LssParser<R> {
                     b"SplitTime" => match str_to_ms(&time_str) {
                         0 => {}
                         t => {
-                            pb_times.push(t);
+                            pb_times.push(t.into());
                             pb += t;
                         }
                     },
                     b"BestSegmentTime" => match str_to_ms(&time_str) {
                         0 => {}
                         t => {
-                            gold_times.push(t);
+                            gold_times.push(t.into());
                         }
                     },
                     b"Time" => {
@@ -109,7 +109,7 @@ impl<R: BufRead> LssParser<R> {
                         segment_sum.1 += str_to_ms(&time_str);
                     }
                     b"SegmentHistory" => {
-                        sum_times.push(segment_sum);
+                        sum_times.push((segment_sum.0, segment_sum.1.into()));
                     }
                     _ => {}
                 },
@@ -121,7 +121,7 @@ impl<R: BufRead> LssParser<R> {
         run.set_pb_times(&pb_times);
         run.set_sum_times(&sum_times);
         run.set_splits(&splits);
-        run.set_pb(pb);
+        run.set_pb(pb.into());
         run
     }
 }
