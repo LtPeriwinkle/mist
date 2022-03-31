@@ -82,8 +82,10 @@ pub struct MsfParser {
 
 impl MsfParser {
     /// Create a new [`MsfParser`].
-    pub fn new(filename: String) -> Self {
-        Self { filename }
+    pub fn new<S: ToString>(filename: S) -> Self {
+        Self {
+            filename: filename.to_string(),
+        }
     }
 
     /// Attempt to parse a [`Run`] from the file stored in the [`MsfParser`]
@@ -128,13 +130,28 @@ impl MsfParser {
         };
         Ok(run)
     }
+
     /// Write the given run to the file stored in the [`MsfParser`].
-    pub fn write<W: Write>(&mut self, run: &Run) -> Result<(), String> {
+    pub fn write(&mut self, run: &Run) -> Result<(), String> {
         let run = super::sanify_run(run);
         let mut file = File::create(&self.filename).map_err(|e| e.to_string())?;
         file.write(b"version 2\n").map_err(|e| e.to_string())?;
         to_writer_pretty(&mut file, &run, PrettyConfig::new()).map_err(|e| e.to_string())?;
         Ok(())
+    }
+
+    /// Set the filename to write the run to.
+    pub fn set_filename<S: ToString>(&mut self, new: S) {
+        self.filename = new.to_string();
+    }
+
+    /// Check whether there is a path stored in the parser or not.
+    pub fn no_path(&self) -> bool {
+        self.filename.is_empty()
+    }
+
+    pub fn filename(&self) -> &str {
+        &self.filename
     }
 }
 
