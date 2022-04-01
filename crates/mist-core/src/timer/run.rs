@@ -79,7 +79,7 @@ impl Run {
     }
     /// Returns the times that were set on each split on the last personal best, as their u128 values.
     pub fn pb_times_u128(&self) -> Vec<u128> {
-        self.pb_times.iter().map(|t| t.val()).collect()
+        self.pb_times.iter().map(|t| t.raw()).collect()
     }
     /// Returns the best time that the runner has achieved on each split.
     pub fn gold_times(&self) -> &Vec<TimeType> {
