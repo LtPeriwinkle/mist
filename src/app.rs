@@ -1,6 +1,4 @@
 use std::cell::RefCell;
-use std::fs::File;
-use std::io::BufReader;
 use std::rc::Rc;
 use std::thread;
 use std::time::{Duration, Instant};
@@ -56,24 +54,33 @@ impl<'a, 'b> App<'a, 'b> {
         let mut canvas = window.into_canvas().build().map_err(|_| get_error())?;
         let ev_pump = context.event_pump()?;
         let mut config = Config::open()?;
-        let msf = MsfParser::new();
-        let run = Rc::new(RefCell::new(if let Some(x) = config.file() {
-            let f = File::open(x).map_err(|e| e.to_string())?;
-            let reader = BufReader::new(f);
-            msf.parse(reader)?
-        } else {
-            match dialogs::open_run() {
-                Ok(ret) => {
-                    if let Some((r, path)) = ret {
+        let (run, msf) = loop {
+            let path = if let Some(x) = config.file() {
+                x.to_owned()
+            } else {
+                match dialogs::get_run_path() {
+                    Some(x) => x,
+                    None => "".into(),
+                }
+            };
+            if path.is_empty() {
+                break (Run::empty(), MsfParser::new(""));
+            } else {
+                let msf = MsfParser::new(&path);
+                match msf.parse() {
+                    Ok(r) => {
                         config.set_file(&path);
-                        r
-                    } else {
-                        Run::empty()
+                        break (r, msf);
+                    }
+                    Err(_) => {
+                        if !dialogs::try_again() {
+                            break (Run::empty(), msf);
+                        }
                     }
                 }
-                Err(e) => return Err(e.to_string()),
             }
-        }));
+        };
+        let run = Rc::new(RefCell::new(run));
 
         canvas
             .window_mut()
@@ -97,14 +104,7 @@ impl<'a, 'b> App<'a, 'b> {
     }
 
     pub fn run(mut self) -> Result<(), String> {
-        let no_file: bool;
-        let mut path = if let Some(p) = self.config.file() {
-            no_file = false;
-            p.clone()
-        } else {
-            no_file = true;
-            "".to_owned()
-        };
+        let no_file = self.config.file().is_none();
 
         // framerate cap timer
         let mut frame_time: Instant;
@@ -157,32 +157,34 @@ impl<'a, 'b> App<'a, 'b> {
                                 // save the previous run if it was updated
                                 if (self.run_state.needs_save() || no_file) && dialogs::save_check()
                                 {
-                                    if path.is_empty() {
-                                        let p = dialogs::get_save_as();
-                                        if let Some(s) = p {
-                                            path = s;
-                                            let mut f =
-                                                File::create(&path).map_err(|e| e.to_string())?;
-                                            self.msf.write(&self.run.borrow(), &mut f)?;
+                                    if self.msf.no_path() {
+                                        if let Some(s) = dialogs::get_save_as() {
+                                            self.msf.set_filename(&s);
+                                            self.msf.write(&self.run.borrow())?;
                                         }
                                     } else {
-                                        let mut f =
-                                            File::create(&path).map_err(|e| e.to_string())?;
-                                        self.msf.write(&self.run.borrow(), &mut f)?;
+                                        self.msf.write(&self.run.borrow())?;
                                     }
                                 }
                                 // open a file dialog to get a new split file + run
                                 // if the user cancelled, do nothing
-                                match dialogs::open_run() {
-                                    Ok(s) => {
-                                        if let Some((run, p)) = s {
-                                            self.run.replace(run);
-                                            self.config.set_file(&path);
-                                            path = p;
+                                loop {
+                                    if let Some(x) = dialogs::get_run_path() {
+                                        match self.msf.parse() {
+                                            Ok(r) => {
+                                                self.msf.set_filename(&x);
+                                                self.run.replace(r);
+                                                break;
+                                            }
+                                            Err(_) => {
+                                                if !dialogs::try_again() {
+                                                    break;
+                                                }
+                                            }
                                         }
                                     }
-                                    Err(e) => return Err(e.to_string()),
                                 }
+                                self.config.set_file(self.msf.filename());
                                 self.run_state = RunState::new(Rc::clone(&self.run));
                                 self.ren_state.reload_run()?;
                             }
@@ -226,16 +228,14 @@ impl<'a, 'b> App<'a, 'b> {
         self.config.save()?;
         // if splits were updated, prompt user to save the split file
         if (self.run_state.needs_save() || no_file) && dialogs::save_check() {
-            if path.is_empty() {
+            if self.msf.no_path() {
                 let p = dialogs::get_save_as();
                 if let Some(s) = p {
-                    path = s;
-                    let mut f = File::create(&path).map_err(|e| e.to_string())?;
-                    self.msf.write(&self.run.borrow(), &mut f)?;
+                    self.msf.set_filename(s);
+                    self.msf.write(&self.run.borrow())?;
                 }
             } else {
-                let mut f = File::create(&path).map_err(|e| e.to_string())?;
-                self.msf.write(&self.run.borrow(), &mut f)?;
+                self.msf.write(&self.run.borrow())?;
             }
         }
         Ok(())

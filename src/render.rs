@@ -49,6 +49,7 @@ pub struct RenderState<'a, 'b> {
     max_splits: usize,
     inline: bool,
     status: SplitStatus,
+    comparison: Comparison,
     #[cfg(feature = "bg")]
     background: Background,
 }
@@ -77,10 +78,14 @@ impl<'a, 'b> RenderState<'a, 'b> {
     ) -> Result<Self, String> {
         canvas.clear();
         let creator = canvas.texture_creator();
-        let rw = RWops::from_file(config.tfont().get_path()?, "r")?;
-        let timer_font = TTF.load_font_from_rwops(rw, config.fsize().0)?;
-        let rw = RWops::from_file(config.sfont().get_path()?, "r")?;
-        let splits_font = TTF.load_font_from_rwops(rw, config.fsize().1)?;
+        let tfont = config.tfont();
+        let tf_path = tfont.get_path()?;
+        let sfont = config.sfont();
+        let sf_path = sfont.get_path()?;
+        let rw = RWops::from_file(tf_path.0, "r")?;
+        let timer_font = TTF.load_font_at_index_from_rwops(rw, tf_path.1, tfont.size())?;
+        let rw = RWops::from_file(sf_path.0, "r")?;
+        let splits_font = TTF.load_font_at_index_from_rwops(rw, sf_path.1, sfont.size())?;
         let panels = {
             let mut ret = vec![];
             for panel in config.panels() {
@@ -102,7 +107,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     }
                 };
                 let time = if let Panel::SumOfBest = panel {
-                    let sob = run.borrow().gold_times().iter().sum::<u128>();
+                    let sob = run.borrow().gold_times_u128().iter().sum::<u128>();
                     format::split_time_text(sob)
                 } else {
                     "-  ".into()
@@ -114,10 +119,12 @@ impl<'a, 'b> RenderState<'a, 'b> {
             }
             ret
         };
-        let string_times: Vec<String> = format::split_time_sum(run.borrow().pb_times())
+        let times = run.borrow().pb_times().clone();
+        let string_times: Vec<String> = format::split_time_sum(&run.borrow().pb_times_u128())
             .iter()
-            .map(|&t| {
-                if t == 0 {
+            .enumerate()
+            .map(|(idx, &t)| {
+                if t == 0 || !times[idx].is_time() {
                     "-  ".into()
                 } else {
                     format::split_time_text(t)
@@ -155,8 +162,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
             max_splits = max_initial_splits;
             bottom_index = max_initial_splits - 1;
         }
-        let time_str = if let Some(n) = run.borrow().offset() {
-            format!("-{}", format::ms_to_readable(n, None))
+        let time_str = if run.borrow().offset().is_time() {
+            format!(
+                "-{}",
+                format::ms_to_readable(run.borrow().offset().val(), None)
+            )
         } else {
             "0.000".into()
         };
@@ -197,6 +207,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             max_splits,
             inline: config.layout().inline_splits,
             status: SplitStatus::None,
+            comparison: Comparison::PersonalBest,
             #[cfg(feature = "bg")]
             background: Background::load(config, canvas.viewport(), &creator)?,
             canvas,
@@ -220,9 +231,15 @@ impl<'a, 'b> RenderState<'a, 'b> {
         if self.status != SplitStatus::None {
             for panel in &mut self.panels {
                 match panel.panel_type() {
-                    Panel::Pace { golds } if self.run.borrow().pb_times()[self.current] != 0 => {
+                    Panel::Pace { golds }
+                        if self.run.borrow().pb_times()[self.current].is_time() =>
+                    {
                         let r = self.run.borrow();
-                        let times = if *golds { r.gold_times() } else { r.pb_times() };
+                        let times = if *golds {
+                            r.gold_times_u128()
+                        } else {
+                            r.pb_times_u128()
+                        };
                         let pace = format::split_time_text(
                             times[self.current + 1..].iter().sum::<u128>() + update.time,
                         );
@@ -235,12 +252,12 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     }
                     Panel::CurrentSplitDiff { golds }
                         if self.splits.len() > 1
-                            && self.run.borrow().pb_times()[self.current] != 0 =>
+                            && self.run.borrow().pb_times()[self.current].is_time() =>
                     {
                         let compare_time: u128 = if *golds {
-                            self.run.borrow().gold_times()[self.current]
+                            self.run.borrow().gold_times()[self.current].raw()
                         } else {
-                            self.run.borrow().pb_times()[self.current]
+                            self.run.borrow().pb_times()[self.current].raw()
                         };
                         let time = if !*golds {
                             if update.split_time < compare_time {
@@ -331,7 +348,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
                                 if *panel.panel_type() == Panel::SumOfBest {
                                     panel.set_time(render_text(
                                         format::split_time_text(
-                                            self.run.borrow().gold_times().iter().sum::<u128>(),
+                                            self.run
+                                                .borrow()
+                                                .gold_times_u128()
+                                                .iter()
+                                                .sum::<u128>(),
                                         ),
                                         &self.splits_font,
                                         &self.creator,
@@ -342,7 +363,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             self.colors[4]
                         }
                     };
-                    let time_str = if self.run.borrow().pb_times()[self.current] == 0 {
+                    let time_str = if !self.run.borrow().pb_times()[self.current].is_time() {
                         "-  ".into()
                     } else {
                         format::diff_text(diff)
@@ -412,8 +433,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     } else {
                         self.bottom_index = self.max_splits - 1;
                     }
-                    if let Some(x) = self.run.borrow().offset() {
-                        self.time_str = format!("-{}", format::ms_to_readable(x, None));
+                    if self.run.borrow().offset().is_time() {
+                        self.time_str = format!(
+                            "-{}",
+                            format::ms_to_readable(self.run.borrow().offset().val(), None)
+                        );
                     } else {
                         self.time_str = "0.000".into();
                     }
@@ -432,6 +456,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         }
                     }
                     self.is_running = false;
+                    self.rebuild_comparison(self.comparison)?;
                     self.canvas
                         .window_mut()
                         .set_title(&format!(
@@ -441,87 +466,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         ))
                         .map_err(|_| get_error())?;
                 }
-                StateChange::ComparisonChanged { comp } => match comp {
-                    Comparison::None => {
-                        for split in &mut self.splits {
-                            split.set_comp(render_text(
-                                "-  ",
-                                &self.splits_font,
-                                &self.creator,
-                                Color::WHITE,
-                            )?);
-                        }
-                    }
-                    Comparison::Average => {
-                        let mut i = 0;
-                        let (attempts, mut times) = {
-                            let mut att = vec![];
-                            let mut tm = vec![];
-                            for sum in self.run.borrow().sum_times() {
-                                att.push(sum.0);
-                                tm.push(sum.1);
-                            }
-                            (att, tm)
-                        };
-                        while i < attempts.len() {
-                            times[i] /= {
-                                if attempts[i] == 0 {
-                                    1
-                                } else {
-                                    attempts[i]
-                                }
-                            };
-                            i += 1;
-                        }
-                        let split_times_raw: Vec<String> = format::split_time_sum(&times)
-                            .iter()
-                            .map(|&val| {
-                                if val == 0 {
-                                    "-  ".into()
-                                } else {
-                                    format::split_time_text(val)
-                                }
-                            })
-                            .collect();
-                        i = 0;
-                        while i < self.splits.len() {
-                            self.splits[i].set_comp(render_text(
-                                &split_times_raw[i],
-                                &self.splits_font,
-                                &self.creator,
-                                Color::WHITE,
-                            )?);
-                            i += 1;
-                        }
-                    }
-                    c => {
-                        let split_times = match c {
-                            Comparison::PersonalBest => self.run.borrow().pb_times().clone(),
-                            Comparison::Golds => self.run.borrow().gold_times().clone(),
-                            _ => unreachable!(),
-                        };
-                        let split_times_raw: Vec<String> = format::split_time_sum(&split_times)
-                            .iter()
-                            .map(|&val| {
-                                if val == 0 {
-                                    "-  ".into()
-                                } else {
-                                    format::split_time_text(val)
-                                }
-                            })
-                            .collect();
-                        let mut i = 0;
-                        while i < self.splits.len() {
-                            self.splits[i].set_comp(render_text(
-                                &split_times_raw[i],
-                                &self.splits_font,
-                                &self.creator,
-                                Color::WHITE,
-                            )?);
-                            i += 1;
-                        }
-                    }
-                },
+                StateChange::ComparisonChanged { comp } => self.rebuild_comparison(comp)?,
                 StateChange::EnterOffset => {
                     self.is_running = true;
                 }
@@ -532,7 +477,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             if update.offset {
                 self.time_str = format!(
                     "-{}",
-                    format::ms_to_readable(self.run.borrow().offset().unwrap() - update.time, None)
+                    format::ms_to_readable(self.run.borrow().offset().val() - update.time, None)
                 );
             } else {
                 self.time_str = format::ms_to_readable(update.time, None);
@@ -614,7 +559,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
     }
 
     pub fn reload_run(&mut self) -> Result<(), String> {
-        let string_times: Vec<String> = format::split_time_sum(self.run.borrow().pb_times())
+        let string_times: Vec<String> = format::split_time_sum(&self.run.borrow().pb_times_u128())
             .iter()
             .map(|&t| {
                 if t == 0 {
@@ -638,8 +583,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 None,
             ));
         }
-        if let Some(x) = self.run.borrow().offset() {
-            self.time_str = format!("-{}", format::ms_to_readable(x, None));
+        if self.run.borrow().offset().is_time() {
+            self.time_str = format!(
+                "-{}",
+                format::ms_to_readable(self.run.borrow().offset().val(), None)
+            );
         } else {
             self.time_str = "0.000".into();
         }
@@ -673,6 +621,94 @@ impl<'a, 'b> RenderState<'a, 'b> {
         } else {
             self.highlighted = usize::MAX;
         }
+    }
+
+    fn rebuild_comparison(&mut self, comp: Comparison) -> Result<(), String> {
+        self.comparison = comp;
+        match comp {
+            Comparison::None => {
+                for split in &mut self.splits {
+                    split.set_comp(render_text(
+                        "-  ",
+                        &self.splits_font,
+                        &self.creator,
+                        Color::WHITE,
+                    )?);
+                }
+            }
+            Comparison::Average => {
+                let mut i = 0;
+                let (attempts, times) = {
+                    let mut att = vec![];
+                    let mut tm = vec![];
+                    for sum in self.run.borrow().sum_times() {
+                        att.push(sum.0);
+                        tm.push(sum.1);
+                    }
+                    (att, tm)
+                };
+                let mut avgs = vec![];
+                while i < attempts.len() {
+                    avgs.push(if attempts[i] == 0 {
+                        times[i] / attempts[i]
+                    } else {
+                        attempts[i]
+                    });
+                    i += 1;
+                }
+                let split_times_raw: Vec<String> = format::split_time_sum(&avgs)
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, &t)| {
+                        if t == 0 || !times[idx].is_time() {
+                            "-  ".into()
+                        } else {
+                            format::split_time_text(t)
+                        }
+                    })
+                    .collect();
+                i = 0;
+                while i < self.splits.len() {
+                    self.splits[i].set_comp(render_text(
+                        &split_times_raw[i],
+                        &self.splits_font,
+                        &self.creator,
+                        Color::WHITE,
+                    )?);
+                    i += 1;
+                }
+            }
+            c => {
+                let split_times = match c {
+                    Comparison::PersonalBest => self.run.borrow().pb_times_u128(),
+                    Comparison::Golds => self.run.borrow().gold_times_u128(),
+                    _ => unreachable!(),
+                };
+                let times = self.run.borrow().pb_times().clone();
+                let split_times_raw: Vec<String> = format::split_time_sum(&split_times)
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, &t)| {
+                        if t == 0 || !times[idx].is_time() {
+                            "-  ".into()
+                        } else {
+                            format::split_time_text(t)
+                        }
+                    })
+                    .collect();
+                let mut i = 0;
+                while i < self.splits.len() {
+                    self.splits[i].set_comp(render_text(
+                        &split_times_raw[i],
+                        &self.splits_font,
+                        &self.creator,
+                        Color::WHITE,
+                    )?);
+                    i += 1;
+                }
+            }
+        }
+        Ok(())
     }
 
     fn render_rows(&mut self) -> Result<(), String> {
