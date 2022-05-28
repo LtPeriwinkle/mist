@@ -1,20 +1,22 @@
-# <img src="assets/MIST.png" width="50" height="50"/> mist
+# <img src="assets/MIST.png?raw=true" width="50" height="50"/> mist
 ![Lines of code](https://img.shields.io/tokei/lines/github/ltperiwinkle/mist)
 
 a minimal, improved speedrun timer
 
-[Changelog](CHANGELOG.md) \
+[Changelog](CHANGELOG.md)
+
 [Latest Release](https://github.com/LtPeriwinkle/mist/releases/latest)
 
 ## Planned features
 Once all planned features are complete, I will likely stop developing this and only squash bugs etc. More *might* still be added to this list.
-- [X] Cross platform
+
+* [X] Cross platform
 	* [X] Linux
 	* [X] Windows
 	* [X] MacOS (compiled & tested in macOS catalina VM)
-- [X] Human-readable split file (using [ron](https://github.com/ron-rs/ron))
-- [X] LiveSplit split file transposing (split tool)
-- [ ] (limited) customizability 
+* [X] Human-readable split file (using [ron](https://github.com/ron-rs/ron))
+* [X] LiveSplit split file transposing (split tool)
+* [ ] (limited) customizability
 	* [X] custom fonts/font sizes
 	* [X] custom colors
 	* [X] keybinds
@@ -22,31 +24,32 @@ Once all planned features are complete, I will likely stop developing this and o
 	* [X] panels (sum of best etc)
 	* [X] time rounding (30/60/off)
 	* [ ] *very limited* timer layout (i.e. use two rows for splits like option available in LiveSplit)
-- [ ] split file creation tool
+* [ ] split file creation tool
 	* [X] edit existing msf
 	* [X] convert lss to msf
 	* [X] create new splits
 	* [ ] actually good and usable (hardest part)
-- [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time)
-- [X] dynamic colors
-- [X] different run comparisons
+* [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time)
+* [X] dynamic colors
+* [X] different run comparisons
 	* [X] sum of best
 	* [X] pb
 	* [X] none
 	* [X] average
-- [X] hot reloading
+* [X] hot reloading
 	* [X] split file reloading
 	* [X] config reloading
-- [ ] plugins
+* [ ] plugins
 	* [ ] autoloading from plugins directory (probably run as some kind of child process thing?)
 	* [ ] communicate with plugins through ipc (i.e. unix socket, windows named pipe)
 	* [ ] plugins that are shipped with this repo (a discord presence, some kind of notes plugin, maybe more)
-- [ ] search for config/assets in standard os-specific dirs rather than hard-coded one (allows for packaging, installation, etc)
-- [X] better way to find fonts than paths in config file
-- [X] skip splits (because somehow i missed this all along)
+* [ ] search for config/assets in standard os-specific dirs rather than hard-coded one (allows for packaging, installation, etc)
+* [X] better way to find fonts than paths in config file
+* [X] skip splits (because somehow i missed this all along)
 
 ## Unplanned features
 These features will not be implemented, in the spirit of minimalism.
+
 * Autosplitters
 * Horizontal timer layout
 * Ingame time
