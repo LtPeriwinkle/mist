@@ -106,14 +106,15 @@ brew install sdl2 sdl2_image sdl2_ttf sdl2_gfx
 Then you should be able to run `cargo build --release`.
 
 # Usage
-The default keybinds are: \
-<kbd>F1</kbd>: Open new split file \
-<kbd>Space</kbd>: Start/split/stop \
-<kbd>Enter</kbd>: Pause \
-<kbd>R</kbd>: Reset \
-<kbd>&leftarrow;</kbd>: Previous comparison \
-<kbd>&rightarrow;</kbd>: Next comparison \
-Mousewheel: Scroll splits up/down (if there are more than fit in the window)
+The default keybinds are:
+
+* <kbd>F1</kbd>: Open new split file
+* <kbd>Space</kbd>: Start/split/stop
+* <kbd>Enter</kbd>: Pause
+* <kbd>R</kbd>: Reset
+* <kbd>&leftarrow;</kbd>: Previous comparison
+* <kbd>&rightarrow;</kbd>: Next comparison
+* Mousewheel: Scroll splits up/down (if there are more than fit in the window)
 
 Mist reads configuration info from assets/mist.cfg in the directory where its executable is located.
 
