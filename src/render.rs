@@ -1,7 +1,7 @@
 // Functions for putting stuff into the correct places on the sdl buffer
 use crate::panels::RenderPanel;
 use crate::splits::Split;
-use mist_core::config::{Config, Panel};
+use mist_core::config::{Colors, Config, Panel};
 use mist_core::timer::state::{RunUpdate, SplitStatus, StateChange};
 use mist_core::timer::{format, Comparison, Run};
 use sdl2::get_error;
@@ -31,7 +31,7 @@ pub struct RenderState<'a, 'b> {
     run: Rc<RefCell<Run>>,
     canvas: WindowCanvas,
     creator: TextureCreator<WindowContext>,
-    colors: [(u8, u8, u8); 6],
+    colors: Colors,
     splits: Vec<Split>,
     panels: Vec<RenderPanel>,
     map: FontMap,
@@ -42,6 +42,7 @@ pub struct RenderState<'a, 'b> {
     timer_height: u32,
     splits_font: Font<'b, 'a>,
     splits_height: u32,
+    ms_ratio: f32,
     top_index: usize,
     bottom_index: usize,
     highlighted: usize,
@@ -112,8 +113,18 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 } else {
                     "-  ".into()
                 };
-                let time_tex = render_text(&time, &splits_font, &creator, Color::WHITE)?;
-                let text_tex = render_text(&text, &splits_font, &creator, Color::WHITE)?;
+                let time_tex = render_text(
+                    &time,
+                    &splits_font,
+                    &creator,
+                    Color::from(config.colors().text),
+                )?;
+                let text_tex = render_text(
+                    &text,
+                    &splits_font,
+                    &creator,
+                    Color::from(config.colors().text),
+                )?;
                 let newpanel = RenderPanel::new(text_tex, time_tex, paneltype);
                 ret.push(newpanel);
             }
@@ -138,8 +149,20 @@ impl<'a, 'b> RenderState<'a, 'b> {
             .enumerate()
             .map(|(idx, name)| {
                 Split::new(
-                    render_text(name, &splits_font, &creator, Color::WHITE).unwrap(),
-                    render_text(&string_times[idx], &splits_font, &creator, Color::WHITE).unwrap(),
+                    render_text(
+                        name,
+                        &splits_font,
+                        &creator,
+                        Color::from(config.colors().text),
+                    )
+                    .unwrap(),
+                    render_text(
+                        &string_times[idx],
+                        &splits_font,
+                        &creator,
+                        Color::from(config.colors().text),
+                    )
+                    .unwrap(),
                     None,
                     None,
                 )
@@ -189,10 +212,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
         canvas.present();
         Ok(Self {
             run,
-            colors: config.color_list(),
+            colors: config.colors(),
             splits,
             panels,
-            map: FontMap::generate(&timer_font, &creator, Color::WHITE)?,
+            map: FontMap::generate(&timer_font, &creator, Color::from(config.colors().text))?,
             time_str,
             time_rounding: config.rounding(),
             is_running: false,
@@ -200,6 +223,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             timer_height,
             splits_font,
             splits_height,
+            ms_ratio: config.ms_ratio(),
             top_index: 0,
             bottom_index,
             highlighted: usize::MAX,
@@ -219,12 +243,12 @@ impl<'a, 'b> RenderState<'a, 'b> {
         if update.status != self.status {
             self.status = update.status;
             let color = match self.status {
-                SplitStatus::None => (255, 255, 255),
-                SplitStatus::Ahead => self.colors[0],
-                SplitStatus::Behind => self.colors[1],
-                SplitStatus::Gaining => self.colors[2],
-                SplitStatus::Losing => self.colors[3],
-                SplitStatus::Gold => self.colors[4],
+                SplitStatus::None => self.colors.text,
+                SplitStatus::Ahead => self.colors.ahead,
+                SplitStatus::Behind => self.colors.behind,
+                SplitStatus::Gaining => self.colors.gaining,
+                SplitStatus::Losing => self.colors.losing,
+                SplitStatus::Gold => self.colors.gold,
             };
             self.map = FontMap::generate(&self.timer_font, &self.creator, color.into()).unwrap();
         }
@@ -247,7 +271,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             pace,
                             &self.splits_font,
                             &self.creator,
-                            Color::WHITE,
+                            Color::from(self.colors.text),
                         )?);
                     }
                     Panel::CurrentSplitDiff { golds }
@@ -274,7 +298,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             time,
                             &self.splits_font,
                             &self.creator,
-                            Color::WHITE,
+                            Color::from(self.colors.text),
                         )?);
                     }
                     _ => {}
@@ -338,11 +362,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     status, time, diff, ..
                 } => {
                     let color = match status {
-                        SplitStatus::None => (255, 255, 255),
-                        SplitStatus::Ahead => self.colors[0],
-                        SplitStatus::Behind => self.colors[1],
-                        SplitStatus::Gaining => self.colors[2],
-                        SplitStatus::Losing => self.colors[3],
+                        SplitStatus::None => self.colors.text,
+                        SplitStatus::Ahead => self.colors.ahead,
+                        SplitStatus::Behind => self.colors.behind,
+                        SplitStatus::Gaining => self.colors.gaining,
+                        SplitStatus::Losing => self.colors.losing,
                         SplitStatus::Gold => {
                             for panel in &mut self.panels {
                                 if *panel.panel_type() == Panel::SumOfBest {
@@ -356,11 +380,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
                                         ),
                                         &self.splits_font,
                                         &self.creator,
-                                        Color::WHITE,
+                                        Color::from(self.colors.text),
                                     )?);
                                 }
                             }
-                            self.colors[4]
+                            self.colors.gold
                         }
                     };
                     let time_str = if !self.run.borrow().pb_times()[self.current].is_time() {
@@ -373,7 +397,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             "-  ",
                             &self.splits_font,
                             &self.creator,
-                            Color::WHITE,
+                            Color::from(self.colors.text),
                         )?));
                     } else {
                         self.splits[self.current].set_diff(Some(render_text(
@@ -387,7 +411,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             &time_str,
                             &self.splits_font,
                             &self.creator,
-                            Color::WHITE,
+                            Color::from(self.colors.text),
                         )?));
                     }
                 }
@@ -451,7 +475,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                                 "-  ",
                                 &self.splits_font,
                                 &self.creator,
-                                Color::WHITE,
+                                Color::from(self.colors.text),
                             )?);
                         }
                     }
@@ -545,7 +569,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
     }
 
     pub fn render(&mut self) -> Result<(), String> {
-        self.canvas.set_draw_color(self.colors[5]);
+        self.canvas.set_draw_color(self.colors.background);
         self.canvas.clear();
 
         #[cfg(feature = "bg")]
@@ -572,12 +596,17 @@ impl<'a, 'b> RenderState<'a, 'b> {
         self.splits = vec![];
         for (idx, name) in self.run.borrow().splits().iter().enumerate() {
             self.splits.push(Split::new(
-                render_text(name, &self.splits_font, &self.creator, Color::WHITE)?,
+                render_text(
+                    name,
+                    &self.splits_font,
+                    &self.creator,
+                    Color::from(self.colors.text),
+                )?,
                 render_text(
                     &string_times[idx],
                     &self.splits_font,
                     &self.creator,
-                    Color::WHITE,
+                    Color::from(self.colors.text),
                 )?,
                 None,
                 None,
@@ -632,7 +661,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         "-  ",
                         &self.splits_font,
                         &self.creator,
-                        Color::WHITE,
+                        Color::from(self.colors.text),
                     )?);
                 }
             }
@@ -673,7 +702,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         &split_times_raw[i],
                         &self.splits_font,
                         &self.creator,
-                        Color::WHITE,
+                        Color::from(self.colors.text),
                     )?);
                     i += 1;
                 }
@@ -702,7 +731,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         &split_times_raw[i],
                         &self.splits_font,
                         &self.creator,
-                        Color::WHITE,
+                        Color::from(self.colors.text),
                     )?);
                     i += 1;
                 }
@@ -726,7 +755,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             let TextureQuery { width, height, .. } = item.name().query();
             // draw the blue highlight box before drawing the text for the split with index current
             if index == self.highlighted {
-                self.canvas.set_draw_color(Color::BLUE);
+                self.canvas.set_draw_color(self.colors.highlight);
                 self.canvas
                     .fill_rect(Rect::new(0, y - 1, window_width, incr_height as u32 + 5))?;
             }
@@ -779,7 +808,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 );
                 self.canvas.copy(x, None, Some(row))?;
             }
-            self.canvas.set_draw_color(Color::GRAY);
+            self.canvas.set_draw_color(self.colors.line);
             // draw a line to separate between the rows
             y += incr_height + 3;
             self.canvas
@@ -790,28 +819,34 @@ impl<'a, 'b> RenderState<'a, 'b> {
     }
 
     fn render_time(&mut self) -> Result<(), String> {
-        let coords = self.map.gen_str_coords(&self.time_str);
+        let coords = self.map.gen_str_coords(&self.time_str, self.ms_ratio);
         let vp = self.canvas.viewport();
         let h = vp.height();
         let w = vp.width();
-        let font_y = self.timer_height;
-        let mut src = Rect::new(0, 0, 0, font_y);
-        // multiply initial values by 8/10 so that the font is smaller
+        let mut src = Rect::new(0, 0, 0, self.timer_height);
+        let starting_y = (self.timer_height as f32 * self.ms_ratio) as u32;
+        let diff =
+            (self.timer_height - self.timer_font.find_glyph_metrics('0').unwrap().maxy as u32) / 2;
         let mut dst = Rect::new(
             0,
-            (h - (font_y * 8 / 10) - (self.splits_height * self.panels.len() as u32)) as i32 - 5,
+            (h - (starting_y + (diff as f32 * (1.0 - self.ms_ratio)) as u32)
+                - (self.splits_height * self.panels.len() as u32)) as i32,
             0,
-            font_y * 8 / 10,
+            starting_y,
         );
-        for (idx, (sx, sw, dx, dw)) in coords.iter().enumerate() {
-            src.set_x((*sx).try_into().unwrap());
-            src.set_width(*sw);
-            dst.set_x((w - *dx).try_into().unwrap());
-            dst.set_width(*dw);
+        for (idx, &(sx, sw, dx, dw)) in coords.iter().enumerate() {
+            src.set_x((sx).try_into().unwrap());
+            src.set_width(sw);
+            dst.set_x((w - dx).try_into().unwrap());
+            dst.set_width(dw);
             if idx == 3 {
-                dst.set_y((h - font_y - (self.splits_height * self.panels.len() as u32)) as i32);
-                dst.set_height(font_y);
+                dst.set_y(
+                    (h - self.timer_height - (self.splits_height * self.panels.len() as u32))
+                        as i32,
+                );
+                dst.set_height(self.timer_height);
             }
+            self.canvas.draw_rect(dst)?;
             self.canvas.copy(&self.map.tex, Some(src), Some(dst))?;
         }
         Ok(())
@@ -886,7 +921,7 @@ impl FontMap {
         })
     }
 
-    fn gen_str_coords(&self, string: &str) -> Vec<(u32, u32, u32, u32)> {
+    fn gen_str_coords(&self, string: &str, ms_ratio: f32) -> Vec<(u32, u32, u32, u32)> {
         let mut coord_idx;
         let mut ret: Vec<(u32, u32, u32, u32)> = vec![];
         let mut x = 0;
@@ -911,8 +946,8 @@ impl FontMap {
             let width = self.coords[coord_idx + 1] - self.coords[coord_idx];
             x += if chr == ':' || chr == '.' {
                 width
-            } else if idx < 4 {
-                self.coords[15] * 8 / 10
+            } else if idx < 3 {
+                (self.coords[15] as f32 * ms_ratio) as u32
             } else {
                 self.coords[15]
             };
@@ -920,7 +955,11 @@ impl FontMap {
                 self.coords[coord_idx] + (coord_idx as u32 * space),
                 width,
                 x,
-                if idx < 4 { width * 8 / 10 } else { width },
+                if idx < 3 {
+                    (width as f32 * ms_ratio) as u32
+                } else {
+                    width
+                },
             );
             ret.push(tup);
         }
