@@ -1,3 +1,4 @@
+use super::Colors;
 use super::Font;
 use super::KeybindsRaw;
 use super::LayoutOpts;
@@ -17,12 +18,13 @@ pub struct Config {
     img_file: Option<String>,
     #[cfg(feature = "bg")]
     img_scaled: bool,
-    colors: [(u8, u8, u8); 6],
+    colors: Colors,
     frame_rounding: Option<u128>,
     layout: LayoutOpts,
     panels: Vec<Panel>,
     t_font: Font,
     s_font: Font,
+    ms_ratio: f32,
     binds: KeybindsRaw,
 }
 
@@ -30,7 +32,7 @@ impl Config {
     /// Attempts to open and parse mist's default config.
     ///
     /// If a Config cannot be parsed, returns the default.
-    /// Only will return `Err` if it cannot read/write to the config file.
+    /// Only will return `Err` if it cannot read the config file.
     pub fn open() -> Result<Self, String> {
         let file = OpenOptions::new()
             .read(true)
@@ -68,7 +70,7 @@ impl Config {
         &self.s_font
     }
     /// Get the list of colors to be used for the timer.
-    pub fn color_list(&self) -> [(u8, u8, u8); 6] {
+    pub fn colors(&self) -> Colors {
         self.colors
     }
     /// Write the config to the file.
@@ -107,6 +109,10 @@ impl Config {
     pub fn rounding(&self) -> Option<u128> {
         self.frame_rounding
     }
+    /// Get the ratio of millisecond font size to timer font size
+    pub fn ms_ratio(&self) -> f32 {
+        self.ms_ratio
+    }
 }
 
 impl Default for Config {
@@ -117,19 +123,13 @@ impl Default for Config {
             img_file: None,
             #[cfg(feature = "bg")]
             img_scaled: false,
-            colors: [
-                (0, 255, 0),
-                (255, 0, 0),
-                (255, 90, 90),
-                (135, 255, 125),
-                (255, 255, 0),
-                (0, 0, 0),
-            ],
             frame_rounding: Some(30),
+            colors: Colors::default(),
             layout: LayoutOpts::default(),
             panels: vec![],
             t_font: Font::timer_default(),
             s_font: Font::splits_default(),
+            ms_ratio: 1.0,
             binds: KeybindsRaw::default(),
         }
     }
