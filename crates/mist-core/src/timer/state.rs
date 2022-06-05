@@ -237,10 +237,10 @@ impl RunState {
                 self.run_status = SplitStatus::Ahead;
                 return;
             }
-            let allowed = allowed - buffer;
             let time = self.time as i128;
             // if the last split was ahead of comparison split
             if buffer < 0 {
+                let allowed = allowed - buffer;
                 // if the runner has spent more time than allowed they have to be behind
                 if time > allowed {
                     self.run_status = SplitStatus::Behind;
@@ -259,7 +259,7 @@ impl RunState {
                 if time > allowed && time < allowed + buffer {
                     self.run_status = SplitStatus::Gaining;
                 // if they are behind both the allowed time and their current pace they must be behind
-                } else if time > allowed && time > allowed + buffer {
+                } else if time > allowed + buffer {
                     self.run_status = SplitStatus::Behind;
                 // even if the last split was behind, often during part of the split the runner could finish it and come out ahead
                 } else {
