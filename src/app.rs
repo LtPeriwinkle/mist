@@ -170,9 +170,9 @@ impl<'a, 'b> App<'a, 'b> {
                                 // if the user cancelled, do nothing
                                 loop {
                                     if let Some(x) = dialogs::get_run_path() {
+                                        self.msf.set_filename(&x);
                                         match self.msf.parse() {
                                             Ok(r) => {
-                                                self.msf.set_filename(&x);
                                                 self.run.replace(r);
                                                 break;
                                             }

@@ -825,7 +825,6 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 );
                 dst.set_height(self.timer_height);
             }
-            self.canvas.draw_rect(dst)?;
             self.canvas.copy(&self.map.tex, Some(src), Some(dst))?;
         }
         Ok(())
