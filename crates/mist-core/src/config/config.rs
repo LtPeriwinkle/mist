@@ -14,6 +14,7 @@ use std::io::Write;
 /// Configuration of mist.
 pub struct Config {
     def_file: Option<String>,
+    win_size: (u32, u32),
     #[cfg(feature = "bg")]
     img_file: Option<String>,
     #[cfg(feature = "bg")]
@@ -113,12 +114,19 @@ impl Config {
     pub fn ms_ratio(&self) -> f32 {
         self.ms_ratio
     }
+    pub fn win_size(&self) -> (u32, u32) {
+        self.win_size
+    }
+    pub fn set_win_size(&mut self, new: (u32, u32)) {
+        self.win_size = new;
+    }
 }
 
 impl Default for Config {
     fn default() -> Config {
         Config {
             def_file: None,
+            win_size: (300, 500),
             #[cfg(feature = "bg")]
             img_file: None,
             #[cfg(feature = "bg")]
