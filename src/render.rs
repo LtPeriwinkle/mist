@@ -183,10 +183,6 @@ impl<'a, 'b> RenderState<'a, 'b> {
             .map_err(|_| get_error())?;
         canvas
             .window_mut()
-            .set_size(300, 500 + (splits_height * panels.len() as u32))
-            .map_err(|_| get_error())?;
-        canvas
-            .window_mut()
             .set_title(&format!(
                 "mist: {} ({})",
                 run.borrow().game_title(),
@@ -621,6 +617,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
 
     pub fn reload_config(self, config: &Config) -> Result<Self, String> {
         Self::new(self.run, self.canvas, config)
+    }
+
+    pub fn win_size(&self) -> (u32, u32) {
+        self.canvas.window().size()
     }
 
     fn update_highlighted(&mut self) {

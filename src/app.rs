@@ -33,13 +33,15 @@ pub struct App<'a, 'b> {
     ev_pump: sdl2::EventPump,
     msf: MsfParser,
 }
+
 static ONE_SIXTIETH: Duration = Duration::new(0, 1_000_000_000 / 60);
 
 impl<'a, 'b> App<'a, 'b> {
     pub fn init(context: sdl2::Sdl) -> Result<Self, String> {
         let video = context.video()?;
+        let mut config = Config::open()?;
         let mut window = video
-            .window("mist", 300, 500)
+            .window("mist", config.win_size().0, config.win_size().1)
             .position_centered()
             .resizable()
             .build()
@@ -120,8 +122,6 @@ impl<'a, 'b> App<'a, 'b> {
             for event in self.ev_pump.poll_iter() {
                 // print events to terminal if running in debug
                 #[cfg(debug_assertions)]
-                println!("{:?}", event);
-
                 match event {
                     // quit program on esc or being told by wm to close
                     Event::Quit { .. }
@@ -225,6 +225,7 @@ impl<'a, 'b> App<'a, 'b> {
                 );
             }
         }
+        self.config.set_win_size(self.ren_state.win_size());
         self.config.save()?;
         // if splits were updated, prompt user to save the split file
         if (self.run_state.needs_save() || no_file) && dialogs::save_check() {
