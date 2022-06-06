@@ -105,8 +105,16 @@ impl FontType {
                 let mut props = Properties::default();
                 props.style = style.into();
                 props.weight = weight.into();
+                let family_name = match name.to_lowercase().as_str() {
+                    "serif" => FamilyName::Serif,
+                    "sansserif" => FamilyName::SansSerif,
+                    "monospace" => FamilyName::Monospace,
+                    "cursive" => FamilyName::Cursive,
+                    "fantasy" => FamilyName::Fantasy,
+                    _ => FamilyName::Title(name.to_owned()),
+                };
                 let handle = SystemSource::new()
-                    .select_best_match(&[FamilyName::Title(name.to_string())], &props)
+                    .select_best_match(&[family_name], &props)
                     .map_err(|_| format!("Could not locate font {name} {style:?}"))?;
                 if let Handle::Path { path, font_index } = handle {
                     Ok((path, font_index))
@@ -117,13 +125,17 @@ impl FontType {
         }
     }
     fn timer_default() -> Self {
-        Self::File {
-            path: "assets/DejaVuSans-Bold.ttf".into(),
+        Self::System {
+            name: "SansSerif".into(),
+            style: Style::Normal,
+            weight: Weight::Bold,
         }
     }
     fn splits_default() -> Self {
-        Self::File {
-            path: "assets/DejaVuSans.ttf".into(),
+        Self::System {
+            name: "SansSerif".into(),
+            style: Style::Normal,
+            weight: Weight::Medium,
         }
     }
 }
