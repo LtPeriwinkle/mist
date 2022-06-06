@@ -3,12 +3,14 @@ use super::Font;
 use super::KeybindsRaw;
 use super::LayoutOpts;
 use super::Panel;
+use directories::BaseDirs;
 use ron::de::from_reader;
 use ron::extensions::Extensions;
 use ron::ser::{to_string_pretty, PrettyConfig};
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration of mist.
@@ -39,7 +41,7 @@ impl Config {
             .read(true)
             .write(true)
             .create(true)
-            .open("assets/mist.cfg")
+            .open(config_path()?)
             .map_err(|e| e.to_string())?;
         let cfg: Self = from_reader(&file).unwrap_or_default();
         Ok(cfg)
@@ -83,7 +85,7 @@ impl Config {
     pub fn save(&self) -> Result<(), String> {
         let mut file = OpenOptions::new()
             .write(true)
-            .open("assets/mist.cfg")
+            .open(config_path()?)
             .map_err(|e| e.to_string())?;
         let string = to_string_pretty(
             self,
@@ -141,4 +143,22 @@ impl Default for Config {
             binds: KeybindsRaw::default(),
         }
     }
+}
+
+fn config_path() -> Result<PathBuf, String> {
+    let dirs = BaseDirs::new().ok_or("Could not find your config directory!")?;
+    let mut cfg_path = dirs.config_dir().to_path_buf();
+    cfg_path.push("mist");
+    if !cfg_path.exists() {
+        std::fs::create_dir_all(&cfg_path).map_err(|e| e.to_string())?;
+    }
+    cfg_path.push("mist.cfg");
+    if !cfg_path.exists() {
+        OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(&cfg_path)
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(cfg_path)
 }
