@@ -172,7 +172,7 @@ impl RunState {
     /// the [`RunUpdate`]
     pub fn update(&mut self, rq: &[StateChangeRequest]) -> RunUpdate {
         let elapsed = self.timer.elapsed().as_millis();
-        if self.timer_state == TimerState::Running {
+        if self.is_running() {
             self.time = (elapsed - self.start) + self.before_pause;
         }
 
@@ -220,7 +220,7 @@ impl RunState {
             return;
         }
         let run = self.run.borrow();
-        if run.pb_times().is_empty() {
+        if run.pb_times().is_empty() || run.pb_times().len() == 1 {
             if run.pb().is_none() || self.time < run.pb().val() {
                 self.run_status = SplitStatus::Ahead;
             } else {
@@ -254,16 +254,16 @@ impl RunState {
                 }
             // if last split was behind comparison split
             } else {
+                // ahead of allowed, must be ahead
+                if time < allowed {
+                    self.run_status = SplitStatus::Ahead;
                 // if the runner has gone over the amount of time they should take but are still on better pace than
                 // last split then they are making up time. a sort of light red color like livesplit
-                if time > allowed && time < allowed + buffer {
+                } else if time > allowed && time < allowed + buffer {
                     self.run_status = SplitStatus::Gaining;
                 // if they are behind both the allowed time and their current pace they must be behind
                 } else if time > allowed + buffer {
                     self.run_status = SplitStatus::Behind;
-                // even if the last split was behind, often during part of the split the runner could finish it and come out ahead
-                } else {
-                    self.run_status = SplitStatus::Ahead;
                 }
             }
         }
