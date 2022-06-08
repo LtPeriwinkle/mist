@@ -32,7 +32,7 @@ pub struct RunState {
     set_times: bool,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 enum TimerState {
     Running,
     NotRunning,
@@ -172,7 +172,7 @@ impl RunState {
     /// the [`RunUpdate`]
     pub fn update(&mut self, rq: &[StateChangeRequest]) -> RunUpdate {
         let elapsed = self.timer.elapsed().as_millis();
-        if self.is_running() {
+        if self.timer_state == TimerState::Running || self.timer_state == TimerState::Offset {
             self.time = (elapsed - self.start) + self.before_pause;
         }
 
@@ -186,7 +186,6 @@ impl RunState {
             vec.append(&mut self.handle_scrq(request, elapsed));
             vec
         });
-
         if self.timer_state == TimerState::Offset && self.run.borrow().offset().val() <= self.time {
             self.timer_state = TimerState::Running;
             self.start = elapsed;

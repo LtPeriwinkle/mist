@@ -288,55 +288,17 @@ impl<'a, 'b> RenderState<'a, 'b> {
         for change in update.change {
             match change {
                 StateChange::Pause => {
-                    let r = self.run.borrow();
                     self.is_running = false;
                     self.highlighted = usize::MAX;
                     self.time_str = format::ms_to_readable(update.time, self.time_rounding);
-                    self.canvas
-                        .window_mut()
-                        .set_title(&format!(
-                            "mist: {} ({}) [{}: {}] (paused)",
-                            r.game_title(),
-                            r.category(),
-                            self.current + 1,
-                            if r.splits().is_empty() {
-                                ""
-                            } else {
-                                &r.splits()[self.current]
-                            }
-                        ))
-                        .map_err(|_| get_error())?;
                 }
                 StateChange::Finish { .. } => {
                     self.is_running = false;
                     self.time_str = format::ms_to_readable(update.time, self.time_rounding);
                     self.highlighted = usize::MAX;
-                    self.canvas
-                        .window_mut()
-                        .set_title(&format!(
-                            "mist: {} ({})",
-                            self.run.borrow().game_title(),
-                            self.run.borrow().category(),
-                        ))
-                        .map_err(|_| get_error())?;
                 }
                 StateChange::Unpause { .. } => {
-                    let r = self.run.borrow();
                     self.is_running = true;
-                    self.canvas
-                        .window_mut()
-                        .set_title(&format!(
-                            "mist: {} ({}) [{}: {}]",
-                            r.game_title(),
-                            r.category(),
-                            self.current + 1,
-                            if r.splits().is_empty() {
-                                ""
-                            } else {
-                                &r.splits()[self.current]
-                            }
-                        ))
-                        .map_err(|_| get_error())?;
                 }
                 StateChange::ExitSplit {
                     status, time, diff, ..
@@ -403,23 +365,6 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         self.splits[idx].set_diff(None);
                     }
                     self.current = idx;
-                    {
-                        let r = self.run.borrow();
-                        self.canvas
-                            .window_mut()
-                            .set_title(&format!(
-                                "mist: {} ({}) [{}: {}]",
-                                r.game_title(),
-                                r.category(),
-                                self.current + 1,
-                                if r.splits().is_empty() {
-                                    ""
-                                } else {
-                                    &r.splits()[self.current]
-                                }
-                            ))
-                            .map_err(|_| get_error())?;
-                    }
                     if self.current > self.bottom_index {
                         self.top_index += self.current - self.bottom_index;
                         self.bottom_index = self.current;
@@ -460,15 +405,6 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         }
                     }
                     self.is_running = false;
-                    self.rebuild_comparison(self.comparison)?;
-                    self.canvas
-                        .window_mut()
-                        .set_title(&format!(
-                            "mist: {} ({})",
-                            self.run.borrow().game_title(),
-                            self.run.borrow().category(),
-                        ))
-                        .map_err(|_| get_error())?;
                 }
                 StateChange::ComparisonChanged { comp } => self.rebuild_comparison(comp)?,
                 StateChange::EnterOffset => {
