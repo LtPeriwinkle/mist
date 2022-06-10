@@ -593,7 +593,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 };
                 let mut avgs = vec![];
                 while i < attempts.len() {
-                    avgs.push(if attempts[i] == 0 {
+                    avgs.push(if attempts[i] != 0 {
                         times[i] / attempts[i]
                     } else {
                         attempts[i]
