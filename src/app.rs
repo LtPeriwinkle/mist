@@ -55,7 +55,6 @@ impl<'a, 'b> App<'a, 'b> {
 
         let mut canvas = window.into_canvas().build().map_err(|_| get_error())?;
         let ev_pump = context.event_pump()?;
-        let mut config = Config::open()?;
         let (run, msf) = loop {
             let path = if let Some(x) = config.file() {
                 x.to_owned()
@@ -122,6 +121,8 @@ impl<'a, 'b> App<'a, 'b> {
             for event in self.ev_pump.poll_iter() {
                 // print events to terminal if running in debug
                 #[cfg(debug_assertions)]
+                println!("{:?}", event);
+
                 match event {
                     // quit program on esc or being told by wm to close
                     Event::Quit { .. }
