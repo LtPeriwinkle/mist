@@ -503,10 +503,12 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 } else {
                     self.bottom_index = self.splits.len() - 1;
                 }
-            } else if self.bottom_index + diff < self.splits.len() - 1 {
+            } else if self.splits.len() > 0 && self.bottom_index + diff < self.splits.len() - 1 {
                 self.bottom_index += diff;
-            } else {
+            } else if self.splits.len() > 0 {
                 self.bottom_index = self.splits.len() - 1;
+            } else {
+                self.bottom_index = 0;
             }
         } else if y - bottom_height < all_rows_height {
             let diff = ((all_rows_height - (y - bottom_height)) / row_height) as usize + 1;
@@ -699,7 +701,13 @@ impl<'a, 'b> RenderState<'a, 'b> {
         for (idx, (sx, sw, dx, dw)) in coords.iter().enumerate() {
             src.set_x((*sx).try_into().unwrap());
             src.set_width(*sw);
-            dst.set_x((w - *dx).try_into().unwrap());
+            let wdx: i32 = if w < *dx {
+                let tmp: i32 = (*dx - w).try_into().unwrap();
+                -1 * tmp
+            } else {
+                (w - *dx).try_into().unwrap()
+            };
+            dst.set_x(wdx);
             dst.set_width(*dw);
             if idx == 3 {
                 dst.set_y((h - font_y - (self.splits_height * self.panels.len() as u32)) as i32);

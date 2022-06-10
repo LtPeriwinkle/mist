@@ -46,7 +46,7 @@ impl<'a, 'b> App<'a, 'b> {
             .resizable()
             .build()
             .map_err(|_| get_error())?;
-
+        window.set_minimum_size(100, 100).unwrap();
         #[cfg(feature = "icon")]
         {
             let icon = Surface::from_file("assets/MIST.png")?;
