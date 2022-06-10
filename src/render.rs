@@ -162,7 +162,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
         };
         canvas
             .window_mut()
-            .set_minimum_size(0, timer_height + 20 + (splits_height * panels.len() as u32))
+            .set_minimum_size(
+                100,
+                timer_height + 20 + (splits_height * panels.len() as u32),
+            )
             .map_err(|_| get_error())?;
         canvas
             .window_mut()
@@ -703,7 +706,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             src.set_width(*sw);
             let wdx: i32 = if w < *dx {
                 let tmp: i32 = (*dx - w).try_into().unwrap();
-                -1 * tmp
+                -tmp
             } else {
                 (w - *dx).try_into().unwrap()
             };
