@@ -83,22 +83,16 @@ impl<'a, 'b> RenderState<'a, 'b> {
         let splits_font = TTF.load_font_from_rwops(rw, config.fsize().1)?;
         let panels = {
             let mut ret = vec![];
-            for panel in config.panels() {
+            for &panel in config.panels() {
                 let (text, paneltype) = match panel {
-                    Panel::Pace { golds } => {
-                        if *golds {
-                            ("Pace (best)", Panel::Pace { golds: true })
-                        } else {
-                            ("Pace (pb)", Panel::Pace { golds: false })
-                        }
+                    p @ Panel::Pace { golds } => {
+                        let text = if golds { "Pace (best)" } else { "Pace (pb)" };
+                        (text, p)
                     }
-                    Panel::SumOfBest => ("Sum of Best", Panel::SumOfBest),
-                    Panel::CurrentSplitDiff { golds } => {
-                        if *golds {
-                            ("Split (best)", Panel::CurrentSplitDiff { golds: true })
-                        } else {
-                            ("Split (pb)", Panel::CurrentSplitDiff { golds: false })
-                        }
+                    p @ Panel::SumOfBest => ("Sum of Best", p),
+                    p @ Panel::CurrentSplitDiff { golds } => {
+                        let text = if golds { "Split (best)" } else { "Split (pb)" };
+                        (text, p)
                     }
                 };
                 let time = if let Panel::SumOfBest = panel {
@@ -215,9 +209,9 @@ impl<'a, 'b> RenderState<'a, 'b> {
         if self.status != SplitStatus::None {
             for panel in &mut self.panels {
                 match panel.panel_type() {
-                    Panel::Pace { golds } if self.run.borrow().pb_times()[self.current] != 0 => {
+                    &Panel::Pace { golds } if self.run.borrow().pb_times()[self.current] != 0 => {
                         let r = self.run.borrow();
-                        let times = if *golds { r.gold_times() } else { r.pb_times() };
+                        let times = if golds { r.gold_times() } else { r.pb_times() };
                         let pace = format::split_time_text(
                             times[self.current + 1..].iter().sum::<u128>() + update.time,
                         );
@@ -228,16 +222,16 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             Color::WHITE,
                         )?);
                     }
-                    Panel::CurrentSplitDiff { golds }
+                    &Panel::CurrentSplitDiff { golds }
                         if self.splits.len() > 1
                             && self.run.borrow().pb_times()[self.current] != 0 =>
                     {
-                        let compare_time: u128 = if *golds {
+                        let compare_time: u128 = if golds {
                             self.run.borrow().gold_times()[self.current]
                         } else {
                             self.run.borrow().pb_times()[self.current]
                         };
-                        let time = if !*golds {
+                        let time = if !golds {
                             if update.split_time < compare_time {
                                 format::diff_text(-((compare_time - update.split_time) as i128))
                             } else {
