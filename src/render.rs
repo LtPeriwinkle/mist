@@ -96,12 +96,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     }
                 };
                 let time = if let Panel::SumOfBest = panel {
-                    let sob = run
-                        .borrow()
-                        .gold_times()
-                        .iter()
-                        .map(|t| t.val())
-                        .sum::<u128>();
+                    let sob = run.borrow().gold_times().iter().sum::<u128>();
                     format::split_time_text(sob)
                 } else {
                     "-  ".into()
