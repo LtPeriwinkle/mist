@@ -1,5 +1,11 @@
 # Changelog
-### next
+### 1.15.1
+- Various code cleanups
+- Fix some subtraction overflows (#14)
+- Actually run the timer when started with an offset
+- Reduce title changes
+
+### 1.15.0
 - fix the display of CurrentSplitDiff when golds is false
 - Wow, this ended up being the state machine update also.
 - Adds unsplitting support

@@ -309,7 +309,7 @@ dependencies = [
 
 [[package]]
 name = "mist"
-version = "1.15.0"
+version = "1.15.1"
 dependencies = [
  "lazy_static",
  "mist-core",
