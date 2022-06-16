@@ -1,7 +1,6 @@
 use super::Colors;
 use super::Font;
 use super::KeybindsRaw;
-use super::LayoutOpts;
 use super::Panel;
 use directories::BaseDirs;
 use ron::de::from_reader;
@@ -13,6 +12,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(default)]
 /// Configuration of mist.
 pub struct Config {
     def_file: Option<String>,
@@ -21,9 +21,9 @@ pub struct Config {
     img_file: Option<String>,
     #[cfg(feature = "bg")]
     img_scaled: bool,
+    inline_splits: bool,
     colors: Colors,
     frame_rounding: Option<u128>,
-    layout: LayoutOpts,
     panels: Vec<Panel>,
     t_font: Font,
     s_font: Font,
@@ -85,6 +85,7 @@ impl Config {
     pub fn save(&self) -> Result<(), String> {
         let mut file = OpenOptions::new()
             .write(true)
+            .truncate(true)
             .open(config_path()?)
             .map_err(|e| e.to_string())?;
         let string = to_string_pretty(
@@ -99,9 +100,9 @@ impl Config {
     pub fn binds(&self) -> &KeybindsRaw {
         &self.binds
     }
-    /// Get the layout options.
-    pub fn layout(&self) -> &LayoutOpts {
-        &self.layout
+    /// Get whether splits are in line with times or not.
+    pub fn inline_splits(&self) -> bool {
+        self.inline_splits
     }
     /// Get the list of timing display panels.
     pub fn panels(&self) -> &Vec<Panel> {
@@ -135,7 +136,7 @@ impl Default for Config {
             img_scaled: false,
             frame_rounding: Some(30),
             colors: Colors::default(),
-            layout: LayoutOpts::default(),
+            inline_splits: false,
             panels: vec![],
             t_font: Font::timer_default(),
             s_font: Font::splits_default(),
