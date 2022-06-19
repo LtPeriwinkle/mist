@@ -103,7 +103,12 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     }
                 };
                 let time = if let Panel::SumOfBest = panel {
-                    let sob = run.borrow().gold_times_u128().iter().sum::<u128>();
+                    let sob = run
+                        .borrow()
+                        .gold_times()
+                        .iter()
+                        .map(|t| t.val())
+                        .sum::<u128>();
                     format::split_time_text(sob)
                 } else {
                     "-  ".into()
@@ -320,8 +325,9 @@ impl<'a, 'b> RenderState<'a, 'b> {
                                         format::split_time_text(
                                             self.run
                                                 .borrow()
-                                                .gold_times_u128()
+                                                .gold_times()
                                                 .iter()
+                                                .map(|t| t.val())
                                                 .sum::<u128>(),
                                         ),
                                         &self.splits_font,
