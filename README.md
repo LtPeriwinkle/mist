@@ -13,7 +13,7 @@ Once all planned features are complete, I will likely stop developing this and o
 * [X] Cross platform
 	* [X] Linux
 	* [X] Windows
-	* [X] MacOS (compiled & tested in macOS catalina VM)
+	* [X] MacOS (or it was in the past, as I *cannot* build or test it on a mac)
 * [X] Human-readable split file (using [ron](https://github.com/ron-rs/ron))
 * [X] LiveSplit split file transposing (split tool)
 * [ ] (limited) customizability
@@ -25,9 +25,9 @@ Once all planned features are complete, I will likely stop developing this and o
 	* [X] time rounding (30/60/off)
 	* [ ] *very limited* timer layout (i.e. use two rows for splits like option available in LiveSplit)
 * [ ] split file creation tool
-	* [X] edit existing msf
-	* [X] convert lss to msf
-	* [X] create new splits
+	* [ ] edit existing msf
+	* [ ] convert lss to msf
+	* [ ] create new splits
 	* [ ] actually good and usable (hardest part)
 * [X] fps-based time conversion (so that the timer always ends on a time that corresponds to a possible frame time)
 * [X] dynamic colors
@@ -48,7 +48,7 @@ Once all planned features are complete, I will likely stop developing this and o
 * [X] skip splits (because somehow i missed this all along)
 
 ## Unplanned features
-These features will not be implemented, in the spirit of minimalism.
+These features will not be implemented, in the spirit of minimalism *(and maybe because I don't want to).*
 
 * Autosplitters
 * Horizontal timer layout
@@ -64,7 +64,7 @@ These features will not be implemented, in the spirit of minimalism.
 Probably the best way to try this out is to compile it from source. To do this you need rust installed, and an installation guide
 for that can be found [here](https://www.rust-lang.org/tools/install).
 
-## Features
+### Features
 This package provides two features, `bg` and `icon`. `icon` sets the icon of the application when it is running, and requires sdl2_image.
 `bg` allows for configuration of a background image, and requires both sdl2\_image and sdl2\_gfx. To use only `icon` (removing gfx requirement),
 append
@@ -73,7 +73,6 @@ append
 ```
 
 to the cargo commands below. For only `bg`, do the same except replace `icon` with `bg`. Finally, to remove both, remove the `--features` altogether.
-
 
 When you run mist, make sure it is in the same directory as the `assets` directory or else it won't work.
 ### Linux
@@ -98,7 +97,7 @@ folder specified by in the guide.
 Compile with `cargo build --release` then move the exe as well as the sdl related dlls into the same folder as the assets folder to run it.
 
 ### MacOS
-Install sdl2, sdl image and sdl ttf. Using homebrew:
+Install sdl2, sdl image, sdl gfx and sdl ttf. Using homebrew:
 ```
 brew install sdl2 sdl2_image sdl2_ttf sdl2_gfx
 ```
@@ -116,13 +115,14 @@ The default keybinds are:
 * <kbd>&rightarrow;</kbd>: Next comparison
 * Mousewheel: Scroll splits up/down (if there are more than fit in the window)
 
-Mist reads configuration info from assets/mist.cfg in the directory where its executable is located.
+## Configuration
+Mist reads configuration info from assets/mist.cfg in the directory where its executable is located. You can find more information about the configuration file and split file formats [here](https://periwinkle.sh/projects/mist).
 
-## Credits
+# Credits
 Thanks to [Xeryph](https://twitch.tv/xeryph1) and [Komali](https://youtube.com/c/KomaliPrinceOfRito) for testing, bug reports,
 and help on things.
 
-## Licensing
+# Licensing
 Like Rust itself, mist is licensed under MIT or Apache 2.0, at your option.
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you shall be dual licensed as above, without any
