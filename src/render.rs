@@ -38,6 +38,7 @@ pub struct RenderState<'a, 'b> {
     time_str: String,
     time_rounding: Option<u128>,
     is_running: bool,
+    rebuild: bool,
     timer_font: Font<'b, 'a>,
     timer_height: u32,
     splits_font: Font<'b, 'a>,
@@ -202,6 +203,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             time_str,
             time_rounding: config.rounding(),
             is_running: false,
+            rebuild: false,
             timer_font,
             timer_height,
             splits_font,
@@ -288,6 +290,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 }
             }
         }
+        if self.rebuild {
+            self.rebuild = false;
+            self.rebuild_comparison()?;
+        }
         for change in update.change {
             match change {
                 StateChange::Pause => {
@@ -299,6 +305,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     self.is_running = false;
                     self.time_str = format::ms_to_readable(update.time, self.time_rounding);
                     self.highlighted = usize::MAX;
+                    self.rebuild = true;
                 }
                 StateChange::Unpause { .. } => {
                     self.is_running = true;
@@ -409,7 +416,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     }
                     self.is_running = false;
                 }
-                StateChange::ComparisonChanged { comp } => self.rebuild_comparison(comp)?,
+                StateChange::ComparisonChanged { comp } => {
+                    self.comparison = comp;
+                    self.rebuild = true;
+                }
                 StateChange::EnterOffset => {
                     self.is_running = true;
                 }
@@ -572,9 +582,8 @@ impl<'a, 'b> RenderState<'a, 'b> {
         }
     }
 
-    fn rebuild_comparison(&mut self, comp: Comparison) -> Result<(), String> {
-        self.comparison = comp;
-        match comp {
+    fn rebuild_comparison(&mut self) -> Result<(), String> {
+        match self.comparison {
             Comparison::None => {
                 for split in &mut self.splits {
                     split.set_comp(render_text(
