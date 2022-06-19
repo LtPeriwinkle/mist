@@ -128,7 +128,7 @@ impl<'a, 'b> App<'a, 'b> {
                     | Event::KeyDown {
                         keycode: Some(Keycode::Escape),
                         ..
-                    } => break 'running,
+                    } if dialogs::confirm_exit() => break 'running,
 
                     Event::MouseWheel { y, .. } => {
                         self.ren_state.scroll(y);
