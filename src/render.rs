@@ -157,7 +157,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
         let bottom_index: usize;
         let max_splits: usize;
         let max_initial_splits = ((canvas.viewport().height() - timer_height)
-            / ((splits_height * (1 + !config.layout().inline_splits as u32)) + 5))
+            / ((splits_height * (1 + !config.inline_splits() as u32)) + 5))
             as usize;
         if splits.is_empty() {
             max_splits = 0;
@@ -212,7 +212,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             highlighted: usize::MAX,
             current: 0,
             max_splits,
-            inline: config.layout().inline_splits,
+            inline: config.inline_splits(),
             status: SplitStatus::None,
             comparison: Comparison::PersonalBest,
             #[cfg(feature = "bg")]
