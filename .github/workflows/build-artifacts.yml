@@ -1,0 +1,38 @@
+name: build
+on: push
+
+# create builds for mac and lin, windows requires a lot of setup so not doing that here
+# side effect of me not having to produce a macos build for releases
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-ttf-dev -y
+      - name: Build
+        run: cargo build --release
+      - name: Deploy
+        uses: actions/upload-artifact@v3
+        with:
+          name: mist-linux-x86_64
+          path: target/release/mist
+          retention-days: 1
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install sdl2 sdl2_image sdl2_ttf sdl2_gfx
+      - name: Build
+        run: cargo build --release
+      - name: Deploy
+        uses: actions/upload-artifact@v3
+        with:
+          name: mist-macos-x86_64
+          path: target/release/mist
+          retention-days: 1
