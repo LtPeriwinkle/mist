@@ -1,10 +1,14 @@
 use crate::timer::Run;
-use ron::de::from_str;
-use ron::ser::{to_writer_pretty, PrettyConfig};
+use ron::{
+    de::from_str,
+    ser::{to_writer_pretty, PrettyConfig},
+};
 use serde::Deserialize;
-use std::fs::File;
-use std::io::{BufRead, BufReader, Read, Write};
-use std::str::FromStr;
+use std::{
+    fs::File,
+    io::{BufRead, BufReader, Read, Write},
+    str::FromStr,
+};
 
 #[derive(Deserialize)]
 struct LegacyRun {
@@ -29,22 +33,17 @@ struct RunV1 {
     sum_times: Vec<(u128, u128)>,
 }
 
-impl Into<Run> for LegacyRun {
-    fn into(self) -> Run {
+impl From<LegacyRun> for Run {
+    fn from(r: LegacyRun) -> Run {
         Run::new(
-            self.category,
-            self.game_title,
-            self.offset.into(),
-            self.pb.into(),
-            &self.splits,
-            &self.pb_times.iter().map(|&t| t.into()).collect::<Vec<_>>(),
-            &self
-                .gold_times
-                .iter()
-                .map(|&t| t.into())
-                .collect::<Vec<_>>(),
-            &self
-                .pb_times
+            r.category,
+            r.game_title,
+            r.offset.into(),
+            r.pb.into(),
+            &r.splits,
+            &r.pb_times.iter().map(|&t| t.into()).collect::<Vec<_>>(),
+            &r.gold_times.iter().map(|&t| t.into()).collect::<Vec<_>>(),
+            &r.pb_times
                 .iter()
                 .map(|&t| (1u128, t.into()))
                 .collect::<Vec<_>>(),
@@ -52,22 +51,17 @@ impl Into<Run> for LegacyRun {
     }
 }
 
-impl Into<Run> for RunV1 {
-    fn into(self) -> Run {
+impl From<RunV1> for Run {
+    fn from(r: RunV1) -> Run {
         Run::new(
-            self.category,
-            self.game_title,
-            self.offset.into(),
-            self.pb.into(),
-            &self.splits,
-            &self.pb_times.iter().map(|&t| t.into()).collect::<Vec<_>>(),
-            &self
-                .gold_times
-                .iter()
-                .map(|&t| t.into())
-                .collect::<Vec<_>>(),
-            &self
-                .sum_times
+            r.category,
+            r.game_title,
+            r.offset.into(),
+            r.pb.into(),
+            &r.splits,
+            &r.pb_times.iter().map(|&t| t.into()).collect::<Vec<_>>(),
+            &r.gold_times.iter().map(|&t| t.into()).collect::<Vec<_>>(),
+            &r.sum_times
                 .iter()
                 .map(|&(n, t)| (n, t.into()))
                 .collect::<Vec<_>>(),

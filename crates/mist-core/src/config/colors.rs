@@ -8,9 +8,12 @@ pub struct Colors {
     pub gaining: (u8, u8, u8, u8),
     pub losing: (u8, u8, u8, u8),
     pub gold: (u8, u8, u8, u8),
+    /// The color used to highlight the currently active split.
     pub highlight: (u8, u8, u8, u8),
+    /// The color of the lines separating each split.
     pub line: (u8, u8, u8, u8),
     pub background: (u8, u8, u8, u8),
+    /// The color for split name text.
     pub text: (u8, u8, u8, u8),
 }
 

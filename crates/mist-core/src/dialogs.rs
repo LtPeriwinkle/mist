@@ -96,7 +96,7 @@ pub fn open_config() -> Result<Option<Config>, String> {
     }
 }
 
-/// Ask the user whether they want to exit the program or not
+/// Ask the user whether they want to exit the program or not.
 pub fn confirm_exit() -> bool {
     boolean_check("Confirm exit", "Are you sure you want to exit?")
 }

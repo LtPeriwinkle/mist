@@ -1,7 +1,6 @@
-use font_kit::family_name::FamilyName;
-use font_kit::handle::Handle;
-use font_kit::properties::Properties;
-use font_kit::source::SystemSource;
+use font_kit::{
+    family_name::FamilyName, handle::Handle, properties::Properties, source::SystemSource,
+};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -73,18 +72,22 @@ impl From<&Style> for font_kit::properties::Style {
 }
 
 impl Font {
+    /// Get the path to the font file, and the index of the font, as determined by `font_kit`.
     pub fn get_path(&self) -> Result<(PathBuf, u32), String> {
         self.ty.get_path()
     }
+    /// Get the size of the font.
     pub fn size(&self) -> u16 {
         self.size
     }
+    /// Get the default font and size for the timer.
     pub fn timer_default() -> Self {
         Self {
             ty: FontType::timer_default(),
             size: 60,
         }
     }
+    /// Get the default font and size for the splits.
     pub fn splits_default() -> Self {
         Self {
             ty: FontType::splits_default(),
@@ -102,9 +105,11 @@ impl FontType {
                 style,
                 weight,
             } => {
-                let mut props = Properties::default();
-                props.style = style.into();
-                props.weight = weight.into();
+                let props = Properties {
+                    style: style.into(),
+                    weight: weight.into(),
+                    ..Default::default()
+                };
                 let family_name = match name.to_lowercase().as_str() {
                     "serif" => FamilyName::Serif,
                     "sansserif" => FamilyName::SansSerif,

@@ -1,27 +1,27 @@
-// Functions for putting stuff into the correct places on the sdl buffer
 use crate::panels::RenderPanel;
 use crate::splits::Split;
-use mist_core::config::{Colors, Config, Panel};
-use mist_core::timer::state::{RunUpdate, SplitStatus, StateChange};
-use mist_core::timer::{format, Comparison, Run};
-use sdl2::get_error;
+use mist_core::{
+    config::{Colors, Config, Panel},
+    timer::{
+        format,
+        state::{RunUpdate, SplitStatus, StateChange},
+        Comparison, Run,
+    },
+};
+use sdl2::{
+    get_error,
+    pixels::Color,
+    rect::{Point, Rect},
+    render::{Texture, TextureCreator, TextureQuery, WindowCanvas},
+    rwops::RWops,
+    ttf::{self, Font, Sdl2TtfContext},
+    video::WindowContext,
+};
 #[cfg(feature = "bg")]
-use sdl2::gfx::rotozoom::RotozoomSurface;
-#[cfg(feature = "bg")]
-use sdl2::image::LoadSurface;
-use sdl2::pixels::Color;
-#[cfg(feature = "bg")]
-use sdl2::pixels::PixelFormatEnum;
-use sdl2::rect::{Point, Rect};
-use sdl2::render::{Texture, TextureCreator, TextureQuery, WindowCanvas};
-use sdl2::rwops::RWops;
-#[cfg(feature = "bg")]
-use sdl2::surface::Surface;
-use sdl2::ttf::{self, Font, Sdl2TtfContext};
-use sdl2::video::WindowContext;
-use std::cell::RefCell;
-use std::convert::TryInto;
-use std::rc::Rc;
+use sdl2::{
+    gfx::rotozoom::RotozoomSurface, image::LoadSurface, pixels::PixelFormatEnum, surface::Surface,
+};
+use std::{cell::RefCell, convert::TryInto, rc::Rc};
 
 const ALL_CHARS: &str =
     "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz`1234567890[]~!@#$%^&*(){}',./=\\-;\"<>?+|_:";
@@ -238,8 +238,8 @@ impl<'a, 'b> RenderState<'a, 'b> {
         }
         if self.status != SplitStatus::None {
             for panel in &mut self.panels {
-                match panel.panel_type() {
-                    &Panel::Pace { golds }
+                match *panel.panel_type() {
+                    Panel::Pace { golds }
                         if self.run.borrow().pb_times()[self.current].raw() != 0 =>
                     {
                         let r = self.run.borrow();
@@ -258,7 +258,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             self.colors.text,
                         )?);
                     }
-                    &Panel::CurrentSplitDiff { golds }
+                    Panel::CurrentSplitDiff { golds }
                         if self.splits.len() > 1
                             && self.run.borrow().pb_times()[self.current].is_time() =>
                     {
@@ -474,9 +474,9 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 } else {
                     self.bottom_index = self.splits.len() - 1;
                 }
-            } else if self.splits.len() > 0 && self.bottom_index + diff < self.splits.len() - 1 {
+            } else if !self.splits.is_empty() && self.bottom_index + diff < self.splits.len() - 1 {
                 self.bottom_index += diff;
-            } else if self.splits.len() > 0 {
+            } else if !self.splits.is_empty() {
                 self.bottom_index = self.splits.len() - 1;
             } else {
                 self.bottom_index = 0;

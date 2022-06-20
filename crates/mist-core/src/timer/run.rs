@@ -29,6 +29,7 @@ impl Run {
         }
     }
     /// Create a new [`Run`].
+    #[allow(clippy::too_many_arguments)]
     pub fn new<S>(
         game_title: S,
         category: S,

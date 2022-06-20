@@ -1,16 +1,5 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::thread;
-use std::time::{Duration, Instant};
-
-use sdl2::event::{Event, WindowEvent};
-use sdl2::get_error;
-#[cfg(feature = "icon")]
-use sdl2::image::LoadSurface;
-use sdl2::keyboard::Keycode;
-#[cfg(feature = "icon")]
-use sdl2::surface::Surface;
-
+use crate::keybinds::Keybinds;
+use crate::render::RenderState;
 use mist_core::{
     config::Config,
     dialogs,
@@ -20,9 +9,19 @@ use mist_core::{
         Run,
     },
 };
-
-use crate::keybinds::Keybinds;
-use crate::render::RenderState;
+use sdl2::{
+    event::{Event, WindowEvent},
+    get_error,
+    keyboard::Keycode,
+};
+#[cfg(feature = "icon")]
+use sdl2::{image::ImageRWops, rwops::RWops};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    thread,
+    time::{Duration, Instant},
+};
 
 pub struct App<'a, 'b> {
     _context: sdl2::Sdl,

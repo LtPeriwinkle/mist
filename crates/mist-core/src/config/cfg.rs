@@ -1,15 +1,15 @@
-use super::Colors;
-use super::Font;
-use super::KeybindsRaw;
-use super::Panel;
+use super::{Colors, Font, KeybindsRaw, Panel};
 use directories::BaseDirs;
-use ron::de::from_reader;
-use ron::extensions::Extensions;
-use ron::ser::{to_string_pretty, PrettyConfig};
+use ron::{
+    de::from_reader,
+    extensions::Extensions,
+    ser::{to_string_pretty, PrettyConfig},
+};
 use serde::{Deserialize, Serialize};
-use std::fs::OpenOptions;
-use std::io::Write;
-use std::path::PathBuf;
+//use std::fs::OpenOptions;
+//use std::io::Write;
+//use std::path::PathBuf;
+use std::{fs::OpenOptions, io::Write, path::PathBuf};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(default)]
@@ -113,13 +113,15 @@ impl Config {
     pub fn rounding(&self) -> Option<u128> {
         self.frame_rounding
     }
-    /// Get the ratio of millisecond font size to timer font size
+    /// Get the ratio of millisecond font size to timer font size.
     pub fn ms_ratio(&self) -> f32 {
         self.ms_ratio
     }
+    /// Get the size of the window in pixels.
     pub fn win_size(&self) -> (u32, u32) {
         self.win_size
     }
+    /// Set the window size.
     pub fn set_win_size(&mut self, new: (u32, u32)) {
         self.win_size = new;
     }

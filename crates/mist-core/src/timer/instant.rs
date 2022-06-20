@@ -13,8 +13,7 @@ mod inner {
 
     #[cfg(all(feature = "instant", unix))]
     pub mod platform {
-        use std::cmp::Ordering;
-        use std::time::Duration;
+        use std::{cmp::Ordering, time::Duration};
         #[derive(Copy, Clone)]
         struct Timespec {
             t: libc::timespec,
@@ -89,8 +88,7 @@ mod inner {
                 };
                 #[cfg(target = "linux")]
                 {
-                    use std::sync::atomic::AtomicBool;
-                    use std::sync::atomic::Ordering as AtomicOrd;
+                    use std::sync::atomic::{AtomicBool, Ordering as AtomicOrd};
                     static NO_BOOTTIME: AtomicBool = AtomicBool::new(false);
                     if !NO_BOOTTIME.load(AtomicOrd::Relaxed) {
                         let r = unsafe { libc::clock_gettime(libc::CLOCK_BOOTTIME, &mut ts.t) };

@@ -5,8 +5,7 @@ use super::Comparison as Comp;
 use super::MistInstant;
 use super::Run;
 use super::{DiffType, TimeType};
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 /// The state of the loaded run.
 ///
@@ -298,7 +297,7 @@ impl RunState {
                         StateChange::ExitSplit {
                             idx: self.current_split,
                             status: self.run_status,
-                            time: time,
+                            time,
                             diff,
                         },
                         StateChange::Finish,

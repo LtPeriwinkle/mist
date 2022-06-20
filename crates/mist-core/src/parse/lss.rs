@@ -1,7 +1,6 @@
 use crate::timer::Run;
 use quick_xml::{events::Event, Reader};
-use std::fs::File;
-use std::io::BufReader;
+use std::{fs::File, io::BufReader};
 
 fn str_to_ms(tm: &str) -> u128 {
     if tm == "00:00:00" || tm.is_empty() {
