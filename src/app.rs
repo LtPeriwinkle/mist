@@ -48,8 +48,8 @@ impl<'a, 'b> App<'a, 'b> {
             .map_err(|_| get_error())?;
         #[cfg(feature = "icon")]
         {
-            let icon = Surface::from_file("assets/MIST.png")?;
-            window.set_icon(icon);
+            let rw = RWops::from_bytes(include_bytes!("../assets/MIST.png"))?;
+            window.set_icon(rw.load_png()?);
         }
 
         let mut canvas = window.into_canvas().build().map_err(|_| get_error())?;
