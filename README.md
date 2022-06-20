@@ -16,14 +16,14 @@ Once all planned features are complete, I will likely stop developing this and o
 	* [X] MacOS (or it was in the past, as I *cannot* build or test it on a mac)
 * [X] Human-readable split file (using [ron](https://github.com/ron-rs/ron))
 * [X] LiveSplit split file transposing (split tool)
-* [ ] (limited) customizability
+* [X] (limited) customizability
 	* [X] custom fonts/font sizes
 	* [X] custom colors
 	* [X] keybinds
 	* [X] timer backgrounds
 	* [X] panels (sum of best etc)
 	* [X] time rounding (30/60/off)
-	* [ ] *very limited* timer layout (i.e. use two rows for splits like option available in LiveSplit)
+	* [X] inline splits or use two rows
 * [ ] split file creation tool
 	* [ ] edit existing msf
 	* [ ] convert lss to msf
@@ -40,10 +40,10 @@ Once all planned features are complete, I will likely stop developing this and o
 	* [X] split file reloading
 	* [X] config reloading
 * [ ] plugins
-	* [ ] autoloading from plugins directory (probably run as some kind of child process thing?)
+	* [ ] autoloading from plugins directory (probably run as some kind of child process thing? or wasm?)
 	* [ ] communicate with plugins through ipc (i.e. unix socket, windows named pipe)
 	* [ ] plugins that are shipped with this repo (a discord presence, some kind of notes plugin, maybe more)
-* [ ] search for config/assets in standard os-specific dirs rather than hard-coded one (allows for packaging, installation, etc)
+* [X] search for config/assets in standard os-specific dirs rather than hard-coded one (allows for packaging, installation, etc)
 * [X] better way to find fonts than paths in config file
 * [X] skip splits (because somehow i missed this all along)
 
@@ -74,7 +74,6 @@ append
 
 to the cargo commands below. For only `bg`, do the same except replace `icon` with `bg`. Finally, to remove both, remove the `--features` altogether.
 
-When you run mist, make sure it is in the same directory as the `assets` directory or else it won't work.
 ### Linux
 Requirements are SDL2, SDL2\_Image and SDL2\_TTF shared libraries, as well as development libraries. On ubuntu:
 ```
@@ -86,18 +85,18 @@ On arch:
 sudo pacman -S sdl2 sdl2_ttf sdl2_image sdl2_gfx
 ```
 
-Clone this repo (`git clone https://github.com/LtPeriwinkle/mist`), enter the directory, and run `cargo build --release`. Move the
-resulting binary from `./target/release/` into the repository root (or just the same folder as `assets/`) to run.
+Clone this repo (`git clone https://github.com/LtPeriwinkle/mist`), enter the directory, and run `cargo build --release`. The resulting binary will be located at
+`./target/release/mist`
 
 ### Windows
 Follow [this guide](https://github.com/Rust-SDL2/rust-sdl2#windows-msvc) to set up your SDL dependencies. You will have to follow this process for SDL2, SDL\_Image and SDL2\_TTF,
 whose development stuff is available [here](http://libsdl.org/projects/SDL_ttf/) and [here](http://libsdl.org/projects/SDL_image). I had to use vcpkg to get sdl_gfx and then copy the .lib file to the
 folder specified by in the guide.
 
-Compile with `cargo build --release` then move the exe as well as the sdl related dlls into the same folder as the assets folder to run it.
+Compile with `cargo build --release` then move the exe as well as the sdl related dlls into the same folder to run.
 
 ### MacOS
-Install sdl2, sdl image, sdl gfx and sdl ttf. Using homebrew:
+Install sdl2, sdl2 image, sdl2 gfx and sdl2 ttf. Using homebrew:
 ```
 brew install sdl2 sdl2_image sdl2_ttf sdl2_gfx
 ```
@@ -108,15 +107,19 @@ Then you should be able to run `cargo build --release`.
 The default keybinds are:
 
 * <kbd>F1</kbd>: Open new split file
+* <kbd>F2</kbd>: Open a new config file
 * <kbd>Space</kbd>: Start/split/stop
-* <kbd>Enter</kbd>: Pause
+* <kbd>Enter</kbd>: Pause/unpause
 * <kbd>R</kbd>: Reset
 * <kbd>&leftarrow;</kbd>: Previous comparison
 * <kbd>&rightarrow;</kbd>: Next comparison
 * Mousewheel: Scroll splits up/down (if there are more than fit in the window)
 
 ## Configuration
-Mist reads configuration info from assets/mist.cfg in the directory where its executable is located. You can find more information about the configuration file and split file formats [here](https://periwinkle.sh/projects/mist).
+mist reads its configuration from the user configuration directory, specific to each operating system:
+- Linux: `$XDG_CONFIG_HOME/mist/mist.cfg` or `$HOME/.config/mist/mist.cfg`
+- Windows: `\Users\YourUser\AppData\Roaming\mist\mist.cfg`
+- MacOS: `$HOME/Library/Application Support/mist/mist.cfg`
 
 # Credits
 Thanks to [Xeryph](https://twitch.tv/xeryph1) and [Komali](https://youtube.com/c/KomaliPrinceOfRito) for testing, bug reports,
