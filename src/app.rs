@@ -54,15 +54,15 @@ impl<'a, 'b> App<'a, 'b> {
 
         let mut canvas = window.into_canvas().build().map_err(|_| get_error())?;
         let ev_pump = context.event_pump()?;
+        let mut path = if let Some(x) = config.file() {
+            x.to_owned()
+        } else {
+            match dialogs::get_run_path() {
+                Some(x) => x,
+                None => "".into(),
+            }
+        };
         let (run, msf) = loop {
-            let path = if let Some(x) = config.file() {
-                x.to_owned()
-            } else {
-                match dialogs::get_run_path() {
-                    Some(x) => x,
-                    None => "".into(),
-                }
-            };
             if path.is_empty() {
                 break (Run::empty(), MsfParser::new(""));
             } else {
@@ -78,6 +78,10 @@ impl<'a, 'b> App<'a, 'b> {
                         }
                     }
                 }
+            }
+            path = match dialogs::get_run_path() {
+                Some(x) => x,
+                None => "".into(),
             }
         };
         let run = Rc::new(RefCell::new(run));
