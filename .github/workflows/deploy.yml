@@ -1,7 +1,8 @@
-name: deploy
+name: build
 on: [push, pull_request]
 
 # create builds for mac and lin, windows requires a lot of setup so not doing that here
+# side effect of me not having to produce a macos build for releases
 jobs:
   build-linux:
     runs-on: ubuntu-latest

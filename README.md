@@ -13,7 +13,7 @@ Once all planned features are complete, I will likely stop developing this and o
 * [X] Cross platform
 	* [X] Linux
 	* [X] Windows
-	* [X] MacOS (or it was in the past, as I *cannot* build or test it on a mac)
+	* [X] MacOS (builds, at least)
 * [X] Human-readable split file (using [ron](https://github.com/ron-rs/ron))
 * [X] LiveSplit split file transposing (split tool)
 * [ ] (limited) customizability
