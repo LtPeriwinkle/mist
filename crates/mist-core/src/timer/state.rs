@@ -292,6 +292,18 @@ impl RunState {
                 let time = (elapsed - self.split) + self.before_pause_split;
                 self.split = elapsed;
                 self.before_pause_split = 0;
+                if self.run.borrow().splits().is_empty() {
+                    let diff = time as i128 - self.run.borrow().pb().val() as i128;
+                    return vec![
+                        StateChange::ExitSplit {
+                            idx: self.current_split,
+                            status: self.run_status,
+                            time: time,
+                            diff,
+                        },
+                        StateChange::Finish,
+                    ];
+                }
                 self.run_times[self.current_split] = TimeType::Time(time);
                 self.run_diffs[self.current_split] =
                     DiffType::Time(if self.comparison == Comp::PersonalBest {

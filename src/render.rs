@@ -312,59 +312,61 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 StateChange::ExitSplit {
                     status, time, diff, ..
                 } => {
-                    let color = match status {
-                        SplitStatus::None => self.colors.text,
-                        SplitStatus::Ahead => self.colors.ahead,
-                        SplitStatus::Behind => self.colors.behind,
-                        SplitStatus::Gaining => self.colors.gaining,
-                        SplitStatus::Losing => self.colors.losing,
-                        SplitStatus::Gold => {
-                            for panel in &mut self.panels {
-                                if *panel.panel_type() == Panel::SumOfBest {
-                                    panel.set_time(render_text(
-                                        format::split_time_text(
-                                            self.run
-                                                .borrow()
-                                                .gold_times()
-                                                .iter()
-                                                .map(|t| t.val())
-                                                .sum::<u128>(),
-                                        ),
-                                        &self.splits_font,
-                                        &self.creator,
-                                        self.colors.text,
-                                    )?);
+                    if !self.run.borrow().splits().is_empty() {
+                        let color = match status {
+                            SplitStatus::None => self.colors.text,
+                            SplitStatus::Ahead => self.colors.ahead,
+                            SplitStatus::Behind => self.colors.behind,
+                            SplitStatus::Gaining => self.colors.gaining,
+                            SplitStatus::Losing => self.colors.losing,
+                            SplitStatus::Gold => {
+                                for panel in &mut self.panels {
+                                    if *panel.panel_type() == Panel::SumOfBest {
+                                        panel.set_time(render_text(
+                                            format::split_time_text(
+                                                self.run
+                                                    .borrow()
+                                                    .gold_times()
+                                                    .iter()
+                                                    .map(|t| t.val())
+                                                    .sum::<u128>(),
+                                            ),
+                                            &self.splits_font,
+                                            &self.creator,
+                                            self.colors.text,
+                                        )?);
+                                    }
                                 }
+                                self.colors.gold
                             }
-                            self.colors.gold
+                        };
+                        let time_str = if !self.run.borrow().pb_times()[self.current].is_time() {
+                            "-  ".into()
+                        } else {
+                            format::diff_text(diff)
+                        };
+                        if time == 0 {
+                            self.splits[self.current].set_cur(Some(render_text(
+                                "-  ",
+                                &self.splits_font,
+                                &self.creator,
+                                self.colors.text,
+                            )?));
+                        } else {
+                            self.splits[self.current].set_diff(Some(render_text(
+                                &time_str,
+                                &self.splits_font,
+                                &self.creator,
+                                color,
+                            )?));
+                            let time_str = format::split_time_text(update.time);
+                            self.splits[self.current].set_cur(Some(render_text(
+                                &time_str,
+                                &self.splits_font,
+                                &self.creator,
+                                self.colors.text,
+                            )?));
                         }
-                    };
-                    let time_str = if !self.run.borrow().pb_times()[self.current].is_time() {
-                        "-  ".into()
-                    } else {
-                        format::diff_text(diff)
-                    };
-                    if time == 0 {
-                        self.splits[self.current].set_cur(Some(render_text(
-                            "-  ",
-                            &self.splits_font,
-                            &self.creator,
-                            self.colors.text,
-                        )?));
-                    } else {
-                        self.splits[self.current].set_diff(Some(render_text(
-                            &time_str,
-                            &self.splits_font,
-                            &self.creator,
-                            color,
-                        )?));
-                        let time_str = format::split_time_text(update.time);
-                        self.splits[self.current].set_cur(Some(render_text(
-                            &time_str,
-                            &self.splits_font,
-                            &self.creator,
-                            self.colors.text,
-                        )?));
                     }
                 }
                 StateChange::EnterSplit { idx } => {
