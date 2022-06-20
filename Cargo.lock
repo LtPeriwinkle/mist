@@ -322,7 +322,7 @@ checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 
 [[package]]
 name = "mist"
-version = "1.15.1"
+version = "1.16.0"
 dependencies = [
  "lazy_static",
  "mist-core",
@@ -331,7 +331,7 @@ dependencies = [
 
 [[package]]
 name = "mist-core"
-version = "0.10.0"
+version = "1.0.0"
 dependencies = [
  "directories",
  "font-kit",
