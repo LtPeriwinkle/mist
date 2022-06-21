@@ -189,6 +189,8 @@ impl RunState {
             self.timer_state = TimerState::Running;
             self.start = elapsed;
             self.split = elapsed;
+            self.time = 0;
+            change.push(StateChange::ExitOffset);
             change.push(StateChange::EnterSplit { idx: 0 });
         }
 
