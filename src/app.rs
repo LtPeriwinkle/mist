@@ -58,7 +58,7 @@ impl<'a, 'b> App<'a, 'b> {
         } else {
             match dialogs::get_run_path() {
                 Some(x) => x,
-                None => "".into(),
+                None => String::new(),
             }
         };
         let (run, msf) = loop {
@@ -80,7 +80,7 @@ impl<'a, 'b> App<'a, 'b> {
             }
             path = match dialogs::get_run_path() {
                 Some(x) => x,
-                None => "".into(),
+                None => String::new(),
             }
         };
         let run = Rc::new(RefCell::new(run));

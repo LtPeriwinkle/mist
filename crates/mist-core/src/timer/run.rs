@@ -18,8 +18,8 @@ impl Run {
     /// Create a [`Run`] with all empty fields.
     pub fn empty() -> Self {
         Run {
-            game_title: "".to_owned(),
-            category: "".to_owned(),
+            game_title: String::new(),
+            category: String::new(),
             offset: TimeType::None,
             pb: TimeType::None,
             splits: vec![],
