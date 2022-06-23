@@ -57,20 +57,20 @@ impl LssParser {
                         run.set_game_title(
                             reader
                                 .read_text(b"GameName", &mut buffer2)
-                                .unwrap_or_else(|_| "".to_owned()),
+                                .unwrap_or(String::new()),
                         );
                     }
                     b"CategoryName" => {
                         run.set_category(
                             reader
                                 .read_text(b"CategoryName", &mut buffer2)
-                                .unwrap_or_else(|_| "".to_owned()),
+                                .unwrap_or(String::new()),
                         );
                     }
                     b"Offset" => {
                         let mut off_str = reader
                             .read_text(b"Offset", &mut buffer2)
-                            .unwrap_or_else(|_| "".to_owned());
+                            .unwrap_or(String::new());
                         off_str.remove(0);
                         let t = str_to_ms(&off_str);
                         run.set_offset(t.into());
@@ -79,13 +79,13 @@ impl LssParser {
                         splits.push(
                             reader
                                 .read_text(b"Name", &mut buffer2)
-                                .unwrap_or_else(|_| "".to_owned()),
+                                .unwrap_or(String::new()),
                         );
                     }
                     b"RealTime" => {
                         time_str = reader
                             .read_text(b"RealTime", &mut buffer2)
-                            .unwrap_or_else(|_| "".to_owned());
+                            .unwrap_or(String::new());
                     }
                     b"SegmentHistory" => {
                         segment_sum = (0, 0);
