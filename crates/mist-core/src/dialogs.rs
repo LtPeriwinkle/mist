@@ -44,15 +44,10 @@ pub fn get_save_as() -> Option<String> {
 
 /// Ask the user if they want to try another file.
 pub fn try_again() -> bool {
-    match message_box_yes_no(
+    boolean_check(
         "File parse failed",
         "File parse failed. Do you want to try another?",
-        MessageBoxIcon::Question,
-        YesNo::Yes,
-    ) {
-        YesNo::Yes => true,
-        YesNo::No => false,
-    }
+    )
 }
 
 /// Get the path of an msf file to use.
