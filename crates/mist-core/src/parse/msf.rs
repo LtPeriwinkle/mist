@@ -169,13 +169,11 @@ mod tests {
     #[test]
     fn test_parse_v2() {
         let reader = std::io::BufReader::new(V2_RUN);
-        let parser = MsfParser::new("".into());
-        let run = parser.parse_impl(reader);
-        println!("{:?}", run);
-        assert!(run.is_ok());
-        let run = run.unwrap();
-        assert!(
-            run == Run::new(
+        let parser = MsfParser::new(String::new());
+        let run = parser.parse_impl(reader).unwrap();
+        assert_eq!(
+            run,
+            Run::new(
                 "test",
                 "test",
                 Time(200),
@@ -203,13 +201,11 @@ mod tests {
     #[test]
     fn test_parse_v1() {
         let reader = std::io::BufReader::new(V1_RUN);
-        let parser = MsfParser::new("".into());
-        let run = parser.parse_impl(reader);
-        println!("{:?}", run);
-        assert!(run.is_ok());
-        let run = run.unwrap();
-        assert!(
-            run == Run::new(
+        let parser = MsfParser::new(String::new());
+        let run = parser.parse_impl(reader).unwrap();
+        assert_eq!(
+            run,
+            Run::new(
                 "test",
                 "test",
                 Time(200),
@@ -235,12 +231,11 @@ mod tests {
     #[test]
     fn test_parse_legacy() {
         let reader = std::io::BufReader::new(LEGACY_RUN);
-        let parser = MsfParser::new("".into());
-        let run = parser.parse_impl(reader);
-        assert!(run.is_ok());
-        let run = run.unwrap();
-        assert!(
-            run == Run::new(
+        let parser = MsfParser::new(String::new());
+        let run = parser.parse_impl(reader).unwrap();
+        assert_eq!(
+            run,
+            Run::new(
                 "test",
                 "test",
                 Time(200),
@@ -262,18 +257,18 @@ mod tests {
             splits: [\"test\", \"test2\"],
             pb_times: [1234],
             gold_times: [1234],
-            sum_times: [(2, 1234)],
+            sum_times: [(2, 1234), (1, 1243), (5, 420)],
         )";
 
     #[test]
     fn test_sanity_check() {
         let reader = std::io::BufReader::new(INSANE_RUN);
-        let parser = MsfParser::new("".into());
-        let run = parser.parse_impl(reader);
-        assert!(run.is_ok());
-        let run = crate::parse::sanify_run(&run.unwrap());
-        assert!(
-            run == Run::new(
+        let parser = MsfParser::new(String::new());
+        let run = parser.parse_impl(reader).unwrap();
+        let run = crate::parse::sanify_run(&run);
+        assert_eq!(
+            run,
+            Run::new(
                 "test",
                 "test",
                 Time(200),
@@ -281,9 +276,8 @@ mod tests {
                 &["test".into(), "test2".into()],
                 &[Time(1234), TimeType::None],
                 &[Time(1234), TimeType::None],
-                &[(2, Time(1234)), (0, TimeType::None)]
+                &[(2, Time(1234)), (1, Time(1243))]
             )
         );
-        //assert_eq!(run.sum_times().to_owned(), vec![(2, 1234), (0, 0)]);
     }
 }
