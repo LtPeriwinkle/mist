@@ -1,27 +1,27 @@
-// Functions for putting stuff into the correct places on the sdl buffer
 use crate::panels::RenderPanel;
 use crate::splits::Split;
-use mist_core::config::{Config, Panel};
-use mist_core::timer::state::{RunUpdate, SplitStatus, StateChange};
-use mist_core::timer::{format, Comparison, Run};
-use sdl2::get_error;
+use mist_core::{
+    config::{Colors, Config, Panel},
+    timer::{
+        format,
+        state::{RunUpdate, SplitStatus, StateChange},
+        Comparison, Run,
+    },
+};
+use sdl2::{
+    get_error,
+    pixels::Color,
+    rect::{Point, Rect},
+    render::{Texture, TextureCreator, TextureQuery, WindowCanvas},
+    rwops::RWops,
+    ttf::{self, Font, Sdl2TtfContext},
+    video::WindowContext,
+};
 #[cfg(feature = "bg")]
-use sdl2::gfx::rotozoom::RotozoomSurface;
-#[cfg(feature = "bg")]
-use sdl2::image::LoadSurface;
-use sdl2::pixels::Color;
-#[cfg(feature = "bg")]
-use sdl2::pixels::PixelFormatEnum;
-use sdl2::rect::{Point, Rect};
-use sdl2::render::{Texture, TextureCreator, TextureQuery, WindowCanvas};
-use sdl2::rwops::RWops;
-#[cfg(feature = "bg")]
-use sdl2::surface::Surface;
-use sdl2::ttf::{self, Font, Sdl2TtfContext};
-use sdl2::video::WindowContext;
-use std::cell::RefCell;
-use std::convert::TryInto;
-use std::rc::Rc;
+use sdl2::{
+    gfx::rotozoom::RotozoomSurface, image::LoadSurface, pixels::PixelFormatEnum, surface::Surface,
+};
+use std::{cell::RefCell, convert::TryInto, rc::Rc};
 
 const ALL_CHARS: &str =
     "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz`1234567890[]~!@#$%^&*(){}',./=\\-;\"<>?+|_:";
@@ -31,17 +31,19 @@ pub struct RenderState<'a, 'b> {
     run: Rc<RefCell<Run>>,
     canvas: WindowCanvas,
     creator: TextureCreator<WindowContext>,
-    colors: [(u8, u8, u8); 6],
+    colors: Colors,
     splits: Vec<Split>,
     panels: Vec<RenderPanel>,
     map: FontMap,
     time_str: String,
     time_rounding: Option<u128>,
     is_running: bool,
+    rebuild: bool,
     timer_font: Font<'b, 'a>,
     timer_height: u32,
     splits_font: Font<'b, 'a>,
     splits_height: u32,
+    ms_ratio: f32,
     top_index: usize,
     bottom_index: usize,
     highlighted: usize,
@@ -49,6 +51,7 @@ pub struct RenderState<'a, 'b> {
     max_splits: usize,
     inline: bool,
     status: SplitStatus,
+    comparison: Comparison,
     #[cfg(feature = "bg")]
     background: Background,
 }
@@ -77,10 +80,14 @@ impl<'a, 'b> RenderState<'a, 'b> {
     ) -> Result<Self, String> {
         canvas.clear();
         let creator = canvas.texture_creator();
-        let rw = RWops::from_file(config.tfont().get_path()?, "r")?;
-        let timer_font = TTF.load_font_from_rwops(rw, config.fsize().0)?;
-        let rw = RWops::from_file(config.sfont().get_path()?, "r")?;
-        let splits_font = TTF.load_font_from_rwops(rw, config.fsize().1)?;
+        let tfont = config.tfont();
+        let tf_path = tfont.get_path()?;
+        let sfont = config.sfont();
+        let sf_path = sfont.get_path()?;
+        let rw = RWops::from_file(tf_path.0, "r")?;
+        let timer_font = TTF.load_font_at_index_from_rwops(rw, tf_path.1, tfont.size())?;
+        let rw = RWops::from_file(sf_path.0, "r")?;
+        let splits_font = TTF.load_font_at_index_from_rwops(rw, sf_path.1, sfont.size())?;
         let panels = {
             let mut ret = vec![];
             for &panel in config.panels() {
@@ -96,22 +103,29 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     }
                 };
                 let time = if let Panel::SumOfBest = panel {
-                    let sob = run.borrow().gold_times().iter().sum::<u128>();
+                    let sob = run
+                        .borrow()
+                        .gold_times()
+                        .iter()
+                        .map(|t| t.val())
+                        .sum::<u128>();
                     format::split_time_text(sob)
                 } else {
                     "-  ".into()
                 };
-                let time_tex = render_text(&time, &splits_font, &creator, Color::WHITE)?;
-                let text_tex = render_text(&text, &splits_font, &creator, Color::WHITE)?;
+                let time_tex = render_text(&time, &splits_font, &creator, config.colors().text)?;
+                let text_tex = render_text(&text, &splits_font, &creator, config.colors().text)?;
                 let newpanel = RenderPanel::new(text_tex, time_tex, paneltype);
                 ret.push(newpanel);
             }
             ret
         };
-        let string_times: Vec<String> = format::split_time_sum(run.borrow().pb_times())
+        let times = run.borrow().pb_times().clone();
+        let string_times: Vec<String> = format::split_time_sum(&run.borrow().pb_times_u128())
             .iter()
-            .map(|&t| {
-                if t == 0 {
+            .enumerate()
+            .map(|(idx, &t)| {
+                if t == 0 || !times[idx].is_time() {
                     "-  ".into()
                 } else {
                     format::split_time_text(t)
@@ -125,8 +139,14 @@ impl<'a, 'b> RenderState<'a, 'b> {
             .enumerate()
             .map(|(idx, name)| {
                 Split::new(
-                    render_text(name, &splits_font, &creator, Color::WHITE).unwrap(),
-                    render_text(&string_times[idx], &splits_font, &creator, Color::WHITE).unwrap(),
+                    render_text(name, &splits_font, &creator, config.colors().text).unwrap(),
+                    render_text(
+                        &string_times[idx],
+                        &splits_font,
+                        &creator,
+                        config.colors().text,
+                    )
+                    .unwrap(),
                     None,
                     None,
                 )
@@ -137,7 +157,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
         let bottom_index: usize;
         let max_splits: usize;
         let max_initial_splits = ((canvas.viewport().height() - timer_height)
-            / ((splits_height * (1 + !config.layout().inline_splits as u32)) + 5))
+            / ((splits_height * (1 + !config.inline_splits() as u32)) + 5))
             as usize;
         if splits.is_empty() {
             max_splits = 0;
@@ -149,8 +169,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
             max_splits = max_initial_splits;
             bottom_index = max_initial_splits - 1;
         }
-        let time_str = if let Some(n) = run.borrow().offset() {
-            format!("-{}", format::ms_to_readable(n, None))
+        let time_str = if run.borrow().offset().is_time() {
+            format!(
+                "-{}",
+                format::ms_to_readable(run.borrow().offset().val(), None)
+            )
         } else {
             "0.000".into()
         };
@@ -163,29 +186,36 @@ impl<'a, 'b> RenderState<'a, 'b> {
             .map_err(|_| get_error())?;
         canvas
             .window_mut()
-            .set_size(300, 500 + (splits_height * panels.len() as u32))
+            .set_title(&format!(
+                "mist: {} ({})",
+                run.borrow().game_title(),
+                run.borrow().category(),
+            ))
             .map_err(|_| get_error())?;
         canvas.present();
         Ok(Self {
             run,
-            colors: config.color_list(),
+            colors: config.colors(),
             splits,
             panels,
-            map: FontMap::generate(&timer_font, &creator, Color::WHITE)?,
+            map: FontMap::generate(&timer_font, &creator, config.colors().text)?,
             time_str,
             time_rounding: config.rounding(),
             is_running: false,
+            rebuild: false,
             timer_font,
             timer_height,
             splits_font,
             splits_height,
+            ms_ratio: config.ms_ratio(),
             top_index: 0,
             bottom_index,
             highlighted: usize::MAX,
             current: 0,
             max_splits,
-            inline: config.layout().inline_splits,
+            inline: config.inline_splits(),
             status: SplitStatus::None,
+            comparison: Comparison::PersonalBest,
             #[cfg(feature = "bg")]
             background: Background::load(config, canvas.viewport(), &creator)?,
             canvas,
@@ -197,39 +227,45 @@ impl<'a, 'b> RenderState<'a, 'b> {
         if update.status != self.status {
             self.status = update.status;
             let color = match self.status {
-                SplitStatus::None => (255, 255, 255),
-                SplitStatus::Ahead => self.colors[0],
-                SplitStatus::Behind => self.colors[1],
-                SplitStatus::Gaining => self.colors[2],
-                SplitStatus::Losing => self.colors[3],
-                SplitStatus::Gold => self.colors[4],
+                SplitStatus::None => self.colors.text,
+                SplitStatus::Ahead => self.colors.ahead,
+                SplitStatus::Behind => self.colors.behind,
+                SplitStatus::Gaining => self.colors.gaining,
+                SplitStatus::Losing => self.colors.losing,
+                SplitStatus::Gold => self.colors.gold,
             };
-            self.map = FontMap::generate(&self.timer_font, &self.creator, color.into()).unwrap();
+            self.map = FontMap::generate(&self.timer_font, &self.creator, color).unwrap();
         }
         if self.status != SplitStatus::None {
             for panel in &mut self.panels {
-                match panel.panel_type() {
-                    &Panel::Pace { golds } if self.run.borrow().pb_times()[self.current] != 0 => {
+                match *panel.panel_type() {
+                    Panel::Pace { golds }
+                        if self.run.borrow().pb_times()[self.current].raw() != 0 =>
+                    {
                         let r = self.run.borrow();
                         let times = if golds { r.gold_times() } else { r.pb_times() };
                         let pace = format::split_time_text(
-                            times[self.current + 1..].iter().sum::<u128>() + update.time,
+                            times[self.current + 1..]
+                                .iter()
+                                .map(|t| t.val())
+                                .sum::<u128>()
+                                + update.time,
                         );
                         panel.set_time(render_text(
                             pace,
                             &self.splits_font,
                             &self.creator,
-                            Color::WHITE,
+                            self.colors.text,
                         )?);
                     }
-                    &Panel::CurrentSplitDiff { golds }
+                    Panel::CurrentSplitDiff { golds }
                         if self.splits.len() > 1
-                            && self.run.borrow().pb_times()[self.current] != 0 =>
+                            && self.run.borrow().pb_times()[self.current].is_time() =>
                     {
                         let compare_time: u128 = if golds {
-                            self.run.borrow().gold_times()[self.current]
+                            self.run.borrow().gold_times()[self.current].raw()
                         } else {
-                            self.run.borrow().pb_times()[self.current]
+                            self.run.borrow().pb_times()[self.current].raw()
                         };
                         let time = if !golds {
                             if update.split_time < compare_time {
@@ -246,12 +282,16 @@ impl<'a, 'b> RenderState<'a, 'b> {
                             time,
                             &self.splits_font,
                             &self.creator,
-                            Color::WHITE,
+                            self.colors.text,
                         )?);
                     }
                     _ => {}
                 }
             }
+        }
+        if self.rebuild {
+            self.rebuild = false;
+            self.rebuild_comparison()?;
         }
         for change in update.change {
             match change {
@@ -264,6 +304,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     self.is_running = false;
                     self.time_str = format::ms_to_readable(update.time, self.time_rounding);
                     self.highlighted = usize::MAX;
+                    self.rebuild = true;
                 }
                 StateChange::Unpause { .. } => {
                     self.is_running = true;
@@ -271,54 +312,61 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 StateChange::ExitSplit {
                     status, time, diff, ..
                 } => {
-                    let color = match status {
-                        SplitStatus::None => (255, 255, 255),
-                        SplitStatus::Ahead => self.colors[0],
-                        SplitStatus::Behind => self.colors[1],
-                        SplitStatus::Gaining => self.colors[2],
-                        SplitStatus::Losing => self.colors[3],
-                        SplitStatus::Gold => {
-                            for panel in &mut self.panels {
-                                if *panel.panel_type() == Panel::SumOfBest {
-                                    panel.set_time(render_text(
-                                        format::split_time_text(
-                                            self.run.borrow().gold_times().iter().sum::<u128>(),
-                                        ),
-                                        &self.splits_font,
-                                        &self.creator,
-                                        Color::WHITE,
-                                    )?);
+                    if !self.run.borrow().splits().is_empty() {
+                        let color = match status {
+                            SplitStatus::None => self.colors.text,
+                            SplitStatus::Ahead => self.colors.ahead,
+                            SplitStatus::Behind => self.colors.behind,
+                            SplitStatus::Gaining => self.colors.gaining,
+                            SplitStatus::Losing => self.colors.losing,
+                            SplitStatus::Gold => {
+                                for panel in &mut self.panels {
+                                    if *panel.panel_type() == Panel::SumOfBest {
+                                        panel.set_time(render_text(
+                                            format::split_time_text(
+                                                self.run
+                                                    .borrow()
+                                                    .gold_times()
+                                                    .iter()
+                                                    .map(|t| t.val())
+                                                    .sum::<u128>(),
+                                            ),
+                                            &self.splits_font,
+                                            &self.creator,
+                                            self.colors.text,
+                                        )?);
+                                    }
                                 }
+                                self.colors.gold
                             }
-                            self.colors[4]
+                        };
+                        let time_str = if !self.run.borrow().pb_times()[self.current].is_time() {
+                            "-  ".into()
+                        } else {
+                            format::diff_text(diff)
+                        };
+                        if time == 0 {
+                            self.splits[self.current].set_cur(Some(render_text(
+                                "-  ",
+                                &self.splits_font,
+                                &self.creator,
+                                self.colors.text,
+                            )?));
+                        } else {
+                            self.splits[self.current].set_diff(Some(render_text(
+                                &time_str,
+                                &self.splits_font,
+                                &self.creator,
+                                color,
+                            )?));
+                            let time_str = format::split_time_text(update.time);
+                            self.splits[self.current].set_cur(Some(render_text(
+                                &time_str,
+                                &self.splits_font,
+                                &self.creator,
+                                self.colors.text,
+                            )?));
                         }
-                    };
-                    let time_str = if self.run.borrow().pb_times()[self.current] == 0 {
-                        "-  ".into()
-                    } else {
-                        format::diff_text(diff)
-                    };
-                    if time == 0 {
-                        self.splits[self.current].set_cur(Some(render_text(
-                            "-  ",
-                            &self.splits_font,
-                            &self.creator,
-                            Color::WHITE,
-                        )?));
-                    } else {
-                        self.splits[self.current].set_diff(Some(render_text(
-                            &time_str,
-                            &self.splits_font,
-                            &self.creator,
-                            color.into(),
-                        )?));
-                        let time_str = format::split_time_text(update.time);
-                        self.splits[self.current].set_cur(Some(render_text(
-                            &time_str,
-                            &self.splits_font,
-                            &self.creator,
-                            Color::WHITE,
-                        )?));
                     }
                 }
                 StateChange::EnterSplit { idx } => {
@@ -346,8 +394,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     } else {
                         self.bottom_index = self.max_splits - 1;
                     }
-                    if let Some(x) = self.run.borrow().offset() {
-                        self.time_str = format!("-{}", format::ms_to_readable(x, None));
+                    if self.run.borrow().offset().is_time() {
+                        self.time_str = format!(
+                            "-{}",
+                            format::ms_to_readable(self.run.borrow().offset().val(), None)
+                        );
                     } else {
                         self.time_str = "0.000".into();
                     }
@@ -361,93 +412,16 @@ impl<'a, 'b> RenderState<'a, 'b> {
                                 "-  ",
                                 &self.splits_font,
                                 &self.creator,
-                                Color::WHITE,
+                                self.colors.text,
                             )?);
                         }
                     }
                     self.is_running = false;
                 }
-                StateChange::ComparisonChanged { comp } => match comp {
-                    Comparison::None => {
-                        for split in &mut self.splits {
-                            split.set_comp(render_text(
-                                "-  ",
-                                &self.splits_font,
-                                &self.creator,
-                                Color::WHITE,
-                            )?);
-                        }
-                    }
-                    Comparison::Average => {
-                        let mut i = 0;
-                        let (attempts, mut times) = {
-                            let mut att = vec![];
-                            let mut tm = vec![];
-                            for sum in self.run.borrow().sum_times() {
-                                att.push(sum.0);
-                                tm.push(sum.1);
-                            }
-                            (att, tm)
-                        };
-                        while i < attempts.len() {
-                            times[i] /= {
-                                if attempts[i] == 0 {
-                                    1
-                                } else {
-                                    attempts[i]
-                                }
-                            };
-                            i += 1;
-                        }
-                        let split_times_raw: Vec<String> = format::split_time_sum(&times)
-                            .iter()
-                            .map(|&val| {
-                                if val == 0 {
-                                    "-  ".into()
-                                } else {
-                                    format::split_time_text(val)
-                                }
-                            })
-                            .collect();
-                        i = 0;
-                        while i < self.splits.len() {
-                            self.splits[i].set_comp(render_text(
-                                &split_times_raw[i],
-                                &self.splits_font,
-                                &self.creator,
-                                Color::WHITE,
-                            )?);
-                            i += 1;
-                        }
-                    }
-                    c => {
-                        let split_times = match c {
-                            Comparison::PersonalBest => self.run.borrow().pb_times().clone(),
-                            Comparison::Golds => self.run.borrow().gold_times().clone(),
-                            _ => unreachable!(),
-                        };
-                        let split_times_raw: Vec<String> = format::split_time_sum(&split_times)
-                            .iter()
-                            .map(|&val| {
-                                if val == 0 {
-                                    "-  ".into()
-                                } else {
-                                    format::split_time_text(val)
-                                }
-                            })
-                            .collect();
-                        let mut i = 0;
-                        while i < self.splits.len() {
-                            self.splits[i].set_comp(render_text(
-                                &split_times_raw[i],
-                                &self.splits_font,
-                                &self.creator,
-                                Color::WHITE,
-                            )?);
-                            i += 1;
-                        }
-                    }
-                },
+                StateChange::ComparisonChanged { comp } => {
+                    self.comparison = comp;
+                    self.rebuild = true;
+                }
                 StateChange::EnterOffset => {
                     self.is_running = true;
                 }
@@ -458,7 +432,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             if update.offset {
                 self.time_str = format!(
                     "-{}",
-                    format::ms_to_readable(self.run.borrow().offset().unwrap() - update.time, None)
+                    format::ms_to_readable(self.run.borrow().offset().val() - update.time, None)
                 );
             } else {
                 self.time_str = format::ms_to_readable(update.time, None);
@@ -500,9 +474,9 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 } else {
                     self.bottom_index = self.splits.len() - 1;
                 }
-            } else if self.splits.len() > 0 && self.bottom_index + diff < self.splits.len() - 1 {
+            } else if !self.splits.is_empty() && self.bottom_index + diff < self.splits.len() - 1 {
                 self.bottom_index += diff;
-            } else if self.splits.len() > 0 {
+            } else if !self.splits.is_empty() {
                 self.bottom_index = self.splits.len() - 1;
             } else {
                 self.bottom_index = 0;
@@ -528,7 +502,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
     }
 
     pub fn render(&mut self) -> Result<(), String> {
-        self.canvas.set_draw_color(self.colors[5]);
+        self.canvas.set_draw_color(self.colors.background);
         self.canvas.clear();
 
         #[cfg(feature = "bg")]
@@ -542,7 +516,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
     }
 
     pub fn reload_run(&mut self) -> Result<(), String> {
-        let string_times: Vec<String> = format::split_time_sum(self.run.borrow().pb_times())
+        let string_times: Vec<String> = format::split_time_sum(&self.run.borrow().pb_times_u128())
             .iter()
             .map(|&t| {
                 if t == 0 {
@@ -555,19 +529,22 @@ impl<'a, 'b> RenderState<'a, 'b> {
         self.splits = vec![];
         for (idx, name) in self.run.borrow().splits().iter().enumerate() {
             self.splits.push(Split::new(
-                render_text(name, &self.splits_font, &self.creator, Color::WHITE)?,
+                render_text(name, &self.splits_font, &self.creator, self.colors.text)?,
                 render_text(
                     &string_times[idx],
                     &self.splits_font,
                     &self.creator,
-                    Color::WHITE,
+                    self.colors.text,
                 )?,
                 None,
                 None,
             ));
         }
-        if let Some(x) = self.run.borrow().offset() {
-            self.time_str = format!("-{}", format::ms_to_readable(x, None));
+        if self.run.borrow().offset().is_time() {
+            self.time_str = format!(
+                "-{}",
+                format::ms_to_readable(self.run.borrow().offset().val(), None)
+            );
         } else {
             self.time_str = "0.000".into();
         }
@@ -595,12 +572,103 @@ impl<'a, 'b> RenderState<'a, 'b> {
         Self::new(self.run, self.canvas, config)
     }
 
+    pub fn win_size(&self) -> (u32, u32) {
+        self.canvas.window().size()
+    }
+
     fn update_highlighted(&mut self) {
         if self.is_running && self.current >= self.top_index && self.current <= self.bottom_index {
             self.highlighted = self.current - self.top_index;
         } else {
             self.highlighted = usize::MAX;
         }
+    }
+
+    fn rebuild_comparison(&mut self) -> Result<(), String> {
+        match self.comparison {
+            Comparison::None => {
+                for split in &mut self.splits {
+                    split.set_comp(render_text(
+                        "-  ",
+                        &self.splits_font,
+                        &self.creator,
+                        self.colors.text,
+                    )?);
+                }
+            }
+            Comparison::Average => {
+                let mut i = 0;
+                let (attempts, times) = {
+                    let mut att = vec![];
+                    let mut tm = vec![];
+                    for sum in self.run.borrow().sum_times() {
+                        att.push(sum.0);
+                        tm.push(sum.1);
+                    }
+                    (att, tm)
+                };
+                let mut avgs = vec![];
+                while i < attempts.len() {
+                    avgs.push(if attempts[i] != 0 {
+                        times[i] / attempts[i]
+                    } else {
+                        attempts[i]
+                    });
+                    i += 1;
+                }
+                let split_times_raw: Vec<String> = format::split_time_sum(&avgs)
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, &t)| {
+                        if t == 0 || !times[idx].is_time() {
+                            "-  ".into()
+                        } else {
+                            format::split_time_text(t)
+                        }
+                    })
+                    .collect();
+                i = 0;
+                while i < self.splits.len() {
+                    self.splits[i].set_comp(render_text(
+                        &split_times_raw[i],
+                        &self.splits_font,
+                        &self.creator,
+                        self.colors.text,
+                    )?);
+                    i += 1;
+                }
+            }
+            c => {
+                let split_times = match c {
+                    Comparison::PersonalBest => self.run.borrow().pb_times_u128(),
+                    Comparison::Golds => self.run.borrow().gold_times_u128(),
+                    _ => unreachable!(),
+                };
+                let times = self.run.borrow().pb_times().clone();
+                let split_times_raw: Vec<String> = format::split_time_sum(&split_times)
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, &t)| {
+                        if t == 0 || !times[idx].is_time() {
+                            "-  ".into()
+                        } else {
+                            format::split_time_text(t)
+                        }
+                    })
+                    .collect();
+                let mut i = 0;
+                while i < self.splits.len() {
+                    self.splits[i].set_comp(render_text(
+                        &split_times_raw[i],
+                        &self.splits_font,
+                        &self.creator,
+                        self.colors.text,
+                    )?);
+                    i += 1;
+                }
+            }
+        }
+        Ok(())
     }
 
     fn render_rows(&mut self) -> Result<(), String> {
@@ -618,7 +686,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             let TextureQuery { width, height, .. } = item.name().query();
             // draw the blue highlight box before drawing the text for the split with index current
             if index == self.highlighted {
-                self.canvas.set_draw_color(Color::BLUE);
+                self.canvas.set_draw_color(self.colors.highlight);
                 self.canvas
                     .fill_rect(Rect::new(0, y - 1, window_width, incr_height as u32 + 5))?;
             }
@@ -671,7 +739,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 );
                 self.canvas.copy(x, None, Some(row))?;
             }
-            self.canvas.set_draw_color(Color::GRAY);
+            self.canvas.set_draw_color(self.colors.line);
             // draw a line to separate between the rows
             y += incr_height + 3;
             self.canvas
@@ -682,33 +750,38 @@ impl<'a, 'b> RenderState<'a, 'b> {
     }
 
     fn render_time(&mut self) -> Result<(), String> {
-        let coords = self.map.gen_str_coords(&self.time_str);
+        let coords = self.map.gen_str_coords(&self.time_str, self.ms_ratio);
         let vp = self.canvas.viewport();
         let h = vp.height();
         let w = vp.width();
-        let font_y = self.timer_height;
-        let mut src = Rect::new(0, 0, 0, font_y);
-        // multiply initial values by 8/10 so that the font is smaller
+        let mut src = Rect::new(0, 0, 0, self.timer_height);
+        let starting_y = (self.timer_height as f32 * self.ms_ratio) as u32;
+        let diff =
+            (self.timer_height - self.timer_font.find_glyph_metrics('0').unwrap().maxy as u32) / 2;
         let mut dst = Rect::new(
             0,
-            (h - (font_y * 8 / 10) - (self.splits_height * self.panels.len() as u32)) as i32 - 5,
+            (h - (starting_y + (diff as f32 * (1.0 - self.ms_ratio)) as u32)
+                - (self.splits_height * self.panels.len() as u32)) as i32,
             0,
-            font_y * 8 / 10,
+            starting_y,
         );
-        for (idx, (sx, sw, dx, dw)) in coords.iter().enumerate() {
-            src.set_x((*sx).try_into().unwrap());
-            src.set_width(*sw);
-            let wdx: i32 = if w < *dx {
-                let tmp: i32 = (*dx - w).try_into().unwrap();
+        for (idx, &(sx, sw, dx, dw)) in coords.iter().enumerate() {
+            src.set_x(sx.try_into().unwrap());
+            src.set_width(sw);
+            let wdx: i32 = if w < dx {
+                let tmp: i32 = (dx - w).try_into().unwrap();
                 -tmp
             } else {
-                (w - *dx).try_into().unwrap()
+                (w - dx).try_into().unwrap()
             };
             dst.set_x(wdx);
-            dst.set_width(*dw);
+            dst.set_width(dw);
             if idx == 3 {
-                dst.set_y((h - font_y - (self.splits_height * self.panels.len() as u32)) as i32);
-                dst.set_height(font_y);
+                dst.set_y(
+                    (h - self.timer_height - (self.splits_height * self.panels.len() as u32))
+                        as i32,
+                );
+                dst.set_height(self.timer_height);
             }
             self.canvas.copy(&self.map.tex, Some(src), Some(dst))?;
         }
@@ -755,10 +828,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
 }
 
 impl FontMap {
-    fn generate(
+    fn generate<C: Into<Color>>(
         font: &Font<'_, '_>,
         creator: &TextureCreator<WindowContext>,
-        color: Color,
+        color: C,
     ) -> Result<Self, String> {
         let mut max = 0;
         let mut sum = 0;
@@ -784,7 +857,7 @@ impl FontMap {
         })
     }
 
-    fn gen_str_coords(&self, string: &str) -> Vec<(u32, u32, u32, u32)> {
+    fn gen_str_coords(&self, string: &str, ms_ratio: f32) -> Vec<(u32, u32, u32, u32)> {
         let mut coord_idx;
         let mut ret: Vec<(u32, u32, u32, u32)> = vec![];
         let mut x = 0;
@@ -809,8 +882,8 @@ impl FontMap {
             let width = self.coords[coord_idx + 1] - self.coords[coord_idx];
             x += if chr == ':' || chr == '.' {
                 width
-            } else if idx < 4 {
-                self.coords[15] * 8 / 10
+            } else if idx < 3 {
+                (self.coords[15] as f32 * ms_ratio) as u32
             } else {
                 self.coords[15]
             };
@@ -818,7 +891,11 @@ impl FontMap {
                 self.coords[coord_idx] + (coord_idx as u32 * space),
                 width,
                 x,
-                if idx < 4 { width * 8 / 10 } else { width },
+                if idx < 3 {
+                    (width as f32 * ms_ratio) as u32
+                } else {
+                    width
+                },
             );
             ret.push(tup);
         }
@@ -893,11 +970,11 @@ impl Background {
     }
 }
 
-fn render_text<T: ToString>(
+fn render_text<T: ToString, C: Into<Color>>(
     text: T,
     font: &sdl2::ttf::Font,
     creator: &sdl2::render::TextureCreator<sdl2::video::WindowContext>,
-    color: sdl2::pixels::Color,
+    color: C,
 ) -> Result<Texture, String> {
     let sur = font
         .render(&text.to_string())

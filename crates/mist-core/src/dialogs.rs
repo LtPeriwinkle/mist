@@ -4,28 +4,27 @@
 //! in a terminal if none of the dialog APIs it's expecting are available.
 #[cfg(feature = "config")]
 use crate::config::Config;
-use crate::parse::MsfParser;
-use crate::timer::Run;
 use std::fs::File;
-use std::io::{BufReader, Error};
 use tinyfiledialogs::{
     message_box_ok, message_box_yes_no, open_file_dialog, save_file_dialog_with_filter,
     MessageBoxIcon, YesNo,
 };
 
+fn boolean_check(title: &str, msg: &str) -> bool {
+    match message_box_yes_no(title, msg, MessageBoxIcon::Question, YesNo::Yes) {
+        YesNo::Yes => true,
+        YesNo::No => false,
+    }
+}
+
 /// Check if the user wants to save their modified split file.
 ///
 /// If they click yes, return `true`. No returns `false`.
 pub fn save_check() -> bool {
-    match message_box_yes_no(
+    boolean_check(
         "Save run?",
         "Your split file has been updated, do you want to save it?",
-        MessageBoxIcon::Question,
-        YesNo::Yes,
-    ) {
-        YesNo::Yes => true,
-        YesNo::No => false,
-    }
+    )
 }
 
 /// Open a file select dialog box.
@@ -43,52 +42,22 @@ pub fn get_save_as() -> Option<String> {
     save_file_dialog_with_filter("Save as:", "", &["*.msf"], "mist split files")
 }
 
-fn try_again() -> bool {
-    match message_box_yes_no(
+/// Ask the user if they want to try another file.
+pub fn try_again() -> bool {
+    boolean_check(
         "File parse failed",
         "File parse failed. Do you want to try another?",
-        MessageBoxIcon::Question,
-        YesNo::Yes,
-    ) {
-        YesNo::Yes => true,
-        YesNo::No => false,
-    }
+    )
 }
 
-/// Function to both select a file and parse it to a [`Run`].
+/// Get the path of an msf file to use.
 ///
-/// # Errors
-///
-/// * If the file cannot be read or there is another fs error.
-///
-/// # Nones
-///
-/// * If the user does not select a file.
-/// * If the file selected cannot be parsed into a [`Run`].
-pub fn open_run() -> Result<Option<(Run, String)>, Error> {
-    loop {
-        match get_file("Open split file", "*.msf") {
-            Some(ref p) => {
-                let f = File::open(p)?;
-                let reader = BufReader::new(f);
-                let parser = MsfParser::new();
-                match parser.parse(reader) {
-                    Ok(r) => {
-                        return Ok(Some((r, p.to_owned())));
-                    }
-                    Err(_) => {
-                        if !try_again() {
-                            return Ok(None);
-                        }
-                    }
-                }
-            }
-            None => return Ok(None),
-        }
-    }
+/// Returns [`None`] if the user cancels the dialog box
+pub fn get_run_path() -> Option<String> {
+    get_file("Open split file", "*.msf")
 }
 
-/// Similar to [`open_run`] but returns a [`Config`] instead.
+/// Gets the path of a [`Config`] and attempts to parse it.
 ///
 /// # Errors
 ///
@@ -120,6 +89,11 @@ pub fn open_config() -> Result<Option<Config>, String> {
             None => return Ok(None),
         }
     }
+}
+
+/// Ask the user whether they want to exit the program or not.
+pub fn confirm_exit() -> bool {
+    boolean_check("Confirm exit", "Are you sure you want to exit?")
 }
 
 /// Inform the user of an error, then exit the program.

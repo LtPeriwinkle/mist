@@ -1,8 +1,9 @@
+//! Everything related to timing in mist
 mod comparison;
 pub mod format;
 mod instant;
 mod run;
 pub mod state;
-pub use comparison::Comparison;
-pub use instant::MistInstant;
-pub use run::Run;
+mod time_type;
+pub use time_type::{DiffType, TimeType};
+pub use {comparison::Comparison, instant::MistInstant, run::Run};

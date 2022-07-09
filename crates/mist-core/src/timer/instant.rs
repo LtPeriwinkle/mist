@@ -1,106 +1,19 @@
 #![allow(non_camel_case_types)]
-#[cfg(feature = "instant")]
 pub use inner::platform::MistInstant;
 
-#[cfg(any(not(feature = "instant"), windows))]
-/// An arbitrary point in time, used for timing speedruns.
-///
-/// Wraps an [`Instant`](std::time::Instant) for use on Windows (since its Instant already behaves how we want),
-/// or on platforms that lack the functions for continuous time.
-pub struct MistInstant(std::time::Instant);
-#[cfg(any(not(feature = "instant"), windows))]
-impl MistInstant {
-    /// Create a MistInstant referring to the point in time that is 'now'.
-    pub fn now() -> Self {
-        MistInstant(std::time::Instant::now())
-    }
-    /// Find the amount of time that has passed since this MistInstant was created.
-    pub fn elapsed(&self) -> std::time::Duration {
-        self.0.elapsed()
-    }
-}
-
-#[cfg(all(feature = "instant", unix))]
 mod inner {
-    #[cfg(any(target_os = "macos"))]
+    #[cfg(any(not(feature = "instant"), windows))]
     pub mod platform {
-        use std::sync::atomic;
-        use std::time::Duration;
-        #[repr(C)]
-        #[derive(Copy, Clone)]
-        struct mach_timebase_info {
-            numer: u32,
-            denom: u32,
-        }
-        fn info() -> mach_timebase_info {
-            static INFO_BITS: atomic::AtomicU64 = atomic::AtomicU64::new(0);
-
-            let info_bits = INFO_BITS.load(atomic::Ordering::Relaxed);
-            if info_bits != 0 {
-                return info_from_bits(info_bits);
-            }
-
-            extern "C" {
-                fn mach_timebase_info(info: *mut mach_timebase_info) -> libc::c_int;
-            }
-
-            let mut info = info_from_bits(0);
-            unsafe {
-                mach_timebase_info(&mut info);
-            }
-            INFO_BITS.store(info_to_bits(info), atomic::Ordering::Relaxed);
-            info
-        }
-
-        #[inline]
-        fn info_to_bits(info: mach_timebase_info) -> u64 {
-            ((info.denom as u64) << 32) | (info.numer as u64)
-        }
-
-        #[inline]
-        fn info_from_bits(bits: u64) -> mach_timebase_info {
-            mach_timebase_info {
-                numer: bits as u32,
-                denom: (bits >> 32) as u32,
-            }
-        }
-        #[derive(Copy, Clone)]
         /// An arbitrary point in time, used for timing speedruns.
-        pub struct MistInstant {
-            t: u64,
-        }
-
-        impl MistInstant {
-            /// Create a MistInstant referring to the point in time that is 'now'.
-            pub fn now() -> Self {
-                extern "C" {
-                    fn mach_continuous_time() -> u64;
-                }
-                Self {
-                    t: unsafe { mach_continuous_time() },
-                }
-            }
-        }
-
-        impl std::ops::Sub<MistInstant> for MistInstant {
-            type Output = Duration;
-            fn sub(self, other: MistInstant) -> Self::Output {
-                let diff = self
-                    .t
-                    .checked_sub(other.t)
-                    .expect("overflow when subtracting instants");
-                let info = info();
-                let nanos = ((diff / info.denom as u64) * info.numer as u64)
-                    + (((diff % info.denom as u64) * info.numer as u64) / info.denom as u64);
-                Duration::new(nanos / 1_000_000_000, (nanos % 1_000_000_000) as u32)
-            }
-        }
+        ///
+        /// Alias to [`Instant`](std::time::Instant) for use on Windows (since its Instant already behaves how we want),
+        /// or on platforms that lack the functions for continuous time.
+        pub type MistInstant = std::time::Instant;
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(all(feature = "instant", unix))]
     pub mod platform {
-        use std::cmp::Ordering;
-        use std::time::Duration;
+        use std::{cmp::Ordering, time::Duration};
         #[derive(Copy, Clone)]
         struct Timespec {
             t: libc::timespec,
@@ -155,34 +68,6 @@ mod inner {
             t: Timespec,
         }
 
-        impl MistInstant {
-            /// Create a MistInstant referring to the point in time that is 'now'.
-            pub fn now() -> Self {
-                Self {
-                    t: now(libc::CLOCK_BOOTTIME),
-                }
-            }
-        }
-
-        #[cfg(not(any(target_os = "dragonfly", target_os = "espidf")))]
-        pub type clock_t = libc::c_int;
-        #[cfg(any(target_os = "dragonfly", target_os = "espidf"))]
-        pub type clock_t = libc::c_ulong;
-
-        fn now(clock: clock_t) -> Timespec {
-            let mut t = Timespec {
-                t: libc::timespec {
-                    tv_sec: 0,
-                    tv_nsec: 0,
-                },
-            };
-            let r = unsafe { libc::clock_gettime(clock, &mut t.t) };
-            if r == -1 {
-                panic!("couldn't clock_gettime");
-            }
-            t
-        }
-
         impl std::ops::Sub<MistInstant> for MistInstant {
             type Output = Duration;
             fn sub(self, other: MistInstant) -> Self::Output {
@@ -191,11 +76,39 @@ mod inner {
                     .expect("overflow when subtracting instants")
             }
         }
-    }
-    impl platform::MistInstant {
-        /// Find the amount of time that has passed since this MistInstant was created.
-        pub fn elapsed(&self) -> std::time::Duration {
-            Self::now() - *self
+
+        impl MistInstant {
+            /// Create a [`MistInstant`] referring to the point in time that is 'now'.
+            pub fn now() -> Self {
+                let mut ts = Timespec {
+                    t: libc::timespec {
+                        tv_sec: 0,
+                        tv_nsec: 0,
+                    },
+                };
+                #[cfg(target = "linux")]
+                {
+                    use std::sync::atomic::{AtomicBool, Ordering as AtomicOrd};
+                    static NO_BOOTTIME: AtomicBool = AtomicBool::new(false);
+                    if !NO_BOOTTIME.load(AtomicOrd::Relaxed) {
+                        let r = unsafe { libc::clock_gettime(libc::CLOCK_BOOTTIME, &mut ts.t) };
+                        if r != 0 {
+                            NO_BOOTTIME.store(true, AtomicOrd::Relaxed);
+                        } else {
+                            return Self { t: ts };
+                        }
+                    }
+                }
+                let r = unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut ts.t) };
+                if r != 0 {
+                    panic!("clock_gettime is broken");
+                }
+                Self { t: ts }
+            }
+            /// Find the amount of time that has passed since this [`MistInstant`] was created.
+            pub fn elapsed(&self) -> std::time::Duration {
+                Self::now() - *self
+            }
         }
     }
 }

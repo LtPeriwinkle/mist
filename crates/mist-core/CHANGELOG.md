@@ -1,4 +1,12 @@
 ## mist-core changelog
+### 1.0.0
+- Add many new config fields
+- Allow fields to be unspecified, filling in with default
+- Use platform-specific config locations
+- Add exit confirmation dialog
+- New timetype enum for skipping splits etc
+- New font locating system for config
+
 ### 0.10.0
 - Brand new state system (wow)
 - Reorganized modules: `Run`, `RunState`, `MistInstant` etc all live in `timer` module

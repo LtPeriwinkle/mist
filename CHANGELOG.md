@@ -1,4 +1,11 @@
 # Changelog
+### 1.16.0
+- Better font locating and handling
+- Can now determine whether a split was skipped or not while also knowing the time
+- New config options: window size, millisecond size
+- Platform config directories
+- Fix several calculations of colors and comparisons
+
 ### 1.15.1
 - Various code cleanups
 - Fix some subtraction overflows (#14)
