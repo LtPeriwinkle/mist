@@ -1,4 +1,12 @@
 # <img src="assets/MIST.png?raw=true" width="50" height="50"/> mist
+
+Development of mist has left GitHub. It is still mirrored here, but issues and the like will be ignored. (In the future, the mirror may stop as well.)
+
+You can now find mist on [codeberg](https://codeberg.org/LieutenantPeriwinkle/mist) instead.
+
+Any use of mist's code by GitHub Copilot, past or present, is done without our permission.  We do not consent to GitHub's use of mist's code in Copilot.
+
+
 ![Lines of code](https://img.shields.io/tokei/lines/github/ltperiwinkle/mist)
 
 a minimal, improved speedrun timer
