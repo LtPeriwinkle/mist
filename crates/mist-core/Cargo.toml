@@ -11,9 +11,9 @@ license = "Apache-2.0 OR MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["timing", "dialogs", "config"]
+default = ["state", "dialogs", "config"]
 lss = ["quick-xml"]
-timing = []
+state = []
 dialogs = ["tinyfiledialogs"]
 config = ["font-kit", "directories"]
 bg = ["config"]
