@@ -2,7 +2,9 @@ use font_kit::{
     family_name::FamilyName, handle::Handle, properties::Properties, source::SystemSource,
 };
 use serde::{Deserialize, Serialize};
+use std::io::Read;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
 /// A font as represented in the config file.
@@ -73,8 +75,8 @@ impl From<&Style> for font_kit::properties::Style {
 
 impl Font {
     /// Get the path to the font file, and the index of the font, as determined by `font_kit`.
-    pub fn get_path(&self) -> Result<(PathBuf, u32), String> {
-        self.ty.get_path()
+    pub fn get_bytes(&self) -> Result<(Arc<Vec<u8>>, u32), String> {
+        self.ty.get_bytes()
     }
     /// Get the size of the font.
     pub fn size(&self) -> u16 {
@@ -97,9 +99,14 @@ impl Font {
 }
 
 impl FontType {
-    fn get_path(&self) -> Result<(PathBuf, u32), String> {
+    fn get_bytes(&self) -> Result<(Arc<Vec<u8>>, u32), String> {
         match self {
-            Self::File { path } => Ok((path.to_owned(), 0)),
+            Self::File { path } => {
+                let mut buf = vec![];
+                let mut f = std::fs::File::open(path).unwrap();
+                f.read_to_end(&mut buf).unwrap();
+                Ok((Arc::new(buf), 0))
+            }
             Self::System {
                 name,
                 style,
@@ -121,10 +128,14 @@ impl FontType {
                 let handle = SystemSource::new()
                     .select_best_match(&[family_name], &props)
                     .map_err(|_| format!("Could not locate font {name} {style:?}"))?;
-                if let Handle::Path { path, font_index } = handle {
-                    Ok((path, font_index))
-                } else {
-                    Err("How did we get here?".into())
+                match handle {
+                    Handle::Path { path, font_index } => {
+                        let mut buf = vec![];
+                        let mut f = std::fs::File::open(path).unwrap();
+                        f.read_to_end(&mut buf).unwrap();
+                        Ok((Arc::new(buf), font_index))
+                    }
+                    Handle::Memory { bytes, font_index } => Ok((bytes, font_index)),
                 }
             }
         }
