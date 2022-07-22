@@ -138,6 +138,21 @@ impl<'a, 'b> App<'a, 'b> {
                     }
 
                     Event::KeyDown {
+                        keycode: Some(Keycode::A),
+                        ..
+                    } => {
+                        let mut d = self.run_state.create_state_dump();
+                        self.ren_state.fill_dump(&mut d);
+                        d.print();
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::O),
+                        ..
+                    } => {
+                        self.ren_state.read_dump(&self.run_state.read_dump())?;
+                    }
+
+                    Event::KeyDown {
                         keycode: Some(k),
                         repeat: false,
                         ..
