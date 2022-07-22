@@ -1,10 +1,12 @@
 //! Internal state of mist.
 
+use super::dump::StateDump;
 use super::format;
 use super::Comparison as Comp;
 use super::MistInstant;
 use super::Run;
 use super::{DiffType, TimeType};
+use serde::{Deserialize, Serialize};
 use std::{cell::RefCell, rc::Rc};
 
 /// The state of the loaded run.
@@ -120,7 +122,7 @@ pub struct RunUpdate {
 /// Status of an active run.
 ///
 /// Usually corresponds to colors in the renderer.
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum SplitStatus {
     /// Timer is not running or no comparison.
     None,
