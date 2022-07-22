@@ -31,6 +31,7 @@ pub struct RunState {
     current_split: usize,
     needs_save: bool,
     set_times: bool,
+    adj_by: u128,
 }
 
 #[derive(PartialEq, Debug)]
@@ -161,7 +162,26 @@ impl RunState {
             current_split: 0,
             needs_save: false,
             set_times: false,
+            adj_by: 0,
         }
+    }
+
+    pub fn read_dump(&mut self) -> StateDump {
+        let dump: StateDump = ron::from_str(&std::fs::read_to_string("foo.ron").unwrap()).unwrap();
+        self.run_status = dump.status;
+        self.comparison = dump.comparison;
+        self.run_times = dump.run_times.clone();
+        self.run_diffs = dump.run_diffs.clone();
+        self.run_golds = dump.run_golds.clone();
+        self.sum_comp_times = dump.sum_comp_times.clone();
+        self.before_pause = dump.before_pause;
+        self.before_pause_split = dump.before_pause_split;
+        self.time = dump.time;
+        self.current_split = dump.current_split;
+        self.needs_save = dump.needs_save;
+        self.adj_by = dump.time;
+        self.timer_state = TimerState::Paused;
+        dump
     }
 
     /// Update the [`RunState`].
@@ -512,5 +532,26 @@ impl RunState {
             _ => {}
         }
         vec![StateChange::None]
+    }
+
+    pub fn create_state_dump(&self) -> StateDump {
+        let before_pause = self.time;
+        let before_pause_split = self.timer.elapsed().as_millis() - self.split;
+        StateDump {
+            status: self.run_status,
+            comparison: self.comparison,
+            run_times: self.run_times.clone(),
+            run_diffs: self.run_diffs.clone(),
+            run_golds: self.run_golds.clone(),
+            sum_comp_times: self.sum_comp_times.clone(),
+            before_pause,
+            before_pause_split,
+            time: self.time,
+            current_split: self.current_split,
+            needs_save: self.needs_save,
+            top_index: 0,
+            bottom_index: 0,
+            time_str: String::new(),
+        }
     }
 }
