@@ -7,8 +7,7 @@ mod panels;
 mod render;
 mod splits;
 use app::App;
-use mist_core::config::Config;
-use mist_core::dialogs::error;
+use mist_core::{config::Config, dialogs::error};
 use sdl2::rwops::RWops;
 
 fn main() {
