@@ -1,5 +1,6 @@
 use crate::panels::RenderPanel;
 use crate::splits::Split;
+use mist_core::timer::dump::StateDump;
 use mist_core::{
     config::{Colors, Config, Panel},
     timer::{
@@ -822,6 +823,52 @@ impl<'a, 'b> RenderState<'a, 'b> {
     fn render_bg(&mut self) -> Result<(), String> {
         if let Background::HasBackground { ref tex, rect } = self.background {
             self.canvas.copy(tex, None, Some(rect))?;
+        }
+        Ok(())
+    }
+
+    pub fn fill_dump(&self, dump: &mut StateDump) {
+        dump.set_render_info(self.top_index, self.bottom_index, self.time_str.clone());
+    }
+
+    pub fn read_dump(&mut self, dump: &StateDump) -> Result<(), String> {
+        self.top_index = dump.top_index;
+        self.bottom_index = dump.bottom_index;
+        self.time_str = dump.time_str.clone();
+        self.status = dump.status;
+        self.comparison = dump.comparison;
+        self.current = dump.current_split;
+        self.rebuild_comparison()?;
+        self.rebuild_current(dump)?;
+        Ok(())
+    }
+
+    fn rebuild_current(&mut self, dump: &StateDump) -> Result<(), String> {
+        let times = format::split_time_sum(
+            &dump
+                .run_times
+                .iter()
+                .map_while(|v| if v.val() != 0 { Some(v.val()) } else { None })
+                .collect::<Vec<_>>(),
+        );
+        for (i, &time) in times.iter().enumerate() {
+            if time == 0 {
+                break;
+            }
+            let time_str = format::split_time_text(time);
+            self.splits[i].set_cur(Some(render_text(
+                &time_str,
+                &self.splits_font,
+                &self.creator,
+                self.colors.text,
+            )?));
+            let time_str = format::diff_text(dump.run_diffs[i].raw());
+            self.splits[i].set_diff(Some(render_text(
+                &time_str,
+                &self.splits_font,
+                &self.creator,
+                self.colors.text,
+            )?));
         }
         Ok(())
     }
