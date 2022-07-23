@@ -5,6 +5,7 @@ use mist_core::{
     dialogs,
     parse::MsfParser,
     timer::{
+        dump::StateDump,
         state::{RunState, RunUpdate, StateChangeRequest},
         Run,
     },
@@ -148,9 +149,22 @@ impl<'a, 'b> App<'a, 'b> {
                     Event::KeyDown {
                         keycode: Some(Keycode::O),
                         ..
-                    } => {
-                        self.ren_state.read_dump(&self.run_state.read_dump())?;
-                    }
+                    } => loop {
+                        if let Some(p) = dialogs::get_dump_path() {
+                            match StateDump::open(p) {
+                                Ok(d) => {
+                                    self.run_state.read_dump(&d);
+                                    self.ren_state.read_dump(&d)?;
+                                    break;
+                                }
+                                Err(_) => {
+                                    if !dialogs::try_again() {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    },
 
                     Event::KeyDown {
                         keycode: Some(k),
