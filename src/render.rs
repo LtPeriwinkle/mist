@@ -851,9 +851,8 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 .map_while(|v| if v.val() != 0 { Some(v.val()) } else { None })
                 .collect::<Vec<_>>(),
         );
-        let split_sums =
-            format::split_time_sum(&dump.run_times.iter().map(|v| v.raw()).collect::<Vec<_>>());
-        let pb_sums = format::split_time_sum(&self.run.borrow().pb_times_u128());
+        let diff_sums =
+            format::split_time_sum(&dump.run_diffs.iter().map(|v| v.raw()).collect::<Vec<_>>());
         for (i, &time) in times.iter().enumerate() {
             let time_str = format::split_time_text(time);
             self.splits[i].set_cur(Some(render_text(
@@ -862,8 +861,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 &self.creator,
                 self.colors.text,
             )?));
-            let diff = split_sums[i] as i128 - pb_sums[i] as i128;
-            let time_str = format::diff_text(diff);
+            let time_str = format::diff_text(diff_sums[i]);
             self.splits[i].set_diff(Some(render_text(
                 &time_str,
                 &self.splits_font,
