@@ -57,6 +57,10 @@ pub fn get_run_path() -> Option<String> {
     get_file("Open split file", "*.msf")
 }
 
+pub fn get_dump_path() -> Option<String> {
+    get_file("Open dump file", "*.ron")
+}
+
 /// Gets the path of a [`Config`] and attempts to parse it.
 ///
 /// # Errors

@@ -31,7 +31,6 @@ pub struct RunState {
     current_split: usize,
     needs_save: bool,
     set_times: bool,
-    adj_by: u128,
 }
 
 #[derive(PartialEq, Debug)]
@@ -62,7 +61,6 @@ pub enum StateChangeRequest {
     Comparison(bool),
 }
 
-// commented items will be used for plugins later
 /// A single change in state.
 #[derive(Debug)]
 pub enum StateChange {
@@ -162,12 +160,11 @@ impl RunState {
             current_split: 0,
             needs_save: false,
             set_times: false,
-            adj_by: 0,
         }
     }
 
-    pub fn read_dump(&mut self) -> StateDump {
-        let dump: StateDump = ron::from_str(&std::fs::read_to_string("foo.ron").unwrap()).unwrap();
+    pub fn read_dump(&mut self, dump: &StateDump) {
+        self.run.replace(dump.run.clone());
         self.run_status = dump.status;
         self.comparison = dump.comparison;
         self.run_times = dump.run_times.clone();
@@ -179,9 +176,7 @@ impl RunState {
         self.time = dump.time;
         self.current_split = dump.current_split;
         self.needs_save = dump.needs_save;
-        self.adj_by = dump.time;
         self.timer_state = TimerState::Paused;
-        dump
     }
 
     /// Update the [`RunState`].
@@ -372,8 +367,7 @@ impl RunState {
                             .run_golds
                             .iter()
                             .enumerate()
-                            .filter(|(_, &i)| i)
-                            .map(|(idx, _)| idx)
+                            .filter_map(|(idx, &gold)| if gold { Some(idx) } else { Option::None })
                         {
                             run.set_gold_time(idx, self.run_times[idx]);
                         }
@@ -538,6 +532,7 @@ impl RunState {
         let before_pause = self.time;
         let before_pause_split = self.timer.elapsed().as_millis() - self.split;
         StateDump {
+            run: self.run.borrow().clone(),
             status: self.run_status,
             comparison: self.comparison,
             run_times: self.run_times.clone(),
