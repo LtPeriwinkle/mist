@@ -851,8 +851,9 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 .map_while(|v| if v.val() != 0 { Some(v.val()) } else { None })
                 .collect::<Vec<_>>(),
         );
-        let diff_sums =
-            format::split_time_sum(&dump.run_diffs.iter().map(|v| v.raw()).collect::<Vec<_>>());
+        let raw_diffs = dump.run_diffs.iter().map(|v| v.raw()).collect::<Vec<_>>();
+        let diff_sums = format::split_time_sum(&raw_diffs);
+        let stats = calculate_statuses(&raw_diffs);
         for (i, &time) in times.iter().enumerate() {
             let time_str = format::split_time_text(time);
             self.splits[i].set_cur(Some(render_text(
@@ -862,15 +863,51 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 self.colors.text,
             )?));
             let time_str = format::diff_text(diff_sums[i]);
+            let color = self.convert_color(stats[i]);
             self.splits[i].set_diff(Some(render_text(
                 &time_str,
                 &self.splits_font,
                 &self.creator,
-                self.colors.text,
+                color,
             )?));
         }
         Ok(())
     }
+
+    fn convert_color(&self, status: SplitStatus) -> (u8, u8, u8, u8) {
+        use SplitStatus::*;
+        match status {
+            Ahead => self.colors.ahead,
+            Behind => self.colors.behind,
+            Losing => self.colors.losing,
+            Gaining => self.colors.gaining,
+            Gold => self.colors.gold,
+            None => self.colors.text,
+        }
+    }
+}
+
+fn calculate_statuses(diffs: &[i128]) -> Vec<SplitStatus> {
+    let mut sum = 0;
+    let mut ret = vec![];
+    for i in diffs {
+        let last_sum = sum;
+        sum += i;
+        if sum <= 0 {
+            if sum <= last_sum {
+                ret.push(SplitStatus::Ahead);
+            } else {
+                ret.push(SplitStatus::Losing);
+            }
+        } else {
+            if sum < last_sum {
+                ret.push(SplitStatus::Gaining);
+            } else {
+                ret.push(SplitStatus::Behind);
+            }
+        }
+    }
+    ret
 }
 
 impl FontMap {
