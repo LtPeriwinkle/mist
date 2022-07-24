@@ -1,5 +1,5 @@
 # <img src="assets/MIST.png?raw=true" width="50" height="50"/> mist
-![Lines of code](https://img.shields.io/tokei/lines/codeberg/lieutenantperiwinkle/mist)
+![Lines of code](https://tokei.rs/b1/codeberg.org/lieutenantperiwinkle/mist?category=code)
 
 a minimal, improved speedrun timer
 
