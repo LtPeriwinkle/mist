@@ -6,6 +6,7 @@
 - Add exit confirmation dialog
 - New timetype enum for skipping splits etc
 - New font locating system for config
+- Fix features
 
 ### 0.10.0
 - Brand new state system (wow)

@@ -13,7 +13,7 @@ a minimal, improved speedrun timer
 
 [Changelog](CHANGELOG.md)
 
-[Latest Release](https://github.com/LtPeriwinkle/mist/releases/latest)
+[Latest Release](https://codeberg.org/lieutenantperiwinkle/mist/releases/latest)
 
 ## Planned features
 Once all planned features are complete, I will likely stop developing this and only squash bugs etc. More *might* still be added to this list.

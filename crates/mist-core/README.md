@@ -13,6 +13,7 @@ Add mist-core to your Cargo.toml.
 version = "0.9"
 ```
 
-`mist-core` provides several features: `timing`, `dialogs`, `config`, `lss`, and `bg`. These enable functionality.
-`bg` is used by mist to enable or enable background image support in configuration; `timing`, `dialogs`, and `config` enable their respective
-modules; `lss` adds the LssParser to module parse.
+`mist-core` provides several features: `dialogs`, `config`, `lss`, `instant`, and `bg`.
+`bg` is used by mist to enable or enable background image support in configuration; `dialogs`, and `config` enable their respective
+modules; `lss` adds the LssParser to module parse; `instant` enables an alternate `Instant` implementation on
+platforms where the version from `std` does not already measure time how I want them to.
