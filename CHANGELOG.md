@@ -1,4 +1,8 @@
 # Changelog
+### 1.16.1
+- Support memory font source for e.g. macOS
+- This removes the ability to reload fonts when config is reloaded!
+
 ### 1.16.0
 - Better font locating and handling
 - Can now determine whether a split was skipped or not while also knowing the time

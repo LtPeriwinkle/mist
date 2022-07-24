@@ -13,6 +13,7 @@ use sdl2::{
     event::{Event, WindowEvent},
     get_error,
     keyboard::Keycode,
+    ttf::Font,
 };
 #[cfg(feature = "icon")]
 use sdl2::{image::ImageRWops, rwops::RWops};
@@ -36,7 +37,11 @@ pub struct App<'a, 'b> {
 static ONE_SIXTIETH: Duration = Duration::new(0, 1_000_000_000 / 60);
 
 impl<'a, 'b> App<'a, 'b> {
-    pub fn init(context: sdl2::Sdl) -> Result<Self, String> {
+    pub fn init(
+        context: sdl2::Sdl,
+        t_font: &'a Font<'b, 'a>,
+        s_font: &'a Font<'b, 'a>,
+    ) -> Result<Self, String> {
         let video = context.video()?;
         let mut config = Config::open()?;
         let mut window = video
@@ -95,7 +100,7 @@ impl<'a, 'b> App<'a, 'b> {
             .map_err(|_| get_error())?;
         let app = App {
             _context: context,
-            ren_state: RenderState::new(Rc::clone(&run), canvas, &config)?,
+            ren_state: RenderState::new(Rc::clone(&run), canvas, &config, t_font, s_font)?,
             run_state: RunState::new(Rc::clone(&run)),
             config,
             ev_pump,
@@ -106,7 +111,7 @@ impl<'a, 'b> App<'a, 'b> {
         Ok(app)
     }
 
-    pub fn run(mut self) -> Result<(), String> {
+    pub fn run(mut self, t_font: &'a Font<'b, 'a>, s_font: &'a Font<'b, 'a>) -> Result<(), String> {
         let no_file = self.config.file().is_none();
 
         // framerate cap timer
@@ -198,8 +203,11 @@ impl<'a, 'b> App<'a, 'b> {
                                 Ok(c) => {
                                     if let Some(conf) = c {
                                         self.config = conf;
-                                        self.ren_state =
-                                            self.ren_state.reload_config(&self.config)?;
+                                        self.ren_state = self.ren_state.reload_config(
+                                            &self.config,
+                                            t_font,
+                                            s_font,
+                                        )?;
                                         binds = Keybinds::from_raw(self.config.binds())?;
                                     }
                                 }

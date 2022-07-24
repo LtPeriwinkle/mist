@@ -2,7 +2,9 @@ use font_kit::{
     family_name::FamilyName, handle::Handle, properties::Properties, source::SystemSource,
 };
 use serde::{Deserialize, Serialize};
+use std::io::Read;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
 /// A font as represented in the config file.
@@ -73,6 +75,9 @@ impl From<&Style> for font_kit::properties::Style {
 
 impl Font {
     /// Get the path to the font file, and the index of the font, as determined by `font_kit`.
+    pub fn get_bytes(&self) -> Result<(Arc<Vec<u8>>, u32), String> {
+        self.ty.get_bytes()
+    }
     pub fn get_path(&self) -> Result<(PathBuf, u32), String> {
         self.ty.get_path()
     }
@@ -97,9 +102,14 @@ impl Font {
 }
 
 impl FontType {
-    fn get_path(&self) -> Result<(PathBuf, u32), String> {
+    fn get_bytes(&self) -> Result<(Arc<Vec<u8>>, u32), String> {
         match self {
-            Self::File { path } => Ok((path.to_owned(), 0)),
+            Self::File { path } => {
+                let mut buf = vec![];
+                let mut f = std::fs::File::open(path).unwrap();
+                f.read_to_end(&mut buf).unwrap();
+                Ok((Arc::new(buf), 0))
+            }
             Self::System {
                 name,
                 style,
@@ -121,10 +131,45 @@ impl FontType {
                 let handle = SystemSource::new()
                     .select_best_match(&[family_name], &props)
                     .map_err(|_| format!("Could not locate font {name} {style:?}"))?;
-                if let Handle::Path { path, font_index } = handle {
-                    Ok((path, font_index))
-                } else {
-                    Err("How did we get here?".into())
+                match handle {
+                    Handle::Path { path, font_index } => {
+                        let mut buf = vec![];
+                        let mut f = std::fs::File::open(path).unwrap();
+                        f.read_to_end(&mut buf).unwrap();
+                        Ok((Arc::new(buf), font_index))
+                    }
+                    Handle::Memory { bytes, font_index } => Ok((bytes, font_index)),
+                }
+            }
+        }
+    }
+    fn get_path(&self) -> Result<(PathBuf, u32), String> {
+        match self {
+            Self::File { path } => Ok((path.into(), 0)),
+            Self::System {
+                name,
+                style,
+                weight,
+            } => {
+                let props = Properties {
+                    style: style.into(),
+                    weight: weight.into(),
+                    ..Default::default()
+                };
+                let family_name = match name.to_lowercase().as_str() {
+                    "serif" => FamilyName::Serif,
+                    "sansserif" => FamilyName::SansSerif,
+                    "monospace" => FamilyName::Monospace,
+                    "cursive" => FamilyName::Cursive,
+                    "fantasy" => FamilyName::Fantasy,
+                    _ => FamilyName::Title(name.to_owned()),
+                };
+                let handle = SystemSource::new()
+                    .select_best_match(&[family_name], &props)
+                    .map_err(|_| format!("Could not locate font {name} {style:?}"))?;
+                match handle {
+                    Handle::Path { path, font_index } => Ok((path, font_index)),
+                    _ => Err(String::from("Font not accessible as a path")),
                 }
             }
         }
