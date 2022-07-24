@@ -122,7 +122,7 @@ impl MsfParser {
                 .map_err(|e| e.to_string())?
                 .into(),
         };
-        Ok(run)
+        Ok(super::sanify_run(&run))
     }
 
     /// Write the given run to the file stored in the [`MsfParser`].

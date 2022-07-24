@@ -1,6 +1,7 @@
 ## mist-core changelog
 ### 1.0.1
 - add get_bytes function for fonts to work on all systems
+- sanify the run upon reading it, as somehow this was missing
 
 ### 1.0.0
 - Add many new config fields
