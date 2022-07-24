@@ -830,18 +830,20 @@ impl<'a, 'b> RenderState<'a, 'b> {
     }
 
     fn rebuild_current(&mut self, dump: &StateDump) -> Result<(), String> {
-        let times = format::split_time_sum(
-            &dump
-                .run_times
-                .iter()
-                .map_while(|v| if v.val() != 0 { Some(v.val()) } else { None })
-                .collect::<Vec<_>>(),
-        );
         let raw_diffs = dump.run_diffs.iter().map(|v| v.raw()).collect::<Vec<_>>();
         let diff_sums = format::split_time_sum(&raw_diffs);
         let stats = calculate_statuses(&raw_diffs);
-        for (i, &time) in times.iter().enumerate() {
-            let time_str = format::split_time_text(time);
+        for (i, &time) in dump
+            .run_times
+            .iter()
+            .enumerate()
+            .take_while(|(_, v)| !v.is_none())
+        {
+            let time_str = if time.is_time() {
+                format::split_time_text(time.val())
+            } else {
+                "-  ".into()
+            };
             self.splits[i].set_cur(Some(render_text(
                 &time_str,
                 &self.splits_font,
@@ -885,12 +887,10 @@ fn calculate_statuses(diffs: &[i128]) -> Vec<SplitStatus> {
             } else {
                 ret.push(SplitStatus::Losing);
             }
+        } else if sum < last_sum {
+            ret.push(SplitStatus::Gaining);
         } else {
-            if sum < last_sum {
-                ret.push(SplitStatus::Gaining);
-            } else {
-                ret.push(SplitStatus::Behind);
-            }
+            ret.push(SplitStatus::Behind);
         }
     }
     ret
