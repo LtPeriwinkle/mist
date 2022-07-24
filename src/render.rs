@@ -227,14 +227,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
     pub fn update(&mut self, update: RunUpdate) -> Result<(), String> {
         if update.status != self.status {
             self.status = update.status;
-            let color = match self.status {
-                SplitStatus::None => self.colors.text,
-                SplitStatus::Ahead => self.colors.ahead,
-                SplitStatus::Behind => self.colors.behind,
-                SplitStatus::Gaining => self.colors.gaining,
-                SplitStatus::Losing => self.colors.losing,
-                SplitStatus::Gold => self.colors.gold,
-            };
+            let color = self.convert_color(self.status);
             self.map = FontMap::generate(&self.timer_font, &self.creator, color).unwrap();
         }
         if self.status != SplitStatus::None {
@@ -314,33 +307,26 @@ impl<'a, 'b> RenderState<'a, 'b> {
                     status, time, diff, ..
                 } => {
                     if !self.run.borrow().splits().is_empty() {
-                        let color = match status {
-                            SplitStatus::None => self.colors.text,
-                            SplitStatus::Ahead => self.colors.ahead,
-                            SplitStatus::Behind => self.colors.behind,
-                            SplitStatus::Gaining => self.colors.gaining,
-                            SplitStatus::Losing => self.colors.losing,
-                            SplitStatus::Gold => {
-                                for panel in &mut self.panels {
-                                    if *panel.panel_type() == Panel::SumOfBest {
-                                        panel.set_time(render_text(
-                                            format::split_time_text(
-                                                self.run
-                                                    .borrow()
-                                                    .gold_times()
-                                                    .iter()
-                                                    .map(|t| t.val())
-                                                    .sum::<u128>(),
-                                            ),
-                                            &self.splits_font,
-                                            &self.creator,
-                                            self.colors.text,
-                                        )?);
-                                    }
+                        if status == SplitStatus::Gold {
+                            for panel in &mut self.panels {
+                                if *panel.panel_type() == Panel::SumOfBest {
+                                    panel.set_time(render_text(
+                                        format::split_time_text(
+                                            self.run
+                                                .borrow()
+                                                .gold_times()
+                                                .iter()
+                                                .map(|t| t.val())
+                                                .sum::<u128>(),
+                                        ),
+                                        &self.splits_font,
+                                        &self.creator,
+                                        self.colors.text,
+                                    )?);
                                 }
-                                self.colors.gold
                             }
-                        };
+                        }
+                        let color = self.convert_color(status);
                         let time_str = if !self.run.borrow().pb_times()[self.current].is_time() {
                             "-  ".into()
                         } else {
