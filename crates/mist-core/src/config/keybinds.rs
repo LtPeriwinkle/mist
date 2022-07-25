@@ -11,6 +11,8 @@ pub struct KeybindsRaw {
     pub next_comp: String,
     pub load_splits: String,
     pub load_config: String,
+    pub dump_state: String,
+    pub load_state: String,
 }
 
 impl Default for KeybindsRaw {
@@ -25,6 +27,8 @@ impl Default for KeybindsRaw {
             next_comp: "Right".to_owned(),
             load_splits: "F1".to_owned(),
             load_config: "F2".to_owned(),
+            dump_state: "F3".to_owned(),
+            load_state: "F4".to_owned(),
         }
     }
 }
