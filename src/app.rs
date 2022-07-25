@@ -139,34 +139,6 @@ impl<'a, 'b> App<'a, 'b> {
                     }
 
                     Event::KeyDown {
-                        keycode: Some(Keycode::A),
-                        ..
-                    } => {
-                        let mut d = self.run_state.create_state_dump();
-                        self.ren_state.fill_dump(&mut d);
-                        d.print();
-                    }
-                    Event::KeyDown {
-                        keycode: Some(Keycode::O),
-                        ..
-                    } => loop {
-                        if let Some(p) = dialogs::get_dump_path() {
-                            match StateDump::open(p) {
-                                Ok(d) => {
-                                    self.run_state.read_dump(&d);
-                                    self.ren_state.read_dump(&d)?;
-                                    break;
-                                }
-                                Err(_) => {
-                                    if !dialogs::try_again() {
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    },
-
-                    Event::KeyDown {
                         keycode: Some(k),
                         repeat: false,
                         ..
@@ -233,6 +205,29 @@ impl<'a, 'b> App<'a, 'b> {
                                     }
                                 }
                                 Err(e) => return Err(e),
+                            }
+                        } else if k == binds.dump_state {
+                            if let Some(p) = dialogs::get_dump_save() {
+                                let mut d = self.run_state.create_state_dump();
+                                self.ren_state.fill_dump(&mut d);
+                                d.write(p)?;
+                            }
+                        } else if k == binds.load_state {
+                            loop {
+                                if let Some(p) = dialogs::get_dump_path() {
+                                    match StateDump::open(p) {
+                                        Ok(d) => {
+                                            self.run_state.read_dump(&d);
+                                            self.ren_state.read_dump(&d)?;
+                                            break;
+                                        }
+                                        Err(_) => {
+                                            if !dialogs::try_again() {
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
