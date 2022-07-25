@@ -1,4 +1,5 @@
 //! Functions used for formatting of times.
+use std::ops::AddAssign;
 
 /// Convert milliseconds into a readable time in the form HH:MM:SS.mmm.
 ///
@@ -102,7 +103,6 @@ pub fn split_time_text(ms: u128) -> String {
 /// Returns a Vec with the sums of every element up to that point in it.
 ///
 /// For example, input of [6, 7, 8] returns [6, 13, 21].
-use std::ops::AddAssign;
 pub fn split_time_sum<T: AddAssign + Default + Copy>(ms_vec: &[T]) -> Vec<T> {
     let mut total = Default::default();
     let mut vec = vec![];

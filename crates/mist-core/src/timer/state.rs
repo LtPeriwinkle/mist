@@ -163,6 +163,10 @@ impl RunState {
         }
     }
 
+    /// Fill in the RunState from a [`StateDump`].
+    ///
+    /// Fills out all relevant fields of the RunState, and sets the timer state to
+    /// paused. No other processing is necessary, on unpause everything should pick up properly.
     pub fn read_dump(&mut self, dump: &StateDump) {
         self.run.replace(dump.run.clone());
         self.run_status = dump.status;
@@ -528,6 +532,11 @@ impl RunState {
         vec![StateChange::None]
     }
 
+    /// Generate a [`StateDump`].
+    ///
+    /// Uses the current state of the timer to create a `StateDump` containing all
+    /// information available in the RunState. The fields unique to the renderer must be
+    /// filled by the application.
     pub fn create_state_dump(&self) -> StateDump {
         let before_pause = self.time;
         let before_pause_split = self.timer.elapsed().as_millis() - self.split;

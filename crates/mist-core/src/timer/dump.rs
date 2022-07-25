@@ -1,3 +1,4 @@
+//! Snapshots of mist's state, for restoration.
 use super::{state::SplitStatus, Comparison, DiffType, Run, TimeType};
 use ron::{
     de::from_reader,
@@ -8,6 +9,13 @@ use std::fs::File;
 use std::path::Path;
 
 #[derive(Serialize, Deserialize)]
+/// A snapshot of mist's state.
+///
+/// This can be used for serialization to disk so that the user can stop and pick
+/// up a run in the middle of the run, for example to restart a computer during a
+/// break in a longer speedrun or something.
+///
+/// All fields are meaningful either in [`RunState`](super::state::RunState) or in the renderer.
 pub struct StateDump {
     pub run: Run,
     pub status: SplitStatus,
@@ -27,9 +35,15 @@ pub struct StateDump {
 }
 
 impl StateDump {
+    /// Open a `StateDump` from a file.
+    ///
+    /// Reads the file specified by `filename` and attempts to parse a `StateDump`
+    /// from the contents. Returns `Err` on an fs error or if the file is not
+    /// parseable.
     pub fn open<P: AsRef<Path>>(filename: P) -> Result<Self, String> {
         from_reader(File::open(filename).map_err(|e| e.to_string())?).map_err(|e| e.to_string())
     }
+    /// Set the information required from the renderer.
     pub fn set_render_info(&mut self, top_index: usize, bottom_index: usize, time_str: String) {
         self.top_index = top_index;
         self.bottom_index = bottom_index;
