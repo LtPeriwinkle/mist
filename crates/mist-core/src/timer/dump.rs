@@ -1,9 +1,6 @@
 //! Snapshots of mist's state, for restoration.
 use super::{state::SplitStatus, Comparison, DiffType, Run, TimeType};
-use ron::{
-    de::from_reader,
-    ser::{to_string_pretty, PrettyConfig},
-};
+use ron::{de::from_reader, ser::to_string};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::path::Path;
@@ -49,12 +46,8 @@ impl StateDump {
         self.bottom_index = bottom_index;
         self.time_str = time_str;
     }
-    pub fn print(&self) {
-        println!("{}", to_string_pretty(self, PrettyConfig::new()).unwrap());
-        std::fs::write(
-            "foo.ron",
-            to_string_pretty(self, PrettyConfig::new()).unwrap(),
-        )
-        .unwrap();
+    pub fn write<P: AsRef<Path>>(&self, filename: P) -> Result<(), String> {
+        std::fs::write(filename, to_string(self).map_err(|e| e.to_string())?)
+            .map_err(|e| e.to_string())
     }
 }

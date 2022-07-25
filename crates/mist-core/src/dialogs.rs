@@ -61,6 +61,10 @@ pub fn get_dump_path() -> Option<String> {
     get_file("Open dump file", "*.ron")
 }
 
+pub fn get_dump_save() -> Option<String> {
+    save_file_dialog_with_filter("Save as:", "", &["*.ron"], "ron files")
+}
+
 /// Gets the path of a [`Config`] and attempts to parse it.
 ///
 /// # Errors
