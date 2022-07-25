@@ -12,8 +12,8 @@ use serde::{Deserialize, Serialize};
 use std::{fs::OpenOptions, io::Write, path::PathBuf};
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(default)]
 /// Configuration of mist.
+#[serde(default)]
 pub struct Config {
     def_file: Option<String>,
     win_size: (u32, u32),
@@ -43,8 +43,9 @@ impl Config {
             .create(true)
             .open(config_path()?)
             .map_err(|e| e.to_string())?;
-        let cfg: Self = from_reader(&file).unwrap_or_default();
-        Ok(cfg)
+        let cfg = from_reader(&file);
+        println!("{cfg:?}");
+        Ok(cfg.unwrap_or_default())
     }
     /// Get the split file from the Config. Returns None if no file set.
     pub fn file(&self) -> Option<&String> {
