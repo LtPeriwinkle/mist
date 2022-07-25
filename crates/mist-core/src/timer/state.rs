@@ -148,7 +148,7 @@ impl RunState {
             timer_state: TimerState::NotRunning,
             comparison: Comp::PersonalBest,
             run_status: SplitStatus::None,
-            run_times: vec![TimeType::Time(0); len],
+            run_times: vec![TimeType::None; len],
             run_diffs: vec![DiffType::Time(0); len],
             run_golds: vec![false; len],
             sum_comp_times,
@@ -423,7 +423,7 @@ impl RunState {
                 self.before_pause_split = 0;
                 self.split -= self.run_times[self.current_split].raw();
                 self.run_diffs[self.current_split] = DiffType::Time(0);
-                self.run_times[self.current_split] = TimeType::Time(0);
+                self.run_times[self.current_split] = TimeType::None;
                 self.run_golds[self.current_split] = false;
                 return vec![StateChange::EnterSplit {
                     idx: self.current_split,
@@ -436,7 +436,7 @@ impl RunState {
                 self.start = 0;
                 let len = self.run.borrow().pb_times().len();
                 self.run_diffs = vec![DiffType::Time(0); len];
-                self.run_times = vec![TimeType::Time(0); len];
+                self.run_times = vec![TimeType::None; len];
                 self.run_golds = vec![false; len];
                 self.current_split = 0;
                 self.timer_state = TimerState::NotRunning;
