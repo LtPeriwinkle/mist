@@ -1,6 +1,6 @@
 [package]
 name = "mist-core"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
 edition = "2018"
 description = "core functionality of mist"
@@ -11,7 +11,7 @@ license = "Apache-2.0 OR MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["state", "dialogs", "config"]
+default = ["state", "dialogs", "config", "instant"]
 lss = ["quick-xml"]
 state = []
 dialogs = ["tinyfiledialogs"]

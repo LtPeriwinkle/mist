@@ -14,7 +14,6 @@ use sdl2::{
     pixels::Color,
     rect::{Point, Rect},
     render::{Texture, TextureCreator, TextureQuery, WindowCanvas},
-    rwops::RWops,
     ttf::{self, Font, Sdl2TtfContext},
     video::WindowContext,
 };
@@ -40,9 +39,9 @@ pub struct RenderState<'a, 'b> {
     time_rounding: Option<u128>,
     is_running: bool,
     rebuild: bool,
-    timer_font: Font<'b, 'a>,
+    timer_font: &'a Font<'b, 'a>,
     timer_height: u32,
-    splits_font: Font<'b, 'a>,
+    splits_font: &'a Font<'b, 'a>,
     splits_height: u32,
     ms_ratio: f32,
     top_index: usize,
@@ -78,17 +77,11 @@ impl<'a, 'b> RenderState<'a, 'b> {
         run: Rc<RefCell<Run>>,
         mut canvas: WindowCanvas,
         config: &Config,
+        timer_font: &'a Font<'b, 'a>,
+        splits_font: &'a Font<'b, 'a>,
     ) -> Result<Self, String> {
         canvas.clear();
         let creator = canvas.texture_creator();
-        let tfont = config.tfont();
-        let tf_path = tfont.get_path()?;
-        let sfont = config.sfont();
-        let sf_path = sfont.get_path()?;
-        let rw = RWops::from_file(tf_path.0, "r")?;
-        let timer_font = TTF.load_font_at_index_from_rwops(rw, tf_path.1, tfont.size())?;
-        let rw = RWops::from_file(sf_path.0, "r")?;
-        let splits_font = TTF.load_font_at_index_from_rwops(rw, sf_path.1, sfont.size())?;
         let panels = {
             let mut ret = vec![];
             for &panel in config.panels() {
@@ -555,8 +548,13 @@ impl<'a, 'b> RenderState<'a, 'b> {
         Ok(())
     }
 
-    pub fn reload_config(self, config: &Config) -> Result<Self, String> {
-        Self::new(self.run, self.canvas, config)
+    pub fn reload_config(
+        self,
+        config: &Config,
+        t_font: &'a Font<'b, 'a>,
+        s_font: &'a Font<'b, 'a>,
+    ) -> Result<Self, String> {
+        Self::new(self.run, self.canvas, config, t_font, s_font)
     }
 
     pub fn win_size(&self) -> (u32, u32) {
