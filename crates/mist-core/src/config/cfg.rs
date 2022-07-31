@@ -6,9 +6,6 @@ use ron::{
     ser::{to_string_pretty, PrettyConfig},
 };
 use serde::{Deserialize, Serialize};
-//use std::fs::OpenOptions;
-//use std::io::Write;
-//use std::path::PathBuf;
 use std::{fs::OpenOptions, io::Write, path::PathBuf};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -25,7 +22,9 @@ pub struct Config {
     colors: Colors,
     frame_rounding: Option<u128>,
     panels: Vec<Panel>,
+    #[serde(default = "Font::timer_default")]
     t_font: Font,
+    #[serde(default = "Font::splits_default")]
     s_font: Font,
     ms_ratio: f32,
     binds: KeybindsRaw,

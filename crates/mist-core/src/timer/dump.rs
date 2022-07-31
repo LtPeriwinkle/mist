@@ -46,6 +46,9 @@ impl StateDump {
         self.bottom_index = bottom_index;
         self.time_str = time_str;
     }
+    /// Serialize the `StateDump` to a file.
+    ///
+    /// Returns `Err` on fs error or if the dump could not be serialized.
     pub fn write<P: AsRef<Path>>(&self, filename: P) -> Result<(), String> {
         std::fs::write(filename, to_string(self).map_err(|e| e.to_string())?)
             .map_err(|e| e.to_string())
