@@ -43,7 +43,6 @@ impl Config {
             .open(config_path()?)
             .map_err(|e| e.to_string())?;
         let cfg = from_reader(&file);
-        println!("{cfg:?}");
         Ok(cfg.unwrap_or_default())
     }
     /// Get the split file from the Config. Returns None if no file set.
