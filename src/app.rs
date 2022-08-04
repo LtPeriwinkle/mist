@@ -160,9 +160,10 @@ impl<'a, 'b> App<'a, 'b> {
                             state_change_queue.push(StateChangeRequest::Comparison(true));
                         } else if k == binds.un_split {
                             state_change_queue.push(StateChangeRequest::Unsplit);
-                        } else if k == binds.load_splits {
-                            // only allow opening a new file if the timer is not running
-                            if !self.run_state.is_running() {
+                        } else if k == binds.skip_split {
+                            state_change_queue.push(StateChangeRequest::Skip);
+                        } else if !self.run_state.is_running() {
+                            if k == binds.load_splits {
                                 // save the previous run if it was updated
                                 if (self.run_state.needs_save() || no_file) && dialogs::save_check()
                                 {
@@ -191,49 +192,51 @@ impl<'a, 'b> App<'a, 'b> {
                                                 }
                                             }
                                         }
+                                    } else {
+                                        break;
                                     }
                                 }
                                 self.config.set_file(self.msf.filename());
                                 self.run_state = RunState::new(Rc::clone(&self.run));
                                 self.ren_state.reload_run()?;
-                            }
-                        } else if k == binds.skip_split {
-                            state_change_queue.push(StateChangeRequest::Skip);
-                        } else if k == binds.load_config {
-                            match dialogs::open_config() {
-                                Ok(c) => {
-                                    if let Some(conf) = c {
-                                        self.config = conf;
-                                        self.ren_state = self.ren_state.reload_config(
-                                            &self.config,
-                                            t_font,
-                                            s_font,
-                                        )?;
-                                        binds = Keybinds::from_raw(self.config.binds())?;
-                                    }
-                                }
-                                Err(e) => return Err(e),
-                            }
-                        } else if k == binds.dump_state {
-                            if let Some(p) = dialogs::get_dump_save() {
-                                let mut d = self.run_state.create_state_dump();
-                                self.ren_state.fill_dump(&mut d);
-                                d.write(p)?;
-                            }
-                        } else if k == binds.load_state {
-                            loop {
-                                if let Some(p) = dialogs::get_dump_path() {
-                                    match StateDump::open(p) {
-                                        Ok(d) => {
-                                            self.run_state.read_dump(&d);
-                                            self.ren_state.read_dump(&d)?;
-                                            break;
+                            } else if k == binds.load_config {
+                                match dialogs::open_config() {
+                                    Ok(c) => {
+                                        if let Some(conf) = c {
+                                            self.config = conf;
+                                            self.ren_state = self.ren_state.reload_config(
+                                                &self.config,
+                                                t_font,
+                                                s_font,
+                                            )?;
+                                            binds = Keybinds::from_raw(self.config.binds())?;
                                         }
-                                        Err(_) => {
-                                            if !dialogs::try_again() {
+                                    }
+                                    Err(e) => return Err(e),
+                                }
+                            } else if k == binds.dump_state {
+                                if let Some(p) = dialogs::get_dump_save() {
+                                    let mut d = self.run_state.create_state_dump();
+                                    self.ren_state.fill_dump(&mut d);
+                                    d.write(p)?;
+                                }
+                            } else if k == binds.load_state {
+                                loop {
+                                    if let Some(p) = dialogs::get_dump_path() {
+                                        match StateDump::open(p) {
+                                            Ok(d) => {
+                                                self.run_state.read_dump(&d);
+                                                self.ren_state.read_dump(&d)?;
                                                 break;
                                             }
+                                            Err(_) => {
+                                                if !dialogs::try_again() {
+                                                    break;
+                                                }
+                                            }
                                         }
+                                    } else {
+                                        break;
                                     }
                                 }
                             }
