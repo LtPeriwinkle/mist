@@ -2,6 +2,7 @@
 ### 1.17.0
 - support dumping the timer state to disk
 - as well as reloading the state from disk
+- make these functions only available when the timer is not running (as well as config reload)
 
 ### 1.16.1
 - Support memory font source for e.g. macOS
