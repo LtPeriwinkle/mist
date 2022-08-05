@@ -178,22 +178,18 @@ impl<'a, 'b> App<'a, 'b> {
                                 }
                                 // open a file dialog to get a new split file + run
                                 // if the user cancelled, do nothing
-                                loop {
-                                    if let Some(x) = dialogs::get_run_path() {
-                                        self.msf.set_filename(&x);
-                                        match self.msf.parse() {
-                                            Ok(r) => {
-                                                self.run.replace(r);
+                                while let Some(x) = dialogs::get_run_path() {
+                                    self.msf.set_filename(&x);
+                                    match self.msf.parse() {
+                                        Ok(r) => {
+                                            self.run.replace(r);
+                                            break;
+                                        }
+                                        Err(_) => {
+                                            if !dialogs::try_again() {
                                                 break;
                                             }
-                                            Err(_) => {
-                                                if !dialogs::try_again() {
-                                                    break;
-                                                }
-                                            }
                                         }
-                                    } else {
-                                        break;
                                     }
                                 }
                                 self.config.set_file(self.msf.filename());
@@ -221,22 +217,18 @@ impl<'a, 'b> App<'a, 'b> {
                                     d.write(p)?;
                                 }
                             } else if k == binds.load_state {
-                                loop {
-                                    if let Some(p) = dialogs::get_dump_path() {
-                                        match StateDump::open(p) {
-                                            Ok(d) => {
-                                                self.run_state.read_dump(&d);
-                                                self.ren_state.read_dump(&d)?;
+                                while let Some(p) = dialogs::get_dump_path() {
+                                    match StateDump::open(p) {
+                                        Ok(d) => {
+                                            self.run_state.read_dump(&d);
+                                            self.ren_state.read_dump(&d)?;
+                                            break;
+                                        }
+                                        Err(_) => {
+                                            if !dialogs::try_again() {
                                                 break;
                                             }
-                                            Err(_) => {
-                                                if !dialogs::try_again() {
-                                                    break;
-                                                }
-                                            }
                                         }
-                                    } else {
-                                        break;
                                     }
                                 }
                             }

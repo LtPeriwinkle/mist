@@ -107,8 +107,8 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 } else {
                     "-  ".into()
                 };
-                let time_tex = render_text(&time, &splits_font, &creator, config.colors().text)?;
-                let text_tex = render_text(&text, &splits_font, &creator, config.colors().text)?;
+                let time_tex = render_text(&time, splits_font, &creator, config.colors().text)?;
+                let text_tex = render_text(&text, splits_font, &creator, config.colors().text)?;
                 let newpanel = RenderPanel::new(text_tex, time_tex, paneltype);
                 ret.push(newpanel);
             }
@@ -133,10 +133,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
             .enumerate()
             .map(|(idx, name)| {
                 Split::new(
-                    render_text(name, &splits_font, &creator, config.colors().text).unwrap(),
+                    render_text(name, splits_font, &creator, config.colors().text).unwrap(),
                     render_text(
                         &string_times[idx],
-                        &splits_font,
+                        splits_font,
                         &creator,
                         config.colors().text,
                     )
@@ -192,7 +192,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             colors: config.colors(),
             splits,
             panels,
-            map: FontMap::generate(&timer_font, &creator, config.colors().text)?,
+            map: FontMap::generate(timer_font, &creator, config.colors().text)?,
             time_str,
             time_rounding: config.rounding(),
             is_running: false,
@@ -221,7 +221,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
         if update.status != self.status {
             self.status = update.status;
             let color = self.convert_color(self.status);
-            self.map = FontMap::generate(&self.timer_font, &self.creator, color).unwrap();
+            self.map = FontMap::generate(self.timer_font, &self.creator, color).unwrap();
         }
         if self.status != SplitStatus::None {
             for panel in &mut self.panels {
@@ -240,7 +240,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         );
                         panel.set_time(render_text(
                             pace,
-                            &self.splits_font,
+                            self.splits_font,
                             &self.creator,
                             self.colors.text,
                         )?);
@@ -267,7 +267,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         };
                         panel.set_time(render_text(
                             time,
-                            &self.splits_font,
+                            self.splits_font,
                             &self.creator,
                             self.colors.text,
                         )?);
@@ -312,7 +312,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                                                 .map(|t| t.val())
                                                 .sum::<u128>(),
                                         ),
-                                        &self.splits_font,
+                                        self.splits_font,
                                         &self.creator,
                                         self.colors.text,
                                     )?);
@@ -328,21 +328,21 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         if time == 0 {
                             self.splits[self.current].set_cur(Some(render_text(
                                 "-  ",
-                                &self.splits_font,
+                                self.splits_font,
                                 &self.creator,
                                 self.colors.text,
                             )?));
                         } else {
                             self.splits[self.current].set_diff(Some(render_text(
                                 &time_str,
-                                &self.splits_font,
+                                self.splits_font,
                                 &self.creator,
                                 color,
                             )?));
                             let time_str = format::split_time_text(update.time);
                             self.splits[self.current].set_cur(Some(render_text(
                                 &time_str,
-                                &self.splits_font,
+                                self.splits_font,
                                 &self.creator,
                                 self.colors.text,
                             )?));
@@ -390,7 +390,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                         if !matches!(panel.panel_type(), Panel::SumOfBest) {
                             panel.set_time(render_text(
                                 "-  ",
-                                &self.splits_font,
+                                self.splits_font,
                                 &self.creator,
                                 self.colors.text,
                             )?);
@@ -509,10 +509,10 @@ impl<'a, 'b> RenderState<'a, 'b> {
         self.splits = vec![];
         for (idx, name) in self.run.borrow().splits().iter().enumerate() {
             self.splits.push(Split::new(
-                render_text(name, &self.splits_font, &self.creator, self.colors.text)?,
+                render_text(name, self.splits_font, &self.creator, self.colors.text)?,
                 render_text(
                     &string_times[idx],
-                    &self.splits_font,
+                    self.splits_font,
                     &self.creator,
                     self.colors.text,
                 )?,
@@ -575,7 +575,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 for split in &mut self.splits {
                     split.set_comp(render_text(
                         "-  ",
-                        &self.splits_font,
+                        self.splits_font,
                         &self.creator,
                         self.colors.text,
                     )?);
@@ -616,7 +616,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 while i < self.splits.len() {
                     self.splits[i].set_comp(render_text(
                         &split_times_raw[i],
-                        &self.splits_font,
+                        self.splits_font,
                         &self.creator,
                         self.colors.text,
                     )?);
@@ -645,7 +645,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
                 while i < self.splits.len() {
                     self.splits[i].set_comp(render_text(
                         &split_times_raw[i],
-                        &self.splits_font,
+                        self.splits_font,
                         &self.creator,
                         self.colors.text,
                     )?);
@@ -844,7 +844,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             };
             self.splits[i].set_cur(Some(render_text(
                 &time_str,
-                &self.splits_font,
+                self.splits_font,
                 &self.creator,
                 self.colors.text,
             )?));
@@ -852,7 +852,7 @@ impl<'a, 'b> RenderState<'a, 'b> {
             let color = self.convert_color(stats[i]);
             self.splits[i].set_diff(Some(render_text(
                 &time_str,
-                &self.splits_font,
+                self.splits_font,
                 &self.creator,
                 color,
             )?));
