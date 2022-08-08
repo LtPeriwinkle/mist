@@ -538,8 +538,6 @@ impl RunState {
     /// information available in the RunState. The fields unique to the renderer must be
     /// filled by the application.
     pub fn create_state_dump(&self) -> StateDump {
-        let before_pause = self.time;
-        let before_pause_split = self.timer.elapsed().as_millis() - self.split;
         StateDump {
             run: self.run.borrow().clone(),
             status: self.run_status,
@@ -548,8 +546,8 @@ impl RunState {
             run_diffs: self.run_diffs.clone(),
             run_golds: self.run_golds.clone(),
             sum_comp_times: self.sum_comp_times.clone(),
-            before_pause,
-            before_pause_split,
+            before_pause: self.before_pause,
+            before_pause_split: self.before_pause_split,
             time: self.time,
             current_split: self.current_split,
             needs_save: self.needs_save,
