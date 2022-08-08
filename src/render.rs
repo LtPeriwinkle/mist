@@ -830,15 +830,17 @@ impl<'a, 'b> RenderState<'a, 'b> {
     fn rebuild_current(&mut self, dump: &StateDump) -> Result<(), String> {
         let raw_diffs = dump.run_diffs.iter().map(|v| v.raw()).collect::<Vec<_>>();
         let diff_sums = format::split_time_sum(&raw_diffs);
-        let stats = calculate_statuses(&raw_diffs);
-        for (i, &time) in dump
-            .run_times
-            .iter()
-            .enumerate()
-            .take_while(|(_, v)| !v.is_none())
-        {
-            let time_str = if time.is_time() {
-                format::split_time_text(time.val())
+        let stats = calculate_statuses(&raw_diffs, &dump.run_golds);
+        let run_times = format::split_time_sum(
+            &dump
+                .run_times
+                .iter()
+                .map_while(|t| t.to_option())
+                .collect::<Vec<_>>(),
+        );
+        for (i, &time) in run_times.iter().enumerate() {
+            let time_str = if dump.run_times[i].is_time() {
+                format::split_time_text(time)
             } else {
                 "-  ".into()
             };
@@ -873,13 +875,15 @@ impl<'a, 'b> RenderState<'a, 'b> {
     }
 }
 
-fn calculate_statuses(diffs: &[i128]) -> Vec<SplitStatus> {
+fn calculate_statuses(diffs: &[i128], golds: &[bool]) -> Vec<SplitStatus> {
     let mut sum = 0;
     let mut ret = vec![];
-    for i in diffs {
+    for (diff, &gold) in diffs.iter().zip(golds) {
         let last_sum = sum;
-        sum += i;
-        if sum <= 0 {
+        sum += diff;
+        if gold {
+            ret.push(SplitStatus::Gold);
+        } else if sum <= 0 {
             if sum <= last_sum {
                 ret.push(SplitStatus::Ahead);
             } else {
