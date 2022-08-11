@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 /// What a run is comparing to.
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(PartialEq, Copy, Clone, Debug, Serialize, Deserialize)]
 pub enum Comparison {
     Average,
     PersonalBest,

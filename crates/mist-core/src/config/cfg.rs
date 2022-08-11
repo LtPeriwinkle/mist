@@ -6,14 +6,11 @@ use ron::{
     ser::{to_string_pretty, PrettyConfig},
 };
 use serde::{Deserialize, Serialize};
-//use std::fs::OpenOptions;
-//use std::io::Write;
-//use std::path::PathBuf;
 use std::{fs::OpenOptions, io::Write, path::PathBuf};
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(default)]
 /// Configuration of mist.
+#[serde(default)]
 pub struct Config {
     def_file: Option<String>,
     win_size: (u32, u32),
@@ -25,7 +22,9 @@ pub struct Config {
     colors: Colors,
     frame_rounding: Option<u128>,
     panels: Vec<Panel>,
+    #[serde(default = "Font::timer_default")]
     t_font: Font,
+    #[serde(default = "Font::splits_default")]
     s_font: Font,
     ms_ratio: f32,
     binds: KeybindsRaw,
@@ -43,8 +42,8 @@ impl Config {
             .create(true)
             .open(config_path()?)
             .map_err(|e| e.to_string())?;
-        let cfg: Self = from_reader(&file).unwrap_or_default();
-        Ok(cfg)
+        let cfg = from_reader(&file);
+        Ok(cfg.unwrap_or_default())
     }
     /// Get the split file from the Config. Returns None if no file set.
     pub fn file(&self) -> Option<&String> {

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 /// Colors used in the mist interface, as RGBA
+#[serde(default)]
 pub struct Colors {
     pub ahead: (u8, u8, u8, u8),
     pub behind: (u8, u8, u8, u8),

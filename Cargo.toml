@@ -1,6 +1,6 @@
 [package]
 name = "mist"
-version = "1.16.1"
+version = "1.17.0"
 authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
 edition = "2018"
 description = "minimal, improved speedrun timer"

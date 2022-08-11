@@ -11,3 +11,4 @@ mod time_type;
 pub use comparison::Comparison;
 pub use time_type::{DiffType, TimeType};
 pub use {instant::MistInstant, run::Run};
+pub mod dump;
