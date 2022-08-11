@@ -5,7 +5,7 @@ authors = ["LtPeriwinkle <not.yet.periwinkle@gmail.com>"]
 edition = "2018"
 description = "minimal, improved speedrun timer"
 readme = "README.md"
-repository = "https://github.com/LtPeriwinkle/mist"
+repository = "https://codeberg.org/LieutenantPeriwinkle/mist"
 license = "MIT OR Apache-2.0"
 
 [workspace]
