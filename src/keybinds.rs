@@ -12,6 +12,8 @@ pub struct Keybinds {
     pub next_comp: Keycode,
     pub load_splits: Keycode,
     pub load_config: Keycode,
+    pub dump_state: Keycode,
+    pub load_state: Keycode,
 }
 
 impl Keybinds {
@@ -33,6 +35,10 @@ impl Keybinds {
                 .ok_or("Load splits keybind could not be parsed")?,
             load_config: Keycode::from_name(&raw.load_config)
                 .ok_or("Load config keybind could not be parsed")?,
+            dump_state: Keycode::from_name(&raw.dump_state)
+                .ok_or("Dump state keybind could not be parsed")?,
+            load_state: Keycode::from_name(&raw.load_state)
+                .ok_or("Load state keybind could not be parsed")?,
         })
     }
 }

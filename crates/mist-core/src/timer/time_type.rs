@@ -14,7 +14,7 @@ pub enum TimeType {
     None,
 }
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(PartialEq, Copy, Clone, Serialize, Deserialize, Debug)]
 /// A type of difference from a previous split.
 pub enum DiffType {
     /// The split was skipped, but the time difference is still

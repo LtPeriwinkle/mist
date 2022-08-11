@@ -57,6 +57,20 @@ pub fn get_run_path() -> Option<String> {
     get_file("Open split file", "*.msf")
 }
 
+/// Get the path of a state dump file to use.
+///
+/// Returns [`None`] if the user cancels the dialog box
+pub fn get_dump_path() -> Option<String> {
+    get_file("Open dump file", "*.ron")
+}
+
+/// Open a save as dialog box (for state dumps).
+///
+/// Returns [`None`] if the user cancels the dialog box
+pub fn get_dump_save() -> Option<String> {
+    save_file_dialog_with_filter("Save as:", "", &["*.ron"], "ron files")
+}
+
 /// Gets the path of a [`Config`] and attempts to parse it.
 ///
 /// # Errors

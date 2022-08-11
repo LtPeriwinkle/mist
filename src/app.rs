@@ -5,6 +5,7 @@ use mist_core::{
     dialogs,
     parse::MsfParser,
     timer::{
+        dump::StateDump,
         state::{RunState, RunUpdate, StateChangeRequest},
         Run,
     },
@@ -13,6 +14,7 @@ use sdl2::{
     event::{Event, WindowEvent},
     get_error,
     keyboard::Keycode,
+    ttf::Font,
 };
 #[cfg(feature = "icon")]
 use sdl2::{image::ImageRWops, rwops::RWops};
@@ -36,7 +38,11 @@ pub struct App<'a, 'b> {
 static ONE_SIXTIETH: Duration = Duration::new(0, 1_000_000_000 / 60);
 
 impl<'a, 'b> App<'a, 'b> {
-    pub fn init(context: sdl2::Sdl) -> Result<Self, String> {
+    pub fn init(
+        context: sdl2::Sdl,
+        t_font: &'a Font<'b, 'a>,
+        s_font: &'a Font<'b, 'a>,
+    ) -> Result<Self, String> {
         let video = context.video()?;
         let mut config = Config::open()?;
         let mut window = video
@@ -95,7 +101,7 @@ impl<'a, 'b> App<'a, 'b> {
             .map_err(|_| get_error())?;
         let app = App {
             _context: context,
-            ren_state: RenderState::new(Rc::clone(&run), canvas, &config)?,
+            ren_state: RenderState::new(Rc::clone(&run), canvas, &config, t_font, s_font)?,
             run_state: RunState::new(Rc::clone(&run)),
             config,
             ev_pump,
@@ -106,7 +112,7 @@ impl<'a, 'b> App<'a, 'b> {
         Ok(app)
     }
 
-    pub fn run(mut self) -> Result<(), String> {
+    pub fn run(mut self, t_font: &'a Font<'b, 'a>, s_font: &'a Font<'b, 'a>) -> Result<(), String> {
         let no_file = self.config.file().is_none();
 
         // framerate cap timer
@@ -154,9 +160,10 @@ impl<'a, 'b> App<'a, 'b> {
                             state_change_queue.push(StateChangeRequest::Comparison(true));
                         } else if k == binds.un_split {
                             state_change_queue.push(StateChangeRequest::Unsplit);
-                        } else if k == binds.load_splits {
-                            // only allow opening a new file if the timer is not running
-                            if !self.run_state.is_running() {
+                        } else if k == binds.skip_split {
+                            state_change_queue.push(StateChangeRequest::Skip);
+                        } else if !self.run_state.is_running() {
+                            if k == binds.load_splits {
                                 // save the previous run if it was updated
                                 if (self.run_state.needs_save() || no_file) && dialogs::save_check()
                                 {
@@ -171,18 +178,16 @@ impl<'a, 'b> App<'a, 'b> {
                                 }
                                 // open a file dialog to get a new split file + run
                                 // if the user cancelled, do nothing
-                                loop {
-                                    if let Some(x) = dialogs::get_run_path() {
-                                        self.msf.set_filename(&x);
-                                        match self.msf.parse() {
-                                            Ok(r) => {
-                                                self.run.replace(r);
+                                while let Some(x) = dialogs::get_run_path() {
+                                    self.msf.set_filename(&x);
+                                    match self.msf.parse() {
+                                        Ok(r) => {
+                                            self.run.replace(r);
+                                            break;
+                                        }
+                                        Err(_) => {
+                                            if !dialogs::try_again() {
                                                 break;
-                                            }
-                                            Err(_) => {
-                                                if !dialogs::try_again() {
-                                                    break;
-                                                }
                                             }
                                         }
                                     }
@@ -190,20 +195,42 @@ impl<'a, 'b> App<'a, 'b> {
                                 self.config.set_file(self.msf.filename());
                                 self.run_state = RunState::new(Rc::clone(&self.run));
                                 self.ren_state.reload_run()?;
-                            }
-                        } else if k == binds.skip_split {
-                            state_change_queue.push(StateChangeRequest::Skip);
-                        } else if k == binds.load_config {
-                            match dialogs::open_config() {
-                                Ok(c) => {
-                                    if let Some(conf) = c {
-                                        self.config = conf;
-                                        self.ren_state =
-                                            self.ren_state.reload_config(&self.config)?;
-                                        binds = Keybinds::from_raw(self.config.binds())?;
+                            } else if k == binds.load_config {
+                                match dialogs::open_config() {
+                                    Ok(c) => {
+                                        if let Some(conf) = c {
+                                            self.config = conf;
+                                            self.ren_state = self.ren_state.reload_config(
+                                                &self.config,
+                                                t_font,
+                                                s_font,
+                                            )?;
+                                            binds = Keybinds::from_raw(self.config.binds())?;
+                                        }
+                                    }
+                                    Err(e) => return Err(e),
+                                }
+                            } else if k == binds.dump_state {
+                                if let Some(p) = dialogs::get_dump_save() {
+                                    let mut d = self.run_state.create_state_dump();
+                                    self.ren_state.fill_dump(&mut d);
+                                    d.write(p)?;
+                                }
+                            } else if k == binds.load_state {
+                                while let Some(p) = dialogs::get_dump_path() {
+                                    match StateDump::open(p) {
+                                        Ok(d) => {
+                                            self.run_state.read_dump(&d);
+                                            self.ren_state.read_dump(&d)?;
+                                            break;
+                                        }
+                                        Err(_) => {
+                                            if !dialogs::try_again() {
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
-                                Err(e) => return Err(e),
                             }
                         }
                     }

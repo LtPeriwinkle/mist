@@ -1,4 +1,14 @@
 ## mist-core changelog
+### 1.1.0
+- add StateDump struct for, well, dumping (and restoring) state
+- various patches to RunState to allow restoring state accurately
+- more things serde(default) for config files
+- add keybinds to config for dump and restore
+
+### 1.0.1
+- add get_bytes function for fonts to work on all systems
+- sanify the run upon reading it, as somehow this was missing
+
 ### 1.0.0
 - Add many new config fields
 - Allow fields to be unspecified, filling in with default

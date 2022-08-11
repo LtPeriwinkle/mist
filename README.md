@@ -93,7 +93,7 @@ On arch:
 sudo pacman -S sdl2 sdl2_ttf sdl2_image sdl2_gfx
 ```
 
-Clone this repo (`git clone https://github.com/LtPeriwinkle/mist`), enter the directory, and run `cargo build --release`. The resulting binary will be located at
+Clone this repo (`git clone https://codeberg.org/LieutenantPeriwinkle/mist`), enter the directory, and run `cargo build --release`. The resulting binary will be located at
 `./target/release/mist`
 
 ### Windows

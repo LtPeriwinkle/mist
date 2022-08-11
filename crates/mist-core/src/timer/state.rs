@@ -1,10 +1,12 @@
 //! Internal state of mist.
 
+use super::dump::StateDump;
 use super::format;
 use super::Comparison as Comp;
 use super::MistInstant;
 use super::Run;
 use super::{DiffType, TimeType};
+use serde::{Deserialize, Serialize};
 use std::{cell::RefCell, rc::Rc};
 
 /// The state of the loaded run.
@@ -59,7 +61,6 @@ pub enum StateChangeRequest {
     Comparison(bool),
 }
 
-// commented items will be used for plugins later
 /// A single change in state.
 #[derive(Debug)]
 pub enum StateChange {
@@ -120,7 +121,7 @@ pub struct RunUpdate {
 /// Status of an active run.
 ///
 /// Usually corresponds to colors in the renderer.
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum SplitStatus {
     /// Timer is not running or no comparison.
     None,
@@ -147,7 +148,7 @@ impl RunState {
             timer_state: TimerState::NotRunning,
             comparison: Comp::PersonalBest,
             run_status: SplitStatus::None,
-            run_times: vec![TimeType::Time(0); len],
+            run_times: vec![TimeType::None; len],
             run_diffs: vec![DiffType::Time(0); len],
             run_golds: vec![false; len],
             sum_comp_times,
@@ -160,6 +161,26 @@ impl RunState {
             needs_save: false,
             set_times: false,
         }
+    }
+
+    /// Fill in the RunState from a [`StateDump`].
+    ///
+    /// Fills out all relevant fields of the RunState, and sets the timer state to
+    /// paused. No other processing is necessary, on unpause everything should pick up properly.
+    pub fn read_dump(&mut self, dump: &StateDump) {
+        self.run.replace(dump.run.clone());
+        self.run_status = dump.status;
+        self.comparison = dump.comparison;
+        self.run_times = dump.run_times.clone();
+        self.run_diffs = dump.run_diffs.clone();
+        self.run_golds = dump.run_golds.clone();
+        self.sum_comp_times = dump.sum_comp_times.clone();
+        self.before_pause = dump.before_pause;
+        self.before_pause_split = dump.before_pause_split;
+        self.time = dump.time;
+        self.current_split = dump.current_split;
+        self.needs_save = dump.needs_save;
+        self.timer_state = TimerState::Paused;
     }
 
     /// Update the [`RunState`].
@@ -350,8 +371,7 @@ impl RunState {
                             .run_golds
                             .iter()
                             .enumerate()
-                            .filter(|(_, &i)| i)
-                            .map(|(idx, _)| idx)
+                            .filter_map(|(idx, &gold)| if gold { Some(idx) } else { Option::None })
                         {
                             run.set_gold_time(idx, self.run_times[idx]);
                         }
@@ -403,7 +423,7 @@ impl RunState {
                 self.before_pause_split = 0;
                 self.split -= self.run_times[self.current_split].raw();
                 self.run_diffs[self.current_split] = DiffType::Time(0);
-                self.run_times[self.current_split] = TimeType::Time(0);
+                self.run_times[self.current_split] = TimeType::None;
                 self.run_golds[self.current_split] = false;
                 return vec![StateChange::EnterSplit {
                     idx: self.current_split,
@@ -416,7 +436,7 @@ impl RunState {
                 self.start = 0;
                 let len = self.run.borrow().pb_times().len();
                 self.run_diffs = vec![DiffType::Time(0); len];
-                self.run_times = vec![TimeType::Time(0); len];
+                self.run_times = vec![TimeType::None; len];
                 self.run_golds = vec![false; len];
                 self.current_split = 0;
                 self.timer_state = TimerState::NotRunning;
@@ -510,5 +530,30 @@ impl RunState {
             _ => {}
         }
         vec![StateChange::None]
+    }
+
+    /// Generate a [`StateDump`].
+    ///
+    /// Uses the current state of the timer to create a `StateDump` containing all
+    /// information available in the RunState. The fields unique to the renderer must be
+    /// filled by the application.
+    pub fn create_state_dump(&self) -> StateDump {
+        StateDump {
+            run: self.run.borrow().clone(),
+            status: self.run_status,
+            comparison: self.comparison,
+            run_times: self.run_times.clone(),
+            run_diffs: self.run_diffs.clone(),
+            run_golds: self.run_golds.clone(),
+            sum_comp_times: self.sum_comp_times.clone(),
+            before_pause: self.before_pause,
+            before_pause_split: self.before_pause_split,
+            time: self.time,
+            current_split: self.current_split,
+            needs_save: self.needs_save,
+            top_index: 0,
+            bottom_index: 0,
+            time_str: String::new(),
+        }
     }
 }
